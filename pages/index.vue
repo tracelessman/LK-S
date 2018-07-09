@@ -11,16 +11,23 @@
         </nuxt-link>
       </li>
     </ul>
+    <div>sdfsdf{{test}}</div>
   </section>
 </template>
 
 <script>
 import axios from '~/plugins/axios'
 
+const test = require('../local/test')
+console.log(test)
+
 export default {
   async asyncData () {
     let { data } = await axios.get('/api/users')
-    return { users: data }
+    return {
+        users: data,
+        test
+    }
   },
   head () {
     return {

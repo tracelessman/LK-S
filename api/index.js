@@ -1,6 +1,4 @@
 const express = require('express')
-// import Vue from 'vue';
-console.log('no vuew')
 
 // Create express instnace
 const app = express()
