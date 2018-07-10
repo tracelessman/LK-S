@@ -1,27 +1,49 @@
 const { Router } = require('express')
+const crypto = require('crypto')
+let hfsMd5 = crypto.createHash('md5').update('hfs').digest('hex')
 
 const router = Router()
 
-// Mock Users
-const users = [
-  { name: 'Alexandre' },
-  { name: 'Pooya' },
-  { name: 'Sébastien' }
-]
 
-/* GET users listing. */
-router.get('/users', function (req, res, next) {
-  res.json(users)
+router.post('/login',(req,res)=>{
+    const {name,password} = req.body
+    const user ={
+        name
+    }
+    let result
+
+    if(!name || !password){
+        result = {
+            error:new Error("非法请求")
+        }
+    }
+    if(name === 'superAdmin'){
+        if(password === hfsMd5){
+            user.role = 'superAdmin'
+        }
+    }else{
+
+    }
+
+
+
+    res.json({a:23})
+
+
 })
 
-/* GET user by ID. */
-router.get('/users/:id', function (req, res, next) {
-  const id = parseInt(req.params.id)
-  if (id >= 0 && id < users.length) {
-    res.json(users[id])
-  } else {
-    res.sendStatus(404)
-  }
+
+router.post('/checkLogin',(req,res)=>{
+    res.json({
+        error:null,
+        content:{
+            user:req.session.user
+        }
+    })
 })
+
+
+
+
 
 module.exports = router
