@@ -5,6 +5,7 @@
   "author": "spirit <catchspirit37@gmail.com>",
   "private": true,
   "scripts": {
+    "test": "jest",
     "dev": "nuxt",
     "build": "nuxt build",
     "start": "nuxt build && nuxt start",
@@ -21,13 +22,13 @@
     "fs-extra": "^6.0.1",
     "iview": "^2.14.3",
     "lodash": "^4.17.10",
+    "mysql2": "^1.5.3",
     "nuxt": "latest",
     "qr-image": "^3.2.0",
     "semver": "^5.5.0",
     "sequelize": "^4.38.0",
     "simple-git": "^1.96.0",
     "source-map-support": "^0.4.15",
-    "sqlite3": "^4.0.1",
     "uuid": "^3.3.2",
     "vue": "^2.5.16"
   },
@@ -41,6 +42,7 @@
     "eslint-plugin-node": "^5.1.1",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
+    "jest": "^23.4.0",
     "node-ssh": "^5.1.2"
   }
 }

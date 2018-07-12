@@ -1,3 +1,5 @@
+//in vue context
+
 const axios = require('axios')
 const commonUtil = require('./commonUtil')
 const frontState = require("../state/frontState")

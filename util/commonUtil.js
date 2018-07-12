@@ -1,3 +1,5 @@
+const fse = require('fs-extra')
+
 const commonUtil = {
     getTimeDisplay: function () {
         const date = new Date();
@@ -17,6 +19,12 @@ const commonUtil = {
     },
     objectify(obj){
         return obj?obj:{}
+    },
+    ensureDirMultipleSync(...ary){
+        for(let ele of ary){
+            fse.ensureDirSync(ele)
+        }
+
     }
 }
 
