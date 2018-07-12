@@ -57,15 +57,13 @@ function logging(sql){
 const storeUtil = {
     async setDb(option){
         const {mainDatabase,metaDatabase,username,password,dialect,metaDbStorage,mainDbStorage} = option
-
-        await Promise.all([this.createSchema({...option,database:metaDatabase}),this.createSchema({...option,database:mainDatabase})])
-
-        return new Promise(resolve=>{
             if(dialect === 'mysql'){
                 let option = {
                     dialect:'mysql',user:username,password
                 }
+                await Promise.all([this.createSchema({...option,database:metaDatabase}),this.createSchema({...option,database:mainDatabase})])
             }
+        return new Promise(resolve=>{
             const metaDb =  new Sequelize(metaDatabase, username, password, {
                 dialect,
                 pool: {
@@ -77,7 +75,8 @@ const storeUtil = {
                 storage:metaDbStorage,
                 logging:function (sql) {
                     // console.log("执行sql:"+sql);
-                }
+                },
+                freezeTableName:true
             })
             sqlModel = metaDb.define('T_Sql',sqlObj,)
             sqlModel.sync().then(()=>{
@@ -90,7 +89,8 @@ const storeUtil = {
                     },
                     operatorsAliases: false,
                     storage:mainDbStorage,
-                    logging
+                    logging,
+                    freezeTableName:true
                 })
                 resolve(mainDb)
             })

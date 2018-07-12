@@ -1,18 +1,31 @@
-# myapp
-
-> Nuxt.js project
-
-## Build Setup
-
-``` bash
-# install dependencies
-$ npm install # Or yarn install
-
-# serve with hot reload at localhost:3000
-$ npm run dev
-
-# build for production and launch server
-$ npm start
+# model
+### model export
 ```
+{
+    tableTitle:"",//表名
+    modelKey:"",//标识值
+    /*
+     *除了id和extra之外的所有字段
+     *
+     *默认值
+     * allowNull:false
+     * unique:false
+     * type:Sequelize.STRING
+     *
+     *增加属性:
+     *hiddenFromCheck:不需要在查看界面显示
+     *
+     *
+     *
+     */
+    modelContent:"",
 
-For detailed explanation on how things work, checkout the [Nuxt.js docs](https://github.com/nuxt/nuxt.js).
+
+}
+```
+### orm
+
+>
+
+
+

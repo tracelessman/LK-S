@@ -24,6 +24,12 @@ const commonUtil = {
         for(let ele of ary){
             fse.ensureDirSync(ele)
         }
+    },
+    capitalizeFirst(str,deCapitalize){
+        let first = str.charAt(0)
+        first = deCapitalize?first.toLowerCase():first.toUpperCase()
+
+        return first+str.substring(1)
 
     }
 }

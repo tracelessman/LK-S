@@ -10,9 +10,11 @@ const util = require('../util')
 
 const option = {
     ...config.db,
-    mainDatabase:'T_LK',
-    metaDatabase:"T_LK_META"
+    mainDatabase:'LK_S',
+    metaDatabase:"LK_S_META"
 }
 
-module.exports = util.setDb(option)
+module.exports = {
+    mainDbPromise:util.setDb(option)
+}
 
