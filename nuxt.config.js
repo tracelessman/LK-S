@@ -1,3 +1,4 @@
+const fs = require('fs')
 module.exports = {
   /*
   ** Headers of the page
@@ -34,6 +35,9 @@ module.exports = {
       //     exclude: /(node_modules)/
       //   })
       // }
+
+        config.target = 'node'
+        config.externals = fs.readdirSync('node_modules').filter((x) => { return x !== '.bin'; })
     }
   },
   serverMiddleware: [
