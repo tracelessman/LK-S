@@ -1,11 +1,15 @@
 const { Router } = require('express')
 const crypto = require('crypto')
-let hfsMd5 = crypto.createHash('md5').update('hfs').digest('hex')
+const md5Algorithm = crypto.createHash('md5')
+let hfsMd5 = md5Algorithm.update('hfs').digest('hex')
 
 const router = Router()
+const {ormServicePromise} = require('../store/ormService')
+const key = 'user'
 
 
 router.post('/login',(req,res)=>{
+
     const {name,password} = req.body
     const user ={
         name
@@ -22,12 +26,24 @@ router.post('/login',(req,res)=>{
             user.role = 'superAdmin'
         }
     }else{
+        ormServicePromise.then(ormService=>{
+            ormService[key].queryExact({
+                name,
+                password:crypto.createHash('md5').update(password).digest('hex')
+            }).then(result=>{
+                console.log(result)
+            }).catch(err=>{
+                console.log(err)
+
+            })
+        })
+
 
     }
 
 
 
-    res.json({a:23})
+    res.json(result)
 
 
 })

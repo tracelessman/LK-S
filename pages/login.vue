@@ -27,7 +27,7 @@
 </template>
 
 <script>
-    const {httpPost} = require('../util')
+    const {httpPost} = require('../frontend/util')
     import axios from '~/plugins/axios'
 
 

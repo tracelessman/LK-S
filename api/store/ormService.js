@@ -6,8 +6,10 @@ const path = require('path')
 const Op = Sequelize.Op;
 const {ormModelPromise} = require('./ormModel')
 const _ = require('lodash')
+const rootPath = path.resolve(__dirname,'../../')
 
-const util = require(path.resolve(rootPath,'util'))
+
+const util = require(path.resolve(rootPath,'api/util'))
 const ormServicePromise = ormModelPromise.then((ormModel)=>{
     const option = {
         ormModel

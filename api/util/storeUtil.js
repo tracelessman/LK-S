@@ -34,6 +34,7 @@ let sqlObj = {
 let sqlModel
 
 function logging(sql){
+
     let type,tableName
     const typeAry = ['INSERT','UPDATE','DELETE']
     for(let typeEle of typeAry){
@@ -76,7 +77,6 @@ const storeUtil = {
                 logging:function (sql) {
                     // console.log("执行sql:"+sql);
                 },
-                freezeTableName:true
             })
             sqlModel = metaDb.define('T_Sql',sqlObj,)
             sqlModel.sync().then(()=>{
@@ -90,7 +90,6 @@ const storeUtil = {
                     operatorsAliases: false,
                     storage:mainDbStorage,
                     logging,
-                    freezeTableName:true
                 })
                 resolve(mainDb)
             })

@@ -1,8 +1,8 @@
 //in vue context
 
 const axios = require('axios')
-const commonUtil = require('./commonUtil')
-const frontState = require("../state/frontState")
+const shareUtil = require('../../share/util')
+const frontState = require("../../state/frontState")
 const {rootView} = frontState
 
 
@@ -15,19 +15,19 @@ const netUtil = {
                 headers: { 'content-type': 'application/json' },
                 method: 'post',
                 url: url,
-                data: commonUtil.objectify(param)
+                data: shareUtil.objectify(param)
             })
             .then( (response)=>{
                 const {data} = response
                 const {error,content,errorMsg} = data
                 if(error){
-                    if(commonUtil.runFunc(failCb,error)){
+                    if(shareUtil.runFunc(failCb,error)){
                         console.log(error)
                     }else{
                         processError(error,errorMsg)
                     }
                 }else{
-                    commonUtil.runFunc(successCb,content)
+                    shareUtil.runFunc(successCb,content)
                 }
             })
             .catch((error)=>{

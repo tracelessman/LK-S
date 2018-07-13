@@ -7,7 +7,6 @@
 
 <script>
 import axios from '~/plugins/axios'
-const frontState = require('../state/frontState')
 import Entry from '../components/Entry'
 
 
@@ -28,7 +27,7 @@ export default {
 
     },
     beforeMount(){
-        frontState.rootView = this
+        // frontState.rootView = this
     }
 }
 </script>

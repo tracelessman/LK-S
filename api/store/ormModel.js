@@ -3,20 +3,20 @@ const Sequelize = require('sequelize')
 const uuidV4 = require('uuid/v4')
 const  _ = require("lodash")
 const path = require('path')
-const rootPath = path.resolve(__dirname,'../')
-const {mainDbPromise} = require('./index')
+const rootPath = path.resolve(__dirname,'../../')
+const {mainDbPromise} = require(path.resolve(rootPath,'api/store'))
 
 const dict = require(path.resolve(rootPath,'business/dict'))
-const util = require(path.resolve(rootPath,'util'))
+const util = require(path.resolve(rootPath,'api/util'))
 
 
 const ormModelPromise = mainDbPromise.then(mainDb=>{
     const option = {
-        modelAry:[require(path.resolve(rootPath,'store/model/user'))],
+        modelAry:[require(path.resolve(rootPath,'api/store/model/user'))],
         dict,
         database:mainDb
     }
-    const orm = util.getOrmModel()
+    const orm = util.getOrmModel(option)
     return orm
 })
 

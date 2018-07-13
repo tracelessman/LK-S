@@ -17,7 +17,7 @@ module.exports = {
         for(let key in modelObj){
             const {dictType,computed,primaryKey,isArray} = modelObj[key]
             if(dictType){
-                if(dicts[dictType].isCascade){
+                if(dict[dictType].isCascade){
                     modelObj[key].isCascade = true
                     modelObj[key].isArray = true
                     modelObj[key].type = Sequelize.JSON

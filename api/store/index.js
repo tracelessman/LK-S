@@ -5,7 +5,7 @@ const fs = require('fs');
 const fse = require('fs-extra')
 const path = require('path');
 const uuidV4 = require('uuid/v4')
-const config = require("../config")
+const config = require("../../config")
 const util = require('../util')
 
 const option = {

@@ -35,9 +35,9 @@ module.exports = {
       //     exclude: /(node_modules)/
       //   })
       // }
-
-        config.target = 'node'
-        config.externals = fs.readdirSync('node_modules').filter((x) => { return x !== '.bin'; })
+      // //
+      //   config.target = 'node'
+      //   config.externals = fs.readdirSync('node_modules').filter((x) => { return x !== '.bin'; })
     }
   },
   serverMiddleware: [

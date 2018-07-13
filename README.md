@@ -3,7 +3,7 @@
 ```
 {
     tableTitle:"",//表名
-    modelKey:"",//标识值
+    key:"",//标识值
     /*
      *除了id和extra之外的所有字段
      *

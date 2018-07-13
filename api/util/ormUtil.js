@@ -1,11 +1,8 @@
 const Sequelize = require('sequelize')
 const uuidV4 = require('uuid/v4')
 const  _ = require("lodash")
-const util = require('./index')
-
-
-
-
+const commonUtil = require('./commonUtil')
+const sequelizeUtil = require('./sequelizeUtil')
 
 
 
@@ -14,7 +11,8 @@ const ormUtil = {
         const {modelAry,dict,database} = option
         function getModelWrapper(model){
             let {key,modelContent,classification,tableTitle} = model
-            const tableName = 'T_'+util.capitalizeFirst(key)
+
+            const tableName = 'T_'+commonUtil.capitalizeFirst(key)
 
             const modelObj = {
                 id: {
@@ -31,16 +29,17 @@ const ormUtil = {
                 }
             }
 
-            util.preProcessModelObj({
+            sequelizeUtil.preProcessModelObj({
                 modelObj,
                 dict
             })
             let modelObjParam  = _.cloneDeep(modelObj)
 
             let modelSequelized =   database.define(tableName,modelObjParam, {
-                paranoid:false
+                paranoid:false,
+                freezeTableName:true
             })
-
+            modelSequelized.sync()
             return {
                 modelObj,
                 modelSequelized,
@@ -109,7 +108,7 @@ const ormUtil = {
                 },
                 getAllRecords(){
                     return ormModel[key].modelSequelized.findAll({
-                            order:util.defaultOrder
+                            order:sequelizeUtil.defaultOrder
                         }
                     )
 
@@ -162,7 +161,7 @@ const ormUtil = {
                     return new Promise((resolve,reject)=>{
                         ormModel[key].modelSequelized.findAll({
                             where,
-                            order:util.defaultOrder
+                            order:sequelizeUtil.defaultOrder
                         }).then(records=>{
                             for(let key in queryCondition) {
                                 let value = queryCondition[key]
@@ -210,10 +209,11 @@ const ormUtil = {
                         })
                     })
                 },
-                queryExact(){
-                    ormModel[key].modelSequelized.findAll({
+                queryExact(queryCondition){
+
+                   return ormModel[key].modelSequelized.findAll({
                         where:queryCondition,
-                        order:util.defaultOrder
+                        order:sequelizeUtil.defaultOrder
                     })
                 },
                 updateRecord(record){
@@ -283,7 +283,7 @@ function compare(record,queryCondition){
         }
         const isSame = JSON.stringify(queryCondition[keyInqueryCondition]).trim() !== JSON.stringify(record[keyInqueryCondition]).trim()
         if(isSame){
-            result = false
+            result = falsecrypto.createHash('md5')
             break
         }
     }
