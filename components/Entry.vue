@@ -29,7 +29,7 @@
                         this.isInited = true
                         this.user = user
                     }else{
-                        location = '/login'
+                        // location = '/login'
                     }
                 }
             })

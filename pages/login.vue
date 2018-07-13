@@ -29,7 +29,7 @@
 <script>
     const {httpPost} = require('../frontend/util')
     import axios from '~/plugins/axios'
-
+    const frontState = require("../state/frontState")
 
     export default {
         async asyncData () {
@@ -66,19 +66,17 @@
                         name:this.user.name.value,
                         password:this.user.password.value
                     },
-                    failCb(error){
-                        this.$Message.error({
-                            content:'登录失败',
-                            duration:5
-                        })
-                    },
                     successCb(content){
-                        // location = '/'
+                        location = '/'
                     }
                 })
 
             },
-
+        },
+        beforeMount(){
+            if(!frontState.rootView){
+                frontState.rootView = this
+            }
         }
     }
 </script>

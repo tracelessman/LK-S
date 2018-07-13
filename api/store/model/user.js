@@ -60,6 +60,10 @@ module.exports = {
             type:Sequelize.TEXT,
             allowNull:true,
         },
+        role:{
+            type:Sequelize.INTEGER,
+            title:"权限"
+        }
     },
     tableTitle,
 }

@@ -3,14 +3,10 @@
 const axios = require('axios')
 const shareUtil = require('../../share/util')
 const frontState = require("../../state/frontState")
-const {rootView} = frontState
-
 
 const netUtil = {
     httpPost(option){
         const {url,param,successCb,failCb} = option
-
-
         axios({
                 headers: { 'content-type': 'application/json' },
                 method: 'post',
@@ -20,7 +16,7 @@ const netUtil = {
             .then( (response)=>{
                 const {data} = response
                 const {error,content,errorMsg} = data
-                if(error){
+                if(error || errorMsg){
                     if(shareUtil.runFunc(failCb,error)){
                         console.log(error)
                     }else{
@@ -31,11 +27,15 @@ const netUtil = {
                 }
             })
             .catch((error)=>{
-                axios.get('https://www.baidu.com/').then(()=>{
+                console.log(error)
 
+                axios.get('api/test/ping',{
+                }).then(()=>{
                     processError(error)
                 }).catch(error=>{
-                    rootView.$Message.error({
+                    console.log(error)
+
+                    frontState.rootView.$Message.error({
                         content: `网络已断开,请检查您的网络连接!`,
                         duration: 5
                     })
@@ -50,8 +50,10 @@ function processError(err,errorMsg){
     if(!errorMsg){
         errorMsg = '操作失败!'
     }
-    rootView.$Message.error(errorMsg)
-    console.log(err)
+    frontState.rootView.$Message.error({
+        duration:4,
+        content:errorMsg
+    })
 }
 
 module.exports = netUtil

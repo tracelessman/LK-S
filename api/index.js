@@ -16,10 +16,12 @@ app.use(session({
 }))
 
 // Require API routes
-const users = require('./routes/users')
+const user = require('./routes/user')
+const test = require('./routes/test')
 
 // Import API Routes
-app.use('/user',users)
+app.use('/user',user)
+app.use('/test',test)
 
 // Export the server middleware
 module.exports = {
