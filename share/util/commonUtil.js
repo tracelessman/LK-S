@@ -25,6 +25,14 @@ const commonUtil = {
 
         return first+str.substring(1)
 
+    },
+    aryToObj(ary,initValue){
+        let result = {}
+        for(let ele of ary){
+            result[ele] = initValue
+        }
+
+        return result
     }
 }
 

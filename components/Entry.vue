@@ -8,9 +8,13 @@
     const axios = require('axios')
 
     const {httpPost} = require('../frontend/util')
+    import customTable from '~/components/common/customTable'
 
     export default {
         name: 'entry',
+        components:{
+            customTable
+        },
         data(){
             return {
                 isInited:true,

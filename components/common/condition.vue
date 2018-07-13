@@ -4,7 +4,7 @@
             <i-col span="8" v-if="!modelObj[item].isTimeFormat" :style="style.icolStyle">
                 <Label :style="style.conditionLabel" style="margin-left:15px;color:#333;font-weight:normal" v-html="getLabel(item,modelObj)" >
                 </Label>
-                <Cascader :data="getItemList(item,modelObj)" v-model="condition[item]" transfer placement="bottom-start"
+                <Cascader :data="getItemList(item)" v-model="condition[item]" transfer placement="bottom-start"
                           v-if="modelObj[item].isCascade" clearable size="small" :style="style.conditionInput" change-on-select
                 ></Cascader>
                 <InputNumber  :precision="0" v-else-if="modelObj[item].isInteger"  :style="style.conditionInput" size="small"
@@ -14,7 +14,7 @@
                 <dateRange v-else-if="modelObj[item].isDateFormat || modelObj[item].isDateRange" v-model="condition[item]"></dateRange>
                 <Select clearable filterable v-else-if="modelObj[item].dictType" :style="style.conditionInput" transfer
                         size="small" v-model="condition[item]" >
-                    <Option v-for="itemTem in getItemList(item,modelObj)" :value="itemTem.value" :key="itemTem.value">{{ itemTem.label }}</Option>
+                    <Option v-for="itemTem in getItemList(item)" :value="itemTem.value" :key="itemTem.value">{{ itemTem.label }}</Option>
                 </Select>
                 <Input v-else :style="style.conditionInput" size="small" clearable v-model.trim="condition[item]"/>
             </i-col>
@@ -32,12 +32,10 @@
 </template>
 
 <script>
-    const ormModel = require('@/store/ormModel')
-    const {common} = require("rootPath/self_contained/proxy")
-    const dictService = require("@/store/service/DictService")
-    const commonStyle = require('@/views/style/common')
-    const businessUtil = require('@/util/businessUtil')
-    import dateRange from '@/views/components/common/dateRange'
+    const common = require("../../share/util")
+    const commonStyle = require('../../style/common')
+    const businessUtil = require('./businessUtil')
+    import dateRange from './dateRange'
 
     export default {
         components:{
@@ -45,7 +43,6 @@
         },
         data(){
             return {
-                modelObj:ormModel[this.type].modelObj,
                 style:{
                     ...commonStyle,
                     icolStyle:{
@@ -64,7 +61,9 @@
             this.style.conditionInput.width = '216px'
         },
         methods:{
-            getItemList:businessUtil.getItemList,
+            getItemList(queryField){
+                return this.dict[this.modelObj[queryField].dictType]
+            },
             getLabel:businessUtil.getLabel,
             queryData(){
                 this.$emit("queryData")
@@ -90,14 +89,20 @@
             type:{
                 type:String,
                 required:true,
-                validator(type){
-                    return ormModel.hasOwnProperty(type)
-                }
+
+            },
+            modelObj:{
+                type:Object,
+                required:true,
             },
             queryFields:{
                 type:Array,
                 required:true,
             },
+            dict:{
+                type:Object,
+                required:true,
+            }
 
 
         },
