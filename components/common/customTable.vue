@@ -239,12 +239,7 @@
     </div>
 </template>
 <script>
-    //property:ormModel
     const _ = require("lodash")
-    const csv = require('csv')
-    const {stringify,parse} = csv
-    const AdmZip = require('adm-zip')
-    const archiver = require('archiver')
 
     import pageSize from './pageSize'
     import condition from './condition'
@@ -252,18 +247,9 @@
     import {Button} from 'iview'
     const iviewUtil = require('../../frontend/util/iviewUtil')
     const commonStyle = require('../../style/common')
-    const businessUtil = require('@/util/businessUtil')
-    const {dialog,shell} = require('electron').remote
-    const other = require('@/util/other')
-    const dataTransport = require('@/util/dataTransport')
-    const fs = require('fs')
-    const fse = require('fs-extra')
-    const path = require('path')
+    const businessUtil = require('./businessUtil')
     const uuidV4 = require('uuid/v4')
     import dateRange from './dateRange'
-    const util = require('util')
-    const Sequelize = require('sequelize')
-    const {Op} = Sequelize
 
     export default {
         components:{
@@ -275,8 +261,6 @@
         computed: {
             allFields(){
                 return iviewUtil.getCertainFields(this.modelObj)
-            },
-            attachmentFolderPath(){
             },
             availableAry(){
                 let availableAry = []
@@ -291,8 +275,6 @@
                     })
                 }
                 return availableAry
-            },
-            htmlFolder(){
             },
             modalWidth(){
                 return this.classification||"600"
@@ -475,12 +457,6 @@
                     this.tabsValue = Object.keys(this.classification)[0]
                 }
             },
-            openAttachmentFolder(){
-            },
-            openAttachmentModal(){
-                this.showAttachmentModal = true
-                this.refreshTableAttachment()
-            },
             openDeleteModal(){
                 if(this.selection.length === 0){
                     this.$Message.info('请先在复选框勾选需要删除的记录')
@@ -549,19 +525,6 @@
                     this.refreshTableByData(records)
                     this.loading = false
                 })
-            },
-            refreshTableAttachment(){
-              let fileNames =  fs.readdirSync(this.attachmentFolderPath)
-                let ary = []
-                for(let fileName of fileNames){
-
-                  let filePath = path.resolve(this.attachmentFolderPath,fileName)
-                    let obj = {
-                        fileName,filePath
-                    }
-                   obj.size = fs.statSync(filePath).size / 1000
-                    ary.push(obj)
-                }
             },
             refreshTableByData(records){
                 records = JSON.stringify(records);
@@ -677,40 +640,8 @@
                this.sizeOfPage = (val===-1)?this.totalRows:val
             },
             test(val){
-                const electron = require('electron')
-                const {ipcRenderer} = electron
-                // console.log(electron)
-                // console.log(ipcRenderer)
-                ipcRenderer.send('openPreview',{
-                    show:true,
-                    iframeSrc:'verified.html',
-                    valueObj:{
-                        name:'万红',
-                        armyAlias:'2234部队',
-                        joinArmyTime:'2001-3-4',
-                        leaveArmyTime:'2009-8-4'
-                    }
-                })
 
             },
-            uploadAttachment(){
-                dialog.showOpenDialog({
-                        title:"请选择上传文件",
-                        properties:['openFile','multiSelections']
-                    },(filePaths)=> {
-                    if (filePaths) {
-                        for(let filePath of filePaths){
-                            let aryTem = filePath.split(path.sep)
-                            let fileName = aryTem[aryTem.length-1]
-                            fse.copySync(filePath,path.resolve(this.attachmentFolderPath,fileName))
-
-                        }
-                        this.refreshTableAttachment()
-                        this.$Message.success('成功上传附件')
-
-                    }
-                })
-            }
         },
         mounted(){
             if(this.showingFields){

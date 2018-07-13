@@ -38,6 +38,15 @@
                 }
             })
 
+            httpPost({
+                url:"/api/orm/getOrm",
+                successCb:(content)=>{
+                    console.log(content)
+
+
+                }
+            })
+
 
 
         }
