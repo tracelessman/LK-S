@@ -11,9 +11,10 @@
      * allowNull:false
      * unique:false
      * type:Sequelize.STRING
+     * displayPage:['create','modify','check']
      *
      *增加属性:
-     *hiddenFromCheck:不需要在查看界面显示
+     *:不需要在查看界面显示
      *
      *
      *

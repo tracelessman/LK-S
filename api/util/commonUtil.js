@@ -31,6 +31,27 @@ const commonUtil = {
 
         return first+str.substring(1)
 
+    },
+    //没有side effect
+    deleteFromAry(option){
+        const defaultOption = {
+            global:false
+        }
+        option = {
+            ...defaultOption,
+            ...option
+        }
+        const {ary,ele,global} = option
+        const _ary = _.cloneDeep(ary)
+        if(_ary.includes(ele)){
+            _ary.splice(_ary.indexOf(ele),1)
+        }
+        if(global){
+            while(_ary.includes(ele)){
+                _ary.splice(_ary.indexOf(ele),1)
+            }
+        }
+        return _ary
     }
 }
 

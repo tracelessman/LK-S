@@ -60,7 +60,7 @@
                 <div  v-if="classification" >
                     <Tabs v-model="tabsValue">
                         <TabPane  v-for="(val,key) in classification" :name="key" :label="val.title" :key="key">
-                            <template  v-for="(item,index) in val.keys"  v-if="!modelObj[item].hiddenFromCheck" >
+                            <template  v-for="(item,index) in val.keys"  v-if="modelObj[item].displayPage.includes('check')" >
                                 <i-col span="12" style="" :style="style.colStyle" v-if="!modelObj[item].isTextArea">
                                     <Label  style="margin-left:25px;" :style="style.conditionLabel" v-html="getLabel(item,modelObj)" >
                                     </Label>
@@ -83,7 +83,7 @@
                     </Tabs>
                 </div>
                 <Row style="margin: 5px auto;" v-else>
-                    <template v-for="(item,index) in allFields" v-if="!modelObj[item].hiddenFromCheck" >
+                    <template v-for="(item,index) in allFields" v-if="modelObj[item].displayPage.includes('check')" >
                         <i-col span="24" style="text-align: center;word-break: break-all" >
                             <Label  :style="style.conditionLabel" style="margin-left:15px" v-html="getLabel(item,modelObj)" >
                             </Label>
@@ -109,7 +109,7 @@
             <div v-if="classification">
                 <Tabs v-model="tabsValue">
                     <TabPane  v-for="(val,key) in classification" :name="key" :label="val.title" :key="key">
-                        <template  v-for="(item,index) in val.keys" v-if="!modelObj[item].isComputed" >
+                        <template  v-for="(item,index) in val.keys" v-if="shouldShow(item)" >
                             <template v-if="!modelObj[item].isTextArea">
                                 <i-col span="12" :style="style.colStyle" >
                                     <Label  style="margin-left:25px"  :style="[style.conditionLabel]">
@@ -171,7 +171,7 @@
                 </Tabs>
             </div>
             <div style="overflow: auto" v-else>
-                <template v-for="(item,index) in allFields" v-if="!modelObj[item].isComputed" >
+                <template v-for="(item,index) in allFields"   v-if="shouldShow(item)" >
                     <i-col span="24" style="text-align: center">
                         <Label  style="margin-left:25px;"  :style="[style.conditionLabel]">
                             <strong style="color:red;margin-right:3px;font-size: 1.3em;vertical-align: middle"
@@ -634,6 +634,9 @@
                 setTimeout(()=>{
                     func(_this)
                 },timeout)
+            },
+            shouldShow(item){
+                return this.modelObj[item].displayPage.includes(this.action)
             },
             sizeChange(val){
                 this.selection = []

@@ -18,14 +18,14 @@ const ormUtil = {
                 id: {
                     type: Sequelize.STRING,
                     primaryKey:true,
-                    hiddenFromCheck:true,
+                    displayPage:[]
                 },
                 ...modelContent,
                 extra:{
                     type: Sequelize.JSON,
                     allowNull:true,
                     title:"额外信息或者用于改变表结构",
-                    hiddenFromCheck:true,
+                    displayPage:[]
                 }
             }
 

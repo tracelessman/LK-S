@@ -176,16 +176,13 @@ export default {
     },
     parseDate,
     getCertainFields(modelObj,excludeAry = [],option = {
-        noHiddenFromCheck:true
     }){
         let ary = []
         excludeAry = excludeAry.concat(['id','extra'])
         for(let key in modelObj){
             if(!excludeAry.includes(key)){
-                if(option.noHiddenFromCheck && modelObj[key].hiddenFromCheck){
-                }else{
-                    ary.push(key)
-                }
+                ary.push(key)
+
             }
         }
         return ary

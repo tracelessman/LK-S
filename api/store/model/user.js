@@ -14,14 +14,13 @@ module.exports = {
             title:"用户名",
             unique:true
         },
-        password:{
-            title:"密码",
-            type:Sequelize.TEXT,
-        },
+
         pic:{
             title:"头像",
             allowNull:true,
             type:Sequelize.TEXT,
+            displayPage:[]
+
         },
         registerStartTime:{
             title:"注册开始时间",
@@ -32,7 +31,7 @@ module.exports = {
             type:Sequelize.INTEGER
         },
         registerCheckCode:{
-            title:"口令",
+            title:"注册验证码",
             allowNull:true
         },
         orgId:{

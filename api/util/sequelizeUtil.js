@@ -1,7 +1,7 @@
 
 
 const Sequelize = require('sequelize')
-
+const commonUtil = require('./commonUtil')
 
 
 const excludeAryBase = ['deletedAt','updatedAt','createdAt','id','extra']
@@ -36,6 +36,18 @@ module.exports = {
             }
         }
         for(let key in modelObj ){
+            const value = modelObj[key]
+
+            //处理displayPage
+            if(!value.hasOwnProperty('displayPage')){
+                modelObj[key].displayPage = ['create','modify','check']
+            }
+            if(modelObj[key].isComputed){
+                modelObj[key].displayPage = commonUtil.deleteFromAry({
+                    ary:modelObj[key].displayPage,
+                    ele:"create"
+                })
+            }
             let typeStr = modelObj[key].type.name
             if(typeStr === 'DATEONLY'){
                 modelObj[key].isDateFormat = true
@@ -50,7 +62,6 @@ module.exports = {
             }else if(typeStr === 'DOUBLE'){
                 modelObj[key].isDouble = true
             }
-
         }
     }
 
