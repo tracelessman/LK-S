@@ -36,4 +36,4 @@ const commonUtil = {
     }
 }
 
-module.exports = commonUtil
+export default  commonUtil

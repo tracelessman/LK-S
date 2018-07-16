@@ -6,6 +6,9 @@ const businessUtil = {
         let field = modelObj[item]
 
         let title = field.title
+        if(!title){
+            title = ''
+        }
 
         let result = title.length === 2?title[0]+"&emsp;&emsp;&nbsp;&nbsp;"+title[1]:title
         return result+":"
@@ -65,4 +68,4 @@ const businessUtil = {
 }
 
 Object.freeze(businessUtil)
-module.exports = businessUtil
+export default businessUtil

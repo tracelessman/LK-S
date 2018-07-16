@@ -6,9 +6,13 @@ const dict = require('../../business/dict')
 
 router.post('/getOrm',(req,res)=>{
     ormModelPromise.then((ormModel)=>{
+
+
         res.json({
-            ormModel,
-            dict
+           content:{
+               ormModel,
+               dict
+           }
         })
     })
 })

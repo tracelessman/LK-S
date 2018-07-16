@@ -34,7 +34,7 @@
 <script>
     const common = require("../../share/util")
     const commonStyle = require('../../style/common')
-    const businessUtil = require('./businessUtil')
+    import businessUtil from './businessUtil'
     import dateRange from './dateRange'
 
     export default {

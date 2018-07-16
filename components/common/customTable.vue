@@ -1,7 +1,7 @@
 <template>
     <div >
         <condition  v-model='condition'  :type="type" :queryFields="queryFieldsLocal"
-                    @resetCondition="refreshTable" @queryData="queryData">
+                    @resetCondition="refreshTable" @queryData="queryData" :modelObj="modelObj" :dict="dict">
         </condition>
         <div style="display:flex;justify-content: space-between;align-items: center">
             <pageSize :sizeOfPage="sizeOfPage" @sizeChange="sizeChange"
@@ -245,9 +245,10 @@
     import condition from './condition'
     import TagGroup from './TagGroup'
     import {Button} from 'iview'
-    const iviewUtil = require('../../frontend/util/iviewUtil')
+    import iviewUtil from '../../frontend/util/iviewUtil'
     const commonStyle = require('../../style/common')
-    const businessUtil = require('./businessUtil')
+    import  businessUtil from './businessUtil'
+
     const uuidV4 = require('uuid/v4')
     import dateRange from './dateRange'
 
@@ -520,11 +521,11 @@
                 })
             },
             refreshTable(){
-                this.loading = true
-                this.service.getAllRecords().then((records)=>{
-                    this.refreshTableByData(records)
-                    this.loading = false
-                })
+                this.loading = false
+                // this.service.getAllRecords().then((records)=>{
+                //     this.refreshTableByData(records)
+                //     this.loading = false
+                // })
             },
             refreshTableByData(records){
                 records = JSON.stringify(records);

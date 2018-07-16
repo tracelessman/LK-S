@@ -28,7 +28,6 @@ router.post('/login',(req,res)=>{
             if(password === 'super'){
                 user.role = 'superAdmin'
                 req.session.user = user
-                console.log(req.session)
 
             }else{
                 result = {
@@ -74,8 +73,7 @@ router.post('/login',(req,res)=>{
 
 
 router.post('/checkLogin',(req,res)=>{
-    console.log(req.session.user)
-    console.log(req.session)
+
 
     res.json({
         error:null,

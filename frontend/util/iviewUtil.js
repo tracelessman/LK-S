@@ -105,7 +105,39 @@ function notNullAndUniqueValidation(option){
 
 }
 
-module.exports = {
+
+
+function focus(_this,field){
+    let component = _this.$refs[field]
+
+    if(component){
+
+        if(component instanceof Array){
+            component = component[0]
+        }
+        if(component && component.focus){
+            component.focus()
+        }
+    }
+}
+
+function padding(target){
+
+    target = target+''
+
+    let result = target
+    if(target.length === 1){
+        result = '0'+target
+    }
+    return result
+}
+
+function info(option){
+
+}
+
+
+export default {
     addCommonSetting,
     commonSettingV1,
     info,
@@ -231,38 +263,4 @@ module.exports = {
             disabledDate
         }
     }
-}
-
-function focus(_this,field){
-    let component = _this.$refs[field]
-
-    if(component){
-
-        if(component instanceof Array){
-            component = component[0]
-        }
-        if(component && component.focus){
-            component.focus()
-        }
-    }
-}
-
-function padding(target){
-
-    target = target+''
-
-    let result = target
-    if(target.length === 1){
-        result = '0'+target
-    }
-    return result
-}
-
-function info(option){
-    const {_this,content} = option
-    _this.$Message.info({
-        content,
-        duration:3
-    })
-
 }
