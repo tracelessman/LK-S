@@ -9,15 +9,16 @@ const pool  = mysql.createPool({
     database        : config.db.database
 });
 
+
 const p1 = new Promise(resolve => {
     pool.execute(`
-CREATE TABLE IF NOT EXISTS ticket 
+CREATE TABLE IF NOT EXISTS org 
 (
-    id varchar(255),
-    memeberId TEXT,
-    startTime int,
-    timeout int,
-    checkCode TEXT,
+    id varchar(36),
+    name varchar(100),
+    parentId varchar(36),
+    mCode varchar(32),
+    memberMCode varchar(32),
     reserve1 TEXT,
     PRIMARY KEY (id)
 )
@@ -34,13 +35,13 @@ CREATE TABLE IF NOT EXISTS ticket
 
 const p2 = new Promise(resolve => {
     pool.execute(`
-CREATE TABLE IF NOT EXISTS org 
+CREATE TABLE IF NOT EXISTS member 
 (
-    id varchar(255),
-    name TEXT,
-    parentId TEXT,
-    mcode TEXT,
-    memberCode TEXT,
+    id varchar(36),
+    name varchar(100),
+    pic TEXT,
+    orgId varchar(36),
+    mCode varchar(32),
     reserve1 TEXT,
     PRIMARY KEY (id)
 )
@@ -53,17 +54,15 @@ CREATE TABLE IF NOT EXISTS org
         }
     })
 })
-
-
 const p3 = new Promise(resolve => {
     pool.execute(`
-CREATE TABLE IF NOT EXISTS member 
+CREATE TABLE IF NOT EXISTS ticket 
 (
-    id varchar(255),
-    name TEXT,
-    pic TEXT,
-    orgId TEXT,
-    mcode TEXT,
+    id varchar(36),
+    memberId varchar(36),
+    startTime int,
+    timeout int,
+    checkCode varchar(6),
     reserve1 TEXT,
     PRIMARY KEY (id)
 )
