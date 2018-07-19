@@ -1,12 +1,13 @@
 const { Router } = require('express')
 const crypto = require('crypto')
 const md5Algorithm = crypto.createHash('md5')
-let hfsMd5 = md5Algorithm.update('hfs').digest('hex')
+
 
 const router = Router()
 const {ormServicePromise} = require('../store/ormService')
 const key = 'user'
 const util = require('../util')
+const config = require('../../config')
 
 //role:super,admin,common
 router.post('/login',(req,res)=>{
@@ -25,8 +26,23 @@ router.post('/login',(req,res)=>{
         }
     }
     (async function(){
+        const ormService =  await ormServicePromise
+
         if(name === 'super'){
-            if(password === 'super'){
+            const recordAry = await ormService.meta.getAllRecords()
+            const {length} = recordAry
+            const md5Val = md5Algorithm.update(password).digest('hex')
+            let pass = false
+            if(length === 0){
+                if(md5Val === config.superDefaultPassword){
+                    pass = true
+                }
+            }else{
+                if(md5Val === recordAry[0].superPassword){
+                    pass = true
+                }
+            }
+            if(pass){
                 user.role = 'super'
                 req.session.user = user
 
@@ -36,7 +52,6 @@ router.post('/login',(req,res)=>{
                 }
             }
         }else{
-            const ormService =  await ormServicePromise
             const credentialResult = await ormService[key].queryExact({
                 name,
                 password:crypto.createHash('md5').update(password).digest('hex')
@@ -88,7 +103,10 @@ router.post('/changePassword',(req,res)=>{
     util.checkLogin(req,res)
     const {role} = req.session.user
     if(role === 'super'){
-        res.json()
+        (async()=>{
+            const ormService =  await ormServicePromise
+            // ormService.meta.
+        })()
     }
 })
 

@@ -52,7 +52,31 @@
 
         </div>
         <Modal v-model="showChangePassword" title='修改密码'>
+            <div >
+                <div style="margin:20px auto;text-align:center">
+                    <div class="style4">
+                        <span style="" class="style2">旧密码</span>
+                        <Input v-model="change.oldPassword" ref="oldPassword" style="" class="style3"/>
+                    </div>
+                    <div class="style4">
+                        <span class="style2">新密码:</span>
+                        <Input v-model="change.newPassword" ref="newPassword" class="style3"/>
 
+                    </div>
+                    <div class="style4">
+                        <span class="style2">确认新密码:</span>
+                        <Input v-model="change.newPasswordAgain" ref="newPasswordAgain" class="style3"/>
+                    </div>
+                </div>
+
+            </div>
+
+            <div slot="footer" style="overflow:auto">
+                <i-col span="24" style="text-align: center;">
+                    <i-button type='primary' size="small" @click="save" class="style5"  >保存</i-button>
+                    <i-button type='primary' size="small" @click="reset" class="style5" >重置</i-button>
+                </i-col>
+            </div>
         </Modal>
     </div>
 </template>
@@ -75,7 +99,12 @@
                 user:null,
                 ormModel:null,
                 dict:null,
-                showChangePassword:true
+                showChangePassword:false,
+                change:{
+                    oldPassword:null,
+                    newPassword:null,
+                    newPasswordAgain:null
+                }
 
             }
         },
@@ -92,16 +121,31 @@
                 this.activeMenuName = name
             },
             changePassword(){
-
-                httpPost({
-                    url:"/api/user/changePassword",
-                    successCb:(content)=>{
-                       this.$Message.success("密码已修改")
-                    }
-                })
+                this.showChangePassword = true
             },
             test(name){
                this[name]()
+            },
+            save(){
+                for(let key in this.change){
+                    if(!this.change[key]){
+                        this.$Message.warning("请将内容填写完整")
+                        this.$refs[key].focus()
+                        break
+                    }
+                }
+                httpPost({
+                    url:"/api/user/changePassword",
+                    successCb:(content)=>{
+                        this.$Message.success("密码已成功修改!")
+                    }
+                })
+
+            },
+            reset(){
+                for(let key in this.change){
+                    this.change[key] = ""
+                }
             }
         },
         mounted(){
@@ -131,5 +175,17 @@
     .style1{
         color: white;font-weight: bold;
     }
-
+    .style2{
+        width:100px;display: inline-block;text-align: left;
+    }
+    .style3{
+        width:300px
+    }
+    .style4{
+        margin:8px
+    }
+    .style5{
+        width:80px;
+        margin:10px 5px
+    }
 </style>

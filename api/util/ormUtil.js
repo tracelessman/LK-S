@@ -10,7 +10,7 @@ const ormUtil = {
     getOrmModel(option){
         const {modelAry,dict,database} = option
         function getModelWrapper(model){
-            let {key,modelContent,classification,tableTitle} = model
+            let {key,modelContent,classification,tableTitle,afterSync} = model
 
             const tableName = 'T_'+commonUtil.capitalizeFirst(key)
 
@@ -39,7 +39,11 @@ const ormUtil = {
                 paranoid:false,
                 freezeTableName:true
             })
-            modelSequelized.sync()
+            modelSequelized.sync().then(()=>{
+                if(afterSync){
+                    afterSync(modelSequelized)
+                }
+            })
             return {
                 modelObj,
                 modelSequelized,
@@ -111,7 +115,6 @@ const ormUtil = {
                             order:sequelizeUtil.defaultOrder
                         }
                     )
-
                 },
                 queryByCondition(queryCondition){
                     let where = {}
