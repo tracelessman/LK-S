@@ -1,5 +1,5 @@
 <template>
-    <div style="padding-top:200px">
+    <div style="padding-top:200px" v-if="isInited">
         <Card :bordered="true" style="width:400px;margin:auto;">
             <p slot="title">
                 <Icon type="log-in"></Icon>
@@ -33,6 +33,7 @@
 
     export default {
         async asyncData () {
+
             return {
                 user:{
                     name:{
@@ -42,6 +43,7 @@
                         title:'密码'
                     }
                 },
+                isInited:false
             }
         },
         head () {
@@ -77,6 +79,21 @@
             if(!frontState.rootView){
                 frontState.rootView = this
             }
+        },
+        mounted(){
+            httpPost({
+                url:"/api/user/checkLogin",
+                successCb:(content)=>{
+                    console.log(content)
+
+                    const {user} = content
+                    if(user){
+                        location = '/'
+                    }else{
+                        this.isInited = true
+                    }
+                }
+            })
         }
     }
 </script>

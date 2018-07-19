@@ -79,22 +79,6 @@
         },
         mounted(){
 
-            httpPost({
-                url:"/api/user/checkLogin",
-                successCb:(content)=>{
-                    console.log(content)
-
-                    const {user} = content
-                    if(user){
-                        this.isInited = true
-                        this.user = user
-                        console.log(this.content)
-
-                    }else{
-                        // location = '/login'
-                    }
-                }
-            })
 
             httpPost({
                 url:"/api/orm/getOrm",
