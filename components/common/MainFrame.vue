@@ -5,13 +5,18 @@
                <span style="float:left;font-size: 20px" class="style1">
                         {{title}}
                </span>
-                <div style="display: inline-block;float: right;margin-right: 30px;">
-                    <span style="font-size: 14px"  class="style1">
-                        当前用户: admin
-                    </span>
-                    <i-Button style="font-size: 10pt;font-weight: bold;margin-left:30px" type="primary" @click="logout">
-                        退出
-                    </i-Button>
+                <div style="display: inline-block;float: right;margin-right: 40px;">
+                    <Dropdown class="style1" @on-click="test" placement="bottom" >
+                        <Button type="primary" style="font-size: 14px;font-weight:bold">
+                            admin
+                            <Icon type="arrow-down-b"></Icon>
+                        </Button>
+                        <DropdownMenu slot="list"  >
+                            <DropdownItem name="changePassword">修改密码</DropdownItem>
+                            <DropdownItem divided name="logout">注销</DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>
+
                 </div>
             </div>
             <div>
@@ -44,7 +49,11 @@
                 <!--<div slot="footer" style="overflow: auto">-->
                 <!--</div>-->
             <!--</Modal>-->
+
         </div>
+        <Modal v-model="showChangePassword" title='修改密码'>
+
+        </Modal>
     </div>
 </template>
 
@@ -65,29 +74,44 @@
                 isInited:false,
                 user:null,
                 ormModel:null,
-                dict:null
+                dict:null,
+                showChangePassword:true
 
             }
         },
         methods:{
             logout(){
+                httpPost({
+                    url:"/api/user/logout",
+                    successCb:(content)=>{
 
+                    }
+                })
             },
             menuOnSelect(name){
                 this.activeMenuName = name
             },
+            changePassword(){
+
+                httpPost({
+                    url:"/api/user/changePassword",
+                    successCb:(content)=>{
+                       this.$Message.success("密码已修改")
+                    }
+                })
+            },
+            test(name){
+               this[name]()
+            }
         },
         mounted(){
-
 
             httpPost({
                 url:"/api/orm/getOrm",
                 successCb:(content)=>{
                     this.isInited = true
-                    console.log(content)
                     this.ormModel = content.ormModel
                     this.dict = content.dict
-
                 }
             })
         },

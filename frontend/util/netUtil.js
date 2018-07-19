@@ -15,7 +15,7 @@ const netUtil = {
             })
             .then( (response)=>{
                 const {data} = response
-                const {error,content,errorMsg} = data
+                const {error,content,errorMsg,isExpired} = data
                 if(error || errorMsg){
                     if(shareUtil.runFunc(failCb,error)){
                         console.log(error)
@@ -23,7 +23,11 @@ const netUtil = {
                         processError(error,errorMsg)
                     }
                 }else{
-                    shareUtil.runFunc(successCb,content)
+                    if(isExpired){
+                        location = '/login'
+                    }else{
+                        shareUtil.runFunc(successCb,content)
+                    }
                 }
             })
             .catch((error)=>{

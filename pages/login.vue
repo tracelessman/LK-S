@@ -68,12 +68,17 @@
                         name:this.user.name.value,
                         password:this.user.password.value
                     },
-                    successCb(content){
+                    successCb:(content)=>{
                         location = '/'
                     }
                 })
 
             },
+            test(){
+                console.log(localStorage)
+
+
+            }
         },
         beforeMount(){
             if(!frontState.rootView){
@@ -88,7 +93,8 @@
 
                     const {user} = content
                     if(user){
-                        location = '/'
+                        // location = '/'
+                        this.isInited = true
                     }else{
                         this.isInited = true
                     }

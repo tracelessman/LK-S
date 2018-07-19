@@ -6,8 +6,9 @@ let hfsMd5 = md5Algorithm.update('hfs').digest('hex')
 const router = Router()
 const {ormServicePromise} = require('../store/ormService')
 const key = 'user'
+const util = require('../util')
 
-
+//role:super,admin,common
 router.post('/login',(req,res)=>{
 
     const {name,password} = req.body
@@ -15,7 +16,7 @@ router.post('/login',(req,res)=>{
         name
     }
     let result = {
-        user
+        content:user
     }
 
     if(!name || !password){
@@ -26,7 +27,7 @@ router.post('/login',(req,res)=>{
     (async function(){
         if(name === 'super'){
             if(password === 'super'){
-                user.role = 'superAdmin'
+                user.role = 'super'
                 req.session.user = user
 
             }else{
@@ -80,6 +81,23 @@ router.post('/checkLogin',(req,res)=>{
         content:{
             user:req.session.user
         }
+    })
+})
+
+router.post('/changePassword',(req,res)=>{
+    util.checkLogin(req,res)
+    const {role} = req.session.user
+    if(role === 'super'){
+        res.json()
+    }
+})
+
+router.post('/logout',(req,res)=>{
+    util.checkLogin(req,res)
+    req.session.user = null
+
+    res.json({
+        isExpired:true
     })
 })
 
