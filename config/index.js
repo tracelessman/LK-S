@@ -9,6 +9,7 @@ const config = {
         database:"LK_S",
         dialect:"mysql",
     },
+    superDefaultPassword:"1b3231655cebb7a1f783eddf27d254ca"
 }
 _.merge(config,diffConfig)
 

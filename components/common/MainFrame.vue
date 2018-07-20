@@ -5,13 +5,18 @@
                <span style="float:left;font-size: 20px" class="style1">
                         {{title}}
                </span>
-                <div style="display: inline-block;float: right;margin-right: 30px;">
-                    <span style="font-size: 14px"  class="style1">
-                        当前用户: admin
-                    </span>
-                    <i-Button style="font-size: 10pt;font-weight: bold;margin-left:30px" type="primary" @click="logout">
-                        退出
-                    </i-Button>
+                <div style="display: inline-block;float: right;margin-right: 40px;">
+                    <Dropdown class="style1" @on-click="test" placement="bottom" >
+                        <Button type="primary" style="font-size: 14px;font-weight:bold">
+                            admin
+                            <Icon type="arrow-down-b"></Icon>
+                        </Button>
+                        <DropdownMenu slot="list"  >
+                            <DropdownItem name="changePassword">修改密码</DropdownItem>
+                            <DropdownItem divided name="logout">注销</DropdownItem>
+                        </DropdownMenu>
+                    </Dropdown>
+
                 </div>
             </div>
             <div>
@@ -44,7 +49,35 @@
                 <!--<div slot="footer" style="overflow: auto">-->
                 <!--</div>-->
             <!--</Modal>-->
+
         </div>
+        <Modal v-model="showChangePassword" title='修改密码'>
+            <div >
+                <div style="margin:20px auto;text-align:center">
+                    <div class="style4">
+                        <span style="" class="style2">旧密码</span>
+                        <Input v-model="change.oldPassword" ref="oldPassword" style="" class="style3"/>
+                    </div>
+                    <div class="style4">
+                        <span class="style2">新密码:</span>
+                        <Input v-model="change.newPassword" ref="newPassword" class="style3"/>
+
+                    </div>
+                    <div class="style4">
+                        <span class="style2">确认新密码:</span>
+                        <Input v-model="change.newPasswordAgain" ref="newPasswordAgain" class="style3"/>
+                    </div>
+                </div>
+
+            </div>
+
+            <div slot="footer" style="overflow:auto">
+                <i-col span="24" style="text-align: center;">
+                    <i-button type='primary' size="small" @click="save" class="style5"  >保存</i-button>
+                    <i-button type='primary' size="small" @click="reset" class="style5" >重置</i-button>
+                </i-col>
+            </div>
+        </Modal>
     </div>
 </template>
 
@@ -65,45 +98,64 @@
                 isInited:false,
                 user:null,
                 ormModel:null,
-                dict:null
+                dict:null,
+                showChangePassword:false,
+                change:{
+                    oldPassword:null,
+                    newPassword:null,
+                    newPasswordAgain:null
+                }
 
             }
         },
         methods:{
             logout(){
+                httpPost({
+                    url:"/api/user/logout",
+                    successCb:(content)=>{
 
+                    }
+                })
             },
             menuOnSelect(name){
                 this.activeMenuName = name
             },
-        },
-        mounted(){
-
-            httpPost({
-                url:"/api/user/checkLogin",
-                successCb:(content)=>{
-                    console.log(content)
-
-                    const {user} = content
-                    if(user){
-                        this.isInited = true
-                        this.user = user
-                        console.log(this.content)
-
-                    }else{
-                        // location = '/login'
+            changePassword(){
+                this.showChangePassword = true
+            },
+            test(name){
+               this[name]()
+            },
+            save(){
+                for(let key in this.change){
+                    if(!this.change[key]){
+                        this.$Message.warning("请将内容填写完整")
+                        this.$refs[key].focus()
+                        break
                     }
                 }
-            })
+                httpPost({
+                    url:"/api/user/changePassword",
+                    successCb:(content)=>{
+                        this.$Message.success("密码已成功修改!")
+                    }
+                })
+
+            },
+            reset(){
+                for(let key in this.change){
+                    this.change[key] = ""
+                }
+            }
+        },
+        mounted(){
 
             httpPost({
                 url:"/api/orm/getOrm",
                 successCb:(content)=>{
                     this.isInited = true
-                    console.log(content)
                     this.ormModel = content.ormModel
                     this.dict = content.dict
-
                 }
             })
         },
@@ -123,5 +175,17 @@
     .style1{
         color: white;font-weight: bold;
     }
-
+    .style2{
+        width:100px;display: inline-block;text-align: left;
+    }
+    .style3{
+        width:300px
+    }
+    .style4{
+        margin:8px
+    }
+    .style5{
+        width:80px;
+        margin:10px 5px
+    }
 </style>
