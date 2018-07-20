@@ -1,6 +1,5 @@
 const { Router } = require('express')
 const crypto = require('crypto')
-const md5Algorithm = crypto.createHash('md5')
 
 
 const router = Router()
@@ -31,7 +30,7 @@ router.post('/login',(req,res)=>{
         if(name === 'super'){
             const recordAry = await ormService.meta.getAllRecords()
             const {length} = recordAry
-            const md5Val = md5Algorithm.update(password).digest('hex')
+            const md5Val = crypto.createHash('md5').update(password).digest('hex')
             let pass = false
             if(length === 0){
                 if(md5Val === config.superDefaultPassword){
@@ -101,11 +100,26 @@ router.post('/checkLogin',(req,res)=>{
 
 router.post('/changePassword',(req,res)=>{
     util.checkLogin(req,res)
+    const {oldPassword,newPassword,newPasswordAgain} = req.body
+    const result = {
+
+    }
     const {role} = req.session.user
     if(role === 'super'){
         (async()=>{
             const ormService =  await ormServicePromise
-            // ormService.meta.
+            const metaRecord = await ormService.meta.getFirstRecord()
+            if(crypto.createHash('md5').update(oldPassword).digest('hex') === metaRecord.superPassword){
+
+                await ormService.meta.updateRecord({
+                    superPassword:crypto.createHash('md5').update(newPassword).digest('hex'),
+                    id:metaRecord.id
+                })
+            }else{
+                result.errorMsg = "旧密码错误,请核对后重试"
+            }
+            res.json(result)
+
         })()
     }
 })

@@ -19,11 +19,17 @@ module.exports = {
 
     },
     afterSync:(modelSequelized)=>{
-        modelSequelized.create({
-            id:uuidV4(),
-            publicIp:config.publicIp,
-            superPassword:config.superDefaultPassword
-        })
+        (async()=>{
+            const record = await modelSequelized.findOne()
+            if(!record){
+                modelSequelized.create({
+                    id:uuidV4(),
+                    publicIp:config.publicIp,
+                    superPassword:config.superDefaultPassword
+                })
+            }
+        })()
+
     },
     tableTitle,
 }

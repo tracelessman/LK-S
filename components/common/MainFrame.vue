@@ -23,6 +23,8 @@
                 <i-menu style="width:15%;float:left" active-name="item1" @on-select="menuOnSelect">
                     <Menu-Item name="item1">用户管理</Menu-Item>
                     <Menu-Item name="item2">日志管理</Menu-Item>
+                    <Menu-Item name="item3">系统设置</Menu-Item>
+
                 </i-menu>
                 <div style="padding:20px 50px;width:85%;float:right">
                     <div v-show="activeMenuName === 'item1'">
@@ -32,6 +34,9 @@
                     </div>
                     <div v-show="activeMenuName === 'item2'">
                         日志管理
+                    </div>
+                    <div v-show="activeMenuName === 'item3'">
+                        <SystemSetting></SystemSetting>
                     </div>
                 </div>
             </div>
@@ -56,16 +61,16 @@
                 <div style="margin:20px auto;text-align:center">
                     <div class="style4">
                         <span style="" class="style2">旧密码</span>
-                        <Input v-model="change.oldPassword" ref="oldPassword" style="" class="style3"/>
+                        <Input v-model="change.oldPassword" ref="oldPassword" style="" class="style3" type="password"/>
                     </div>
                     <div class="style4">
                         <span class="style2">新密码:</span>
-                        <Input v-model="change.newPassword" ref="newPassword" class="style3"/>
+                        <Input v-model="change.newPassword" ref="newPassword" class="style3" type="password"/>
 
                     </div>
                     <div class="style4">
                         <span class="style2">确认新密码:</span>
-                        <Input v-model="change.newPasswordAgain" ref="newPasswordAgain" class="style3"/>
+                        <Input v-model="change.newPasswordAgain" ref="newPasswordAgain" class="style3" type="password"/>
                     </div>
                 </div>
 
@@ -73,8 +78,9 @@
 
             <div slot="footer" style="overflow:auto">
                 <i-col span="24" style="text-align: center;">
-                    <i-button type='primary' size="small" @click="save" class="style5"  >保存</i-button>
                     <i-button type='primary' size="small" @click="reset" class="style5" >重置</i-button>
+
+                    <i-button type='primary' size="small" @click="save" class="style5"  >保存</i-button>
                 </i-col>
             </div>
         </Modal>
@@ -86,11 +92,14 @@
 
     const {httpPost} = require('../../frontend/util')
     import customTable from '~/components/common/customTable'
+    import SystemSetting from '~/components/SystemSetting'
+
+
 
     export default {
         name: 'Frame',
         components:{
-            customTable
+            customTable,SystemSetting
         },
         data(){
             return {
@@ -134,12 +143,23 @@
                         break
                     }
                 }
-                httpPost({
-                    url:"/api/user/changePassword",
-                    successCb:(content)=>{
-                        this.$Message.success("密码已成功修改!")
-                    }
-                })
+                if(this.change.newPassword !== this.change.newPasswordAgain){
+                    this.$Message.warning("两次输入密码不一致")
+                    this.$refs['newPasswordAgain'].focus()
+                }else{
+                    httpPost({
+                        url:"/api/user/changePassword",
+                        param:{
+                            oldPassword:this.change.oldPassword,
+                            newPassword:this.change.newPassword,
+                            newPasswordAgain:this.change.newPasswordAgain
+                        },
+                        successCb:(content)=>{
+                            this.$Message.success("密码已成功修改!")
+                            this.showChangePassword =  false
+                        }
+                    })
+                }
 
             },
             reset(){
