@@ -13,8 +13,10 @@ const util = require(path.resolve(rootPath,'api/util'))
 const ormModelPromise = mainDbPromise.then(mainDb=>{
     const option = {
         modelAry:[
-            require(path.resolve(rootPath,'api/store/model/user')),
-            require(path.resolve(rootPath,'api/store/model/meta'))
+            require(path.resolve(rootPath,'api/store/model/member')),
+            require(path.resolve(rootPath,'api/store/model/meta')),
+            require(path.resolve(rootPath,'api/store/model/org')),
+            require(path.resolve(rootPath,'api/store/model/ticket')),
         ],
         dict,
         database:mainDb

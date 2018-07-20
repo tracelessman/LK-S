@@ -116,6 +116,14 @@ const ormUtil = {
                         }
                     )
                 },
+                getFirstRecord(){
+                    return ormModel[key].modelSequelized.findOne({
+                            where:{
+
+                            }
+                        }
+                    )
+                },
                 queryByCondition(queryCondition){
                     let where = {}
                     for(let key in queryCondition){

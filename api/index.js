@@ -19,11 +19,13 @@ app.use(session({
 const user = require('./routes/user')
 const test = require('./routes/test')
 const orm = require('./routes/orm')
+const meta = require('./routes/meta')
 
 // Import API Routes
 app.use('/user',user)
 app.use('/orm',orm)
 app.use('/test',test)
+app.use('/meta',meta)
 
 // Export the server middleware
 module.exports = {

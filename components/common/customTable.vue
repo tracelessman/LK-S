@@ -17,28 +17,6 @@
                 <Button type="primary" size="small" :style="style.functionButton" @click="openDeleteModal" v-if="!excludeAry.includes('delete')">
                     删除
                 </Button>
-                <div style="display: inline-block" v-if="customButtonAry">
-
-                </div>
-                <template v-for="obj of customButtonAry" >
-                    <Tooltip v-if="obj.content" :content="obj.content" placement="top-start"  :delay="obj.delay?obj.delay:100" transfer  >
-                        <Button v-if="obj.iconType" type="ghost" size="small" :style="style.functionButton" @click="customFunc(obj.click)">
-                            <Icon :type="obj.iconType" size="14"></Icon>
-                        </Button>
-                        <Button v-else type="primary" size="small" :style="style.functionButton" @click="customFunc(obj.click)">
-                            {{obj.text}}
-                        </Button>
-                    </Tooltip>
-                    <template v-else>
-                        <Button v-if="obj.iconType" type="ghost" size="small" :style="style.functionButton" @click="customFunc(obj.click)">
-                            <Icon :type="obj.iconType" size="14"></Icon>
-                        </Button>
-                        <Button v-else type="primary" size="small" :style="style.functionButton" @click="customFunc(obj.click)">
-                            {{obj.text}}
-                        </Button>
-                    </template>
-                </template>
-
             </div>
         </div>
         <i-col span="24" style="margin-top: 10px;">
@@ -314,11 +292,13 @@
 
                 for(let ele of this.showingFieldsLocal){
                     let field = this.modelObj[ele]
-                    let column = {
-                        title:field.title,
-                        key:ele,
+                    if(field.displayPage.includes('check')){
+                        let column = {
+                            title:field.title,
+                            key:ele,
+                        }
+                        columns.push(column)
                     }
-                    columns.push(column)
                 }
                 const commonActionSetting = {
                     title: '操作', key: 'action',  align: 'center',
@@ -648,6 +628,8 @@
             },
         },
         mounted(){
+            console.log(this.ormModel)
+
             if(this.showingFields){
                 this.showingFieldsLocal = this.showingFields
             }else{
