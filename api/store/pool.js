@@ -11,7 +11,7 @@ const pool  = mysql.createPool({
 
 
 const p1 = new Promise(resolve => {
-    pool.execute(`
+    pool.query(`
 CREATE TABLE IF NOT EXISTS org 
 (
     id varchar(36),
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS org
 
 
 const p2 = new Promise(resolve => {
-    pool.execute(`
+    pool.query(`
 CREATE TABLE IF NOT EXISTS member 
 (
     id varchar(36),
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS member
     })
 })
 const p3 = new Promise(resolve => {
-    pool.execute(`
+    pool.query(`
 CREATE TABLE IF NOT EXISTS ticket 
 (
     id varchar(36),
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS ticket
     })
 })
 const p4 = new Promise(resolve => {
-    pool.execute(`
+    pool.query(`
 CREATE TABLE IF NOT EXISTS device 
 (
     id varchar(36),
@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS device
     })
 })
 const p5 = new Promise(resolve => {
-    pool.execute(`
+    pool.query(`
 CREATE TABLE IF NOT EXISTS message 
 (
     id varchar(36),
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS message
 })
 
 const p6 = new Promise(resolve => {
-    pool.execute(`
+    pool.query(`
 CREATE TABLE IF NOT EXISTS contact 
 (
     id varchar(36),
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS contact
 })
 
 const p7 = new Promise(resolve => {
-    pool.execute(`
+    pool.query(`
 CREATE TABLE IF NOT EXISTS contactDevice 
 (
     id varchar(36),
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS contactDevice
 })
 
 const p8 = new Promise(resolve => {
-    pool.execute(`
+    pool.query(`
 CREATE TABLE IF NOT EXISTS friend 
 (
     memberId varchar(36),
