@@ -28,9 +28,9 @@
                 </i-menu>
                 <div style="padding:20px 50px;width:85%;float:right">
                     <div v-show="activeMenuName === 'item1'">
-                        <customTable v-if="isInited" :ormModel="ormModel" :dict="dict" type="user" :ormService="{}">
+                        <MemberManage >
 
-                        </customTable>
+                        </MemberManage>
                     </div>
                     <div v-show="activeMenuName === 'item2'">
                         日志管理
@@ -91,7 +91,7 @@
     const axios = require('axios')
 
     const {httpPost} = require('../../frontend/util')
-    import customTable from '~/components/common/customTable'
+    import MemberManage from '~/components/MemberManage'
     import SystemSetting from '~/components/SystemSetting'
 
 
@@ -99,12 +99,11 @@
     export default {
         name: 'Frame',
         components:{
-            customTable,SystemSetting
+            SystemSetting,MemberManage
         },
         data(){
             return {
                 activeMenuName:"item1",
-                isInited:false,
                 user:null,
                 ormModel:null,
                 dict:null,
@@ -170,14 +169,6 @@
         },
         mounted(){
 
-            httpPost({
-                url:"/api/orm/getOrm",
-                successCb:(content)=>{
-                    this.isInited = true
-                    this.ormModel = content.ormModel
-                    this.dict = content.dict
-                }
-            })
         },
         props:{
             title:{
