@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS friend
 
 pool.execute(`CREATE DATABASE if not exists ${config.db.database}`, function (err, result) {
     if (err) throw err;
-    Promise.all([p1,p2,p3,p4])
+    Promise.all([p1,p2,p3,p4,p5,p6,p7,p8])
 });
 
 module.exports = pool
