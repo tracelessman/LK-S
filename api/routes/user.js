@@ -51,13 +51,13 @@ router.post('/login',(req,res)=>{
                 }
             }
         }else{
-            const credentialResult = await ormService[key].queryExact({
+            const credentialResult = await ormService['member'].queryExact({
                 name,
                 password:crypto.createHash('md5').update(password).digest('hex')
             })
             const {length} = credentialResult
             if(length === 0){
-                const userResult = await ormService[key].queryExact({
+                const userResult = await ormService['member'].queryExact({
                     name
                 })
                 let userCount = userResult.length
@@ -88,8 +88,6 @@ router.post('/login',(req,res)=>{
 
 
 router.post('/checkLogin',(req,res)=>{
-
-
     res.json({
         error:null,
         content:{
@@ -99,6 +97,7 @@ router.post('/checkLogin',(req,res)=>{
 })
 
 router.post('/changePassword',(req,res)=>{
+
     util.checkLogin(req,res)
     const {oldPassword,newPassword,newPasswordAgain} = req.body
     const result = {
@@ -125,12 +124,59 @@ router.post('/changePassword',(req,res)=>{
 })
 
 router.post('/logout',(req,res)=>{
-    util.checkLogin(req,res)
     req.session.user = null
 
     res.json({
         isExpired:true
     })
+})
+
+router.post('/addUser',(req,res)=>{
+    util.checkLogin(req,res)
+   ;(async()=>{
+        const ormService = await ormServicePromise
+        const record = req.body.valueRecordSave
+
+        record.password = crypto.createHash('md5').update(record.password).digest('hex')
+        record.registerStartTime = new Date()
+        await ormService.user.addRecord(record)
+        res.json()
+   })()
+
+
+
+})
+
+router.post('/getAllUser',(req,res)=>{
+    util.checkLogin(req,res)
+    ;(async()=>{
+        const ormService = await ormServicePromise
+
+        let result = await ormService.user.getAllRecords()
+        result = result.map(ele=>{
+            return ele.dataValues
+        })
+
+        res.json({
+            content:result
+        })
+    })()
+
+
+
+})
+router.post('/deleteRecordMultiple',(req,res)=>{
+    util.checkLogin(req,res);
+    (async()=>{
+        const ormService = await ormServicePromise
+
+        await ormService.user.deleteRecordMultiple(req.body.idAry)
+
+        res.json()
+    })()
+
+
+
 })
 
 

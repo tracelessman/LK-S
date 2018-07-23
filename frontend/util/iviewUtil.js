@@ -133,7 +133,11 @@ function padding(target){
 }
 
 function info(option){
-
+    const {_this,content} = option
+    _this.$Message.info({
+        content,
+        duration:3
+    })
 }
 
 

@@ -12,7 +12,7 @@ const ormUtil = {
         function getModelWrapper(model){
             let {key,modelContent,classification,tableTitle,afterSync} = model
 
-            const tableName = 'T_'+commonUtil.capitalizeFirst(key)
+            const tableName = key
 
             const modelObj = {
                 id: {
@@ -105,7 +105,7 @@ const ormUtil = {
                 deleteRecordMultiple(ary){
                     let promises = []
                     for(let record of ary){
-                        let promise = deleteRecord(record)
+                        let promise = this.deleteRecord(record)
                         promises.push(promise)
                     }
                     return Promise.all(promises)

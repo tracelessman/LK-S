@@ -7,6 +7,9 @@ const routeUtil = {
             res.json({
                 isExpired:true
             })
+            return false
+        }else{
+            return true
         }
     }
 }

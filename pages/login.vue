@@ -93,7 +93,7 @@
 
                     const {user} = content
                     if(user){
-                        // location = '/'
+                        location = '/'
                         this.isInited = true
                     }else{
                         this.isInited = true

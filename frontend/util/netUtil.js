@@ -14,6 +14,7 @@ const netUtil = {
                 data: shareUtil.objectify(param)
             })
             .then( (response)=>{
+
                 const {data} = response
                 const {error,content,errorMsg,isExpired} = data
                 if(error || errorMsg){

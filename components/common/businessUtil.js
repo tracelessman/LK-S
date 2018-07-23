@@ -13,7 +13,7 @@ const businessUtil = {
         let result = title.length === 2?title[0]+"&emsp;&emsp;&nbsp;&nbsp;"+title[1]:title
         return result+":"
     },
-    rawDataDisplay(ele,modelObj){
+    rawDataDisplay(ele,modelObj,dict){
         ele = _.cloneDeep(ele)
         function tem(dateStr){
             if(dateStr){
@@ -33,9 +33,11 @@ const businessUtil = {
                 if (value) {
                     if (dictType) {
                         if (isCascade) {
-                            ele[key] = dictService.getLabel2(dictType, value)
+
                         } else {
-                            ele[key] = dictService.getLabelSingle2(dictType, value)
+                            ele[key] = dict[dictType].find(ele=>{
+                               return ele.value = value
+                            }).label
                         }
                     } else if (isDateFormat) {
                         ele[key] = iviewUtil.local(value)

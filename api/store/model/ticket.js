@@ -10,23 +10,23 @@ const tableTitle = ''
 module.exports = {
     key,
     modelContent:{
-        name:{
-            title:"姓名",
+        memberId:{
+            title:"成员ID",
         },
-        pic:{
-            type:Sequelize.TEXT,
-            title:"头像"
+        startTime:{
+            title:"开始时间",
+            type:Sequelize.DATE
         },
-        orgId:{
-            title:"组织ID"
+        timeout:{
+            title:"有效期",
+            type:Sequelize.INTEGER
         },
-        mCode:{
-            title:"节点hash值"
-        },
-        role:{
-            title:"权限"
+        checkCode:{
+            allowNull:true,
+            title:"口令"
         },
         reserve1:{
+            allowNull:true,
             type:Sequelize.TEXT,
         }
 

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <MainFrame v-if="isInited" title="LK控制管理系统"></MainFrame>
+        <MainFrame v-if="isInited" title="LK控制管理系统" :name="user.name"></MainFrame>
     </div>
 </template>
 
@@ -15,11 +15,9 @@
         data(){
             return {
                 isInited:false
-
             }
         },
         mounted(){
-
             httpPost({
                 url:"/api/user/checkLogin",
                 successCb:(content)=>{
@@ -27,7 +25,6 @@
                     if(user){
                         this.isInited = true
                         this.user = user
-
                     }else{
                         location = '/login'
                     }

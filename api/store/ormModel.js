@@ -17,6 +17,7 @@ const ormModelPromise = mainDbPromise.then(mainDb=>{
             require(path.resolve(rootPath,'api/store/model/meta')),
             require(path.resolve(rootPath,'api/store/model/org')),
             require(path.resolve(rootPath,'api/store/model/ticket')),
+            require(path.resolve(rootPath,'api/store/model/user')),
         ],
         dict,
         database:mainDb

@@ -8,7 +8,7 @@
                 <div style="display: inline-block;float: right;margin-right: 40px;">
                     <Dropdown class="style1" @on-click="test" placement="bottom" >
                         <Button type="primary" style="font-size: 14px;font-weight:bold">
-                            admin
+                            {{name}}
                             <Icon type="arrow-down-b"></Icon>
                         </Button>
                         <DropdownMenu slot="list"  >
@@ -16,7 +16,6 @@
                             <DropdownItem divided name="logout">注销</DropdownItem>
                         </DropdownMenu>
                     </Dropdown>
-
                 </div>
             </div>
             <div>
@@ -177,7 +176,14 @@
                 default:()=>{
                     return ""
                 }
-            }
+            },
+            name:{
+                required:false,
+                type:String,
+                default:()=>{
+                    return ""
+                }
+            },
         }
     }
 </script>
