@@ -12,8 +12,8 @@ var transfer = {
     generateWsId: function () {
         return this.seed++;
     },
-    clients: new Map(),//对应多个ws uid:{_id:{_id,_uid,_did}}
-    newResponseMsg: function (msgId, content) {
+    clients: new Map(),//对应多个ws uid:{_id:ws}
+    newResponseMsg: function (msgId,content) {
         return {
             header:{
                 version:"1.0",
@@ -44,13 +44,13 @@ var transfer = {
                         return;
                     } else if (ws._uid) {
                         var wsS = transfer.clients.get(ws._uid);
-                        if (wsS&&wsS[ws._id]) {
+                        if (wsS&&wsS.has(ws._id)) {
                             transfer[action](msg, ws);
                             return;
                         }
                     }
                     //非法请求或需要重新登录的客户端请求
-                    var date = new Date();
+                    let date = new Date();
                     Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._name + "," + ws._uid + "," + ws._cid + "," + ws._id + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                     ws.close();
                 } else {
@@ -64,17 +64,11 @@ var transfer = {
                 console.info("auto close:" + ws._name + "," + ws._uid + "," + ws._cid + "," + ws._id);
                 if (ws._uid) {
                     var wsS = transfer.clients.get(ws._uid);
-                    if (wsS&&wsS[ws._id]) {
-                        delete wsS[ws._id];
-                        var date = new Date();
+                    if (wsS&&wsS.has(ws._id)) {
+                        wsS.delete(ws._id);
+                        let date = new Date();
                         Log.info("logout:" + ws._name + "," + ws._uid + "," + ws._cid + "," + ws._id + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-                        let i=0;
-                        for(let name in wsS){
-                           if(wsS.hasOwnProperty(name)){
-                               i++;
-                           }
-                       }
-                        if (i == 0) {
+                        if (wsS.size==0) {
                             transfer.clients.delete(ws._uid);
                         }
                     }
@@ -88,6 +82,80 @@ var transfer = {
         transfer.wss.on('error', function (err) {
             console.info("ws server error:" + err);
         });
-        setTimeout(transfer._checkTimeoutRetainMsgs, 3 * 60 * 1000);
+        setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
+    },
+    getIP:function () {
+
+    },
+    getPort:function () {
+
+    },
+    _newMsgFromRow:function (row) {
+        let msg = {
+            header:{}
+        };
+        let header = msg.header;
+        header.version = "1.0";
+        header.id = row.msgId;
+        header.action = row.action;
+        header.senderUid = row.senderUid;
+        header.senderDid = row.senderDid;
+        header.senderServerIP = row.senderServerIP;
+        header.senderServerPort = row.senderServerPort;
+        header.targetUid = row.targetUid;
+        header.targetDid = row.targetDid;
+        header.targetServerIP = row.targetServerIP;
+        header.targetServerPort = row.targetServerPort;
+        header.random = row.random;
+        header.time = row.sendTime;
+        msg.body = row.body;
+        return msg;
+    },
+    _sendLocalRetainMsgs:function (ws,rows) {
+        let msgs = [];
+        for(let i=0;i<rows.length;i++){
+            let row = rows[i];
+            msgs.push(this._newMsgFromRow(row));
+        }
+        ws.send(JSON.stringify(msgs),function () {
+            msgs.forEach(function (msg) {
+                Message.markSent(msg.header.id);
+            })
+        });
+    },
+    _checkSingalWSTimeoutMsgs:function (ws,time) {
+        return new Promise((resolve,reject)=>{
+            if(time-ws._lastHbTime>this._hbTimeout){
+                ws.close();
+                resolve();
+            }else{
+                Message.asyGetTimeoutMsgByTarget(ws._uid,ws._did,time).then((results)=>{
+                    this._sendLocalRetainMsgs(ws,results);
+                    resolve();
+                })
+            }
+        });
+
+    },
+     _asyCheckTimeoutRetainMsgs:async function () {
+        //local members's retain msg
+        let time = Date.now();
+         let ps = [];
+         this.clients.forEach( (wsS,uid)=>{
+            wsS.forEach((ws,id)=>{
+                ps.push(this._checkSingalWSTimeoutMsgs(ws,time))
+            })
+        })
+        await Promise.all(ps);
+        //foreign contact's retain msg
+
+         //TOTO
+
+        setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
+    },
+    ping:function(msg,ws){
+        ws._lastHbTime = Date.now();
+        let content = JSON.stringify(transfer.newResponseMsg(msg.header.id));
+        ws.send(content);
     },
 }

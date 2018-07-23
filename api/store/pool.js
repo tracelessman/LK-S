@@ -173,6 +173,7 @@ CREATE TABLE IF NOT EXISTS message
     senderServerPort int,
     sign TEXT,
     body TEXT,
+    senderTime int,
     time int,
     timeout int,
     reserve1 TEXT,
@@ -198,8 +199,9 @@ CREATE TABLE IF NOT EXISTS flow
     targetDid varchar(36),
     targetServerIP varchar(45),
     targetServerPort int,
+    targetMCode varchar(32),
+    random TEXT,
     lastSendTime int,
-    timeout int,
     reserve1 TEXT,
     PRIMARY KEY (msgId,targetUid,targetDid)
 )

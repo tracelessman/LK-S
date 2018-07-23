@@ -34,6 +34,41 @@ let Message = {
                 this._checkRemoveMsg(msgId);
             }
         });
+    },
+
+    asyGetTimeoutMsgByTarget:function (targetUid,targetDid,time) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,
+                flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
+                from message,flow 
+                where message.id = flow.msgId 
+                and flow.targetUid=?
+                and flow.targetDid=?
+                and flow.lastSendTime is not null 
+                and ?-flow.lstSendTime>180000
+            `;
+            Pool.query(sql,[targetUid,targetDid,time], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results);
+                }
+            });
+        });
+
+    },
+
+    markSent:function (msgId) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                update flow set lastSendTime=?
+                where msgId=?
+            `;
+            Pool.query(sql,[Date.now(),msgId], (error,results,fields) =>{
+                resolve();
+            });
+        });
     }
 }
 module.exports = Message;
