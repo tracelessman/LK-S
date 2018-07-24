@@ -22,12 +22,17 @@ module.exports = {
             title:"注册有效期",
             type:Sequelize.INTEGER
         },
-        registerCheckCode:{
-            title:"注册验证码",
-            allowNull:true
-        },
         password:{
             title:"密码"
+        },
+        publicKey:{
+            type:Sequelize.BLOB
+        },
+        privateKey:{
+            type:Sequelize.BLOB
+        },
+        isRegistered:{
+            type:Sequelize.BOOLEAN
         }
     },
     tableTitle,

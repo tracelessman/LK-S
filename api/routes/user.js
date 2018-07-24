@@ -1,13 +1,14 @@
 const { Router } = require('express')
 const crypto = require('crypto')
 
-
+const qr = require('qr-image');
 const router = Router()
 const {ormServicePromise} = require('../store/ormService')
 const key = 'user'
 const util = require('../util')
 const config = require('../../config')
-
+const NodeRSA = require('node-rsa');
+const aesjs = require('aes-js')
 //role:super,admin,common
 router.post('/login',(req,res)=>{
 
@@ -137,7 +138,16 @@ router.post('/addUser',(req,res)=>{
         const ormService = await ormServicePromise
         const record = req.body.valueRecordSave
 
-        record.password = crypto.createHash('md5').update(record.password).digest('hex')
+        const key = new NodeRSA({b: 512});
+        const publicKey = key.exportKey(config.encrypt.publicKeyFormat)
+        const privateKey = key.exportKey(config.encrypt.privateKeyFormat)
+        console.log(privateKey)
+
+
+        record.publicKey = publicKey
+        record.privateKey = privateKey
+
+        record.isRegistered = false
         record.registerStartTime = new Date()
         await ormService.user.addRecord(record)
         res.json()
@@ -179,6 +189,54 @@ router.post('/deleteRecordMultiple',(req,res)=>{
 
 })
 
+router.post('/updateRecord',(req,res)=>{
+    util.checkLogin(req,res);
+    (async()=>{
+        const ormService = await ormServicePromise
+
+        const record = req.body.valueRecordSave
+
+        await ormService.user.updateRecord(record)
+
+        res.json()
+    })()
+
+
+
+})
+
+router.post('/qrcode', function(req, res, next) {
+    const {id} = req.body;
+
+    (async()=>{
+         const ormService = await ormServicePromise
+         const record = await ormService.user.getRecordById(id)
+        const key = new NodeRSA();
+
+        key.importKey(record.privateKey, config.encrypt.privateKeyFormat);
+
+        const qrcodeData = {
+            action:"registerForAdmin",
+            code:"LK",
+            id,
+            signature:key.sign(id,config.encrypt.signatureFormat,config.encrypt.sourceFormat)
+        }
+        const textBytes = aesjs.utils.utf8.toBytes(JSON.stringify(qrcodeData));
+        const aesCtr = new aesjs.ModeOfOperation.ctr(config.encrypt.aesKey, new aesjs.Counter(5));
+        const encryptedBytes = aesCtr.encrypt(textBytes);
+        const encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes);
+
+        res.json({
+            content:{
+                qrcodeData:encryptedHex
+            }
+
+        });
+
+    })()
+
+
+});
 
 
 

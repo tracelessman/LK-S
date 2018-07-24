@@ -126,6 +126,23 @@
                 </i-col>
             </div>
         </Modal>
+        <Modal
+                v-model="showQRcodeModal"
+                title="注册二维码" >
+            <!--<div style="text-align: center;margin:20px 0;font-size: 1.2em" v-html="qrcode">-->
+            <!--</div>-->
+            <div>
+                <div style='display: flex;flex-direction: column;justify-content: center;align-items: center'>
+                    <!--<img :src="qrcode"/>-->
+                    <div v-html='qrcode'>
+
+                    </div>
+                </div>
+
+            </div>
+            <div slot="footer" style="overflow: auto">
+            </div>
+        </Modal>
     </div>
 </template>
 <script>
@@ -140,6 +157,7 @@
     const {httpPost} = require('../frontend/util')
 
     import  businessUtil from './common/businessUtil'
+    const qr = require('qr-image')
 
     const uuidV4 = require('uuid/v4')
     import dateRange from './common/dateRange'
@@ -225,18 +243,43 @@
                 }else{
                     columns.push({
                         ...commonActionSetting,
-                        width: 150,
+                        width: 200,
                         render: (h, params) => {
-                            let onClick = ()=>{
-                                _this.valueRecordCheck = params.row
-                                _this.showCheckModal = true
-                                _this.action = 'check'
+                            let onClick1 = ()=>{
+                                httpPost({
+                                    url:"/api/user/qrcode",
+                                    param:{
+                                        id:params.row.id
+                                    },
+                                    successCb:(content)=>{
+                                        const {qrcodeData} = content
+                                        this.qrcode =  qr.imageSync(JSON.stringify(qrcodeData), { type: 'svg',size:2,parse_url:true})
+
+                                        this.showQRcodeModal = true
+
+                                    }
+                                })
 
                             }
+                            let onClick2 = ()=>{
+                                this.valueRecordCheck = params.row
+                                this.showCheckModal = true
+                                this.action = 'check'
+
+                            }
+
                             return (
-                                <Button size="small" type="primary" onClick={onClick}>
-                                    查看
-                                </Button>
+                                <div>
+                                    <Button size="small" type="primary" onClick={onClick1} style="margin:0 10px" >
+                                        二维码
+                                    </Button>
+                                    <Button size="small" type="primary" onClick={onClick2} style="">
+                                        查看
+                                    </Button>
+
+                                </div>
+
+
                             )
                         }
                     })
@@ -250,6 +293,8 @@
         },
         data(){
             return {
+                qrcode:"",
+                showQRcodeModal:false,
                 action:'',
                 authorizationCode:'',
                 condition:{},
@@ -264,18 +309,12 @@
                     },
                     password:{
                         allowNull:false,
-                        title:"密码"
-                    },
-                    registerCheckCode:{
-                        allowNull:true,
                         title:"验证码"
                     },
                     registerTimeout:{
                         allowNull:false,
                         title:"有效期",
                         dictType:"timeoutDict"
-
-
                     },
                 },
                 dict:{
@@ -352,9 +391,12 @@
                     },
                     successCb:(records)=>{
                         this.$Message.info("删除记录成功!")
-                        this.refreshTable()
-                        this.showDeleteModal = false
-                        this.selection = []
+                        setTimeout(()=>{
+                            this.refreshTable()
+                            this.showDeleteModal = false
+                            this.selection = []
+                        },500)
+
                     }
                 })
 
@@ -415,6 +457,7 @@
                     url:"/api/user/getAllUser",
 
                     successCb:(records)=>{
+
                         this.refreshTableByData(records)
                         this.loading = false
                     }
@@ -457,10 +500,10 @@
                     if(unique && value){
                         let where = {}
                         where[key] = value
-
-                        let promise = this.service.queryExact(where)
-                        promise.key = key
-                        promiseAry.push(promise)
+                        //
+                        // let promise = this.service.queryExact(where)
+                        // promise.key = key
+                        // promiseAry.push(promise)
                     }
                 }
                 Promise.all(promiseAry).then(resultAry=>{
@@ -498,21 +541,22 @@
                             }
                         })
                     }else{
-                        this.service.updateRecord(this.valueRecordSave).then((record)=>{
+                        httpPost({
+                            url:"/api/user/updateRecord",
+                            param:{
+                                valueRecordSave:this.valueRecordSave
+                            },
+                            successCb:(record)=>{
+                                let clone =  _.cloneDeep(this.valueRecordSave)
 
-                            let clone =  _.cloneDeep(this.valueRecordSave)
-
-                            for(let key in clone){
-                                this.totalRecords[this.selectedRecordIndex][key] = clone[key]
+                                for(let key in clone){
+                                    this.totalRecords[this.selectedRecordIndex][key] = clone[key]
+                                }
+                                this.showSaveModal = false
+                                this.selectedRecordIndex = -1
+                                this.$Message.info('成功修改记录!')
                             }
-                            this.showSaveModal = false
-                            this.selectedRecordIndex = -1
-                            this.$Message.info('成功修改记录!')
-                        }).catch(err=>{
-                            console.log(err)
-                            this.$Message.error('修改记录失败!')
                         })
-
                     }
                 })
 
@@ -538,6 +582,7 @@
             },
         },
         mounted(){
+
             if(this.showingFields){
                 this.showingFieldsLocal = this.showingFields
             }else{
@@ -580,5 +625,8 @@
         min-height: 80px;
         border-radius: 3px;
         transition: border .2s ease-in-out,background .2s ease-in-out,box-shadow .2s ease-in-out;
+    }
+    .style1{
+        margin:0 20px
     }
 </style>
