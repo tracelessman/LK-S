@@ -36,7 +36,7 @@ let Message = {
         });
     },
 
-    asyGetTimeoutMsgByTarget:function (targetUid,targetDid,time) {
+    asyPeriodGetLocalMsgByTarget:function (targetUid,targetDid,time) {
         return new Promise((resolve,reject)=>{
             let sql = `
                 select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,
@@ -45,6 +45,7 @@ let Message = {
                 where message.id = flow.msgId 
                 and flow.targetUid=?
                 and flow.targetDid=?
+                and flow.targetServerIP is null
                 and flow.lastSendTime is not null 
                 and ?-flow.lstSendTime>180000
             `;
@@ -67,6 +68,26 @@ let Message = {
             `;
             Pool.query(sql,[Date.now(),msgId], (error,results,fields) =>{
                 resolve();
+            });
+        });
+    },
+    asyPeriodGetForeignMsg:function (time) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,
+                flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
+                from message,flow 
+                where message.id = flow.msgId 
+                and flow.targetServerIP is not null
+                and flow.lastSendTime is not null 
+                and ?-flow.lstSendTime>180000
+            `;
+            Pool.query(sql,[time], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results);
+                }
             });
         });
     }
