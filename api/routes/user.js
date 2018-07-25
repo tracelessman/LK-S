@@ -51,7 +51,7 @@ router.post('/login',(req,res)=>{
             })
             const {length} = credentialResult
             if(length === 0){
-                const userResult = await ormService['member'].queryExact({
+                const userResult = await ormService.user.queryExact({
                     name
                 })
                 let userCount = userResult.length
@@ -68,6 +68,7 @@ router.post('/login',(req,res)=>{
             }else if(length === 1){
                 req.session.user = user
                 user.role = 'admin'
+                user.id = credentialResult[0].id
             }else{
 
             }
@@ -97,7 +98,7 @@ router.post('/changePassword',(req,res)=>{
     const result = {
 
     }
-    const {role} = req.session.user
+    const {role,id} = req.session.user
     if(role === 'super'){
         (async()=>{
             const ormService =  await ormServicePromise
@@ -114,6 +115,23 @@ router.post('/changePassword',(req,res)=>{
             res.json(result)
 
         })()
+    }else{
+        (async()=>{
+            const ormService =  await ormServicePromise
+            const record = await ormService.user.getRecordById(id)
+            if(crypto.createHash('md5').update(oldPassword).digest('hex') === record.password){
+
+                await ormService.user.updateRecord({
+                    password:crypto.createHash('md5').update(newPassword).digest('hex'),
+                    id:record.id
+                })
+            }else{
+                result.errorMsg = "旧密码错误,请核对后重试"
+            }
+            res.json(result)
+
+        })()
+
     }
 })
 

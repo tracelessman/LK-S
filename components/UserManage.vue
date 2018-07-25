@@ -539,17 +539,23 @@
                     }
 
                     if(this.action === 'create'){
-                        httpPost({
-                            url:"/api/user/addUser",
-                            param:{
-                                valueRecordSave:this.valueRecordSave
-                            },
-                            successCb:(content)=>{
-                                this.$Message.success("成功添加管理员")
-                                this.showSaveModal = false
-                                this.refreshTable()
-                            }
-                        })
+                        if(this.valueRecordSave.name === 'super'){
+                            this.$Message.warning("super用户已存在,请重新命名")
+                        }else{
+                            httpPost({
+                                url:"/api/user/addUser",
+                                param:{
+                                    valueRecordSave:this.valueRecordSave
+                                },
+                                successCb:(content)=>{
+                                    this.$Message.success("成功添加管理员")
+                                    this.showSaveModal = false
+                                    this.refreshTable()
+                                }
+                            })
+                        }
+
+
                     }else{
                         httpPost({
                             url:"/api/user/updateRecord",
