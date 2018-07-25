@@ -4,8 +4,9 @@ var fs = require('fs');
 var path = require('path');
 const Message = require('./Message');
 const Log = require('./Log');
+const Transfer = require('./Transfer');
 
-var transfer = {
+var LKServer = {
     _hbTimeout: 3 * 60 * 1000,
     seed: 1,
     //临时内部id，用于标识ws
@@ -28,8 +29,8 @@ var transfer = {
         };
     },
     init: function (port) {
-        transfer.wss = new WebSocket.Server({port: port, path: "/transfer"});
-        transfer.wss.on('connection', function connection(ws, req) {
+        LKServer.wss = new WebSocket.Server({port: port, path: "/transfer"});
+        LKServer.wss.on('connection', function connection(ws, req) {
             ws.on('message', function incoming(message) {
                 let msg = JSON.parse(message);
                 let header = msg.header;
@@ -38,14 +39,14 @@ var transfer = {
                 if (isResponse) {//得到接收应答，删除缓存
                     Message.receiveReport(header.msgId, header.uid, header.did);
                 }
-                else if (transfer[action]) {
+                else if (LKServer[action]) {
                     if (action == "ping" || action == "login" || action == "register" || action == "authorize" || action == "errReport") {
-                        transfer[action](msg, ws);
+                        LKServer[action](msg, ws);
                         return;
                     } else if (ws._uid) {
-                        var wsS = transfer.clients.get(ws._uid);
+                        var wsS = LKServer.clients.get(ws._uid);
                         if (wsS&&wsS.has(ws._id)) {
-                            transfer[action](msg, ws);
+                            LKServer[action](msg, ws);
                             return;
                         }
                     }
@@ -54,7 +55,7 @@ var transfer = {
                     Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._name + "," + ws._uid + "," + ws._cid + "," + ws._id + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                     ws.close();
                 } else {
-                    var content = JSON.stringify(transfer.newResponseMsg(msg, {err: "无法识别的请求"}));
+                    var content = JSON.stringify(LKServer.newResponseMsg(msg, {err: "无法识别的请求"}));
                     ws.send(content);
                 }
 
@@ -63,13 +64,13 @@ var transfer = {
             ws.on('close', function (msg) {
                 console.info("auto close:" + ws._name + "," + ws._uid + "," + ws._cid + "," + ws._id);
                 if (ws._uid) {
-                    var wsS = transfer.clients.get(ws._uid);
+                    var wsS = LKServer.clients.get(ws._uid);
                     if (wsS&&wsS.has(ws._id)) {
                         wsS.delete(ws._id);
                         let date = new Date();
                         Log.info("logout:" + ws._name + "," + ws._uid + "," + ws._cid + "," + ws._id + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                         if (wsS.size==0) {
-                            transfer.clients.delete(ws._uid);
+                            LKServer.clients.delete(ws._uid);
                         }
                     }
                 }
@@ -79,7 +80,7 @@ var transfer = {
             });
 
         });
-        transfer.wss.on('error', function (err) {
+        LKServer.wss.on('error', function (err) {
             console.info("ws server error:" + err);
         });
         setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
@@ -112,16 +113,19 @@ var transfer = {
         return msg;
     },
     _sendLocalRetainMsgs:function (ws,rows) {
-        let msgs = [];
-        for(let i=0;i<rows.length;i++){
-            let row = rows[i];
-            msgs.push(this._newMsgFromRow(row));
+        if(rows){
+            let msgs = [];
+            for(let i=0;i<rows.length;i++){
+                let row = rows[i];
+                msgs.push(this._newMsgFromRow(row));
+            }
+            ws.send(JSON.stringify(msgs),function () {
+                msgs.forEach(function (msg) {
+                    Message.markSent(msg.header.id);
+                })
+            });
         }
-        ws.send(JSON.stringify(msgs),function () {
-            msgs.forEach(function (msg) {
-                Message.markSent(msg.header.id);
-            })
-        });
+
     },
     _checkSingalWSTimeoutMsgs:function (ws,time) {
         return new Promise((resolve,reject)=>{
@@ -129,7 +133,7 @@ var transfer = {
                 ws.close();
                 resolve();
             }else{
-                Message.asyGetTimeoutMsgByTarget(ws._uid,ws._did,time).then((results)=>{
+                Message.asyPeriodGetLocalMsgByTarget(ws._uid,ws._did,time).then((results)=>{
                     this._sendLocalRetainMsgs(ws,results);
                     resolve();
                 })
@@ -140,22 +144,27 @@ var transfer = {
      _asyCheckTimeoutRetainMsgs:async function () {
         //local members's retain msg
         let time = Date.now();
-         let ps = [];
+         let ps = [Message.asyPeriodGetForeignMsg(time)];
          this.clients.forEach( (wsS,uid)=>{
             wsS.forEach((ws,id)=>{
                 ps.push(this._checkSingalWSTimeoutMsgs(ws,time))
             })
         })
-        await Promise.all(ps);
+        let results = await Promise.all(ps);
         //foreign contact's retain msg
-
-         //TOTO
-
+        let foreignMsgs = results[0];
+        let ps2 = [];
+        if(foreignMsgs){
+            foreignMsgs.forEach(function (msg) {
+                ps2.push(Transfer.asyTrans(msg));
+            })
+        }
+        await Promise.all(ps2);
         setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
     },
     ping:function(msg,ws){
         ws._lastHbTime = Date.now();
-        let content = JSON.stringify(transfer.newResponseMsg(msg.header.id));
+        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
         ws.send(content);
     },
 }
