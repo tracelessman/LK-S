@@ -253,7 +253,7 @@
                                     },
                                     successCb:(content)=>{
                                         const {qrcodeData} = content
-                                        this.qrcode =  qr.imageSync(JSON.stringify(qrcodeData), { type: 'svg',size:2,parse_url:true})
+                                        this.qrcode =  qr.imageSync(qrcodeData, { type: 'svg',size:2,parse_url:true})
 
                                         this.showQRcodeModal = true
 

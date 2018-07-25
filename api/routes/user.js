@@ -141,8 +141,6 @@ router.post('/addUser',(req,res)=>{
         const key = new NodeRSA({b: 512});
         const publicKey = key.exportKey(config.encrypt.publicKeyFormat)
         const privateKey = key.exportKey(config.encrypt.privateKeyFormat)
-        console.log(privateKey)
-
 
         record.publicKey = publicKey
         record.privateKey = privateKey
@@ -206,6 +204,7 @@ router.post('/updateRecord',(req,res)=>{
 })
 
 router.post('/qrcode', function(req, res, next) {
+    util.checkLogin(req,res);
     const {id} = req.body;
 
     (async()=>{
@@ -238,6 +237,23 @@ router.post('/qrcode', function(req, res, next) {
 
 });
 
+
+router.post('/registerForAdmin',(req,res)=>{
+    (async()=>{
+        console.log(req.body)
+        
+        const ormService = await ormServicePromise
+
+        const record = req.body.valueRecordSave
+
+        await ormService.user.updateRecord(record)
+
+        res.json()
+    })()
+
+
+
+})
 
 
 
