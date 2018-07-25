@@ -30,14 +30,20 @@ const businessUtil = {
                 let {dictType, isCascade, isDateFormat,isTimeFormat,isArray,isDateRange} = attr
 
                 let value = ele[key]
+
                 if (value) {
+                    const type = typeof value
+                    if(type === 'boolean'){
+                        ele[key] = value?"是":"否"
+                    }
                     if (dictType) {
                         if (isCascade) {
 
                         } else {
                             ele[key] = dict[dictType].find(ele=>{
-                               return ele.value = value
+                               return ele.value === value
                             }).label
+
                         }
                     } else if (isDateFormat) {
                         ele[key] = iviewUtil.local(value)
@@ -47,11 +53,7 @@ const businessUtil = {
                     }else if(isArray){
                         //todo need check
                         if(typeof value ==='string'){
-                            console.log(value)
-                            console.log(key)
-                            console.log('should be array,not string')
                             value = JSON.parse(value)
-
                         }
 
                         if(isDateRange){
@@ -61,7 +63,7 @@ const businessUtil = {
                         }
                     }
                 }else{
-                    ele[key] = "--"
+                    ele[key] =  typeof ele[key] === 'boolean'? '否':"--"
                 }
             }
         }

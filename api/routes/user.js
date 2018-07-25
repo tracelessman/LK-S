@@ -29,18 +29,11 @@ router.post('/login',(req,res)=>{
         const ormService =  await ormServicePromise
 
         if(name === 'super'){
-            const recordAry = await ormService.meta.getAllRecords()
-            const {length} = recordAry
+            const record = await ormService.meta.getFirstRecord()
             const md5Val = crypto.createHash('md5').update(password).digest('hex')
             let pass = false
-            if(length === 0){
-                if(md5Val === config.superDefaultPassword){
-                    pass = true
-                }
-            }else{
-                if(md5Val === recordAry[0].superPassword){
-                    pass = true
-                }
+            if(md5Val === record.superPassword){
+                pass = true
             }
             if(pass){
                 user.role = 'super'
@@ -52,7 +45,7 @@ router.post('/login',(req,res)=>{
                 }
             }
         }else{
-            const credentialResult = await ormService['member'].queryExact({
+            const credentialResult = await ormService.user.queryExact({
                 name,
                 password:crypto.createHash('md5').update(password).digest('hex')
             })
@@ -240,15 +233,47 @@ router.post('/qrcode', function(req, res, next) {
 
 router.post('/registerForAdmin',(req,res)=>{
     (async()=>{
-        console.log(req.body)
-        
+        const {id,signature,checkCode} = req.body
+        let errorMsg = ''
         const ormService = await ormServicePromise
+        let  record = await ormService.user.getRecordById(id)
+        record = record.dataValues
 
-        const record = req.body.valueRecordSave
+        const key = new NodeRSA()
+        key.importKey(record.privateKey, config.encrypt.privateKeyFormat);
 
-        await ormService.user.updateRecord(record)
+        const pass =  key.verify(id, signature, config.encrypt.sourceFormat,config.encrypt.signatureFormat)
+        if(!pass){
+            errorMsg = "注册失败,该二维码无效"
+        }else{
+            if(!record){
+                errorMsg = "注册失败,该管理员不存在"
+            }else{
+                if(record.isRegistered){
+                    errorMsg = "注册失败,该管理员已经被注册过"
+                }else{
+                    if((record.registerStartTime.getTime() + record.timeout) < Date.now()){
+                        errorMsg = "注册失败,该二维码已过期"
+                    }else{
+                        if(record.password !== checkCode){
+                            errorMsg = "注册失败,验证码不正确"
+                        }else{
+                            record.isRegistered = true
+                            record.password = crypto.createHash('md5').update(record.password).digest('hex')
+                            await ormService.user.updateRecord(record)
+                        }
+                    }
+                }
+            }
+        }
 
-        res.json()
+
+        res.json({
+            content:{
+
+            },
+            errorMsg
+        })
     })()
 
 
