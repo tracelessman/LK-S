@@ -60,7 +60,7 @@
                 {{this.action === 'create'?'新增':'修改'}}记录
             </h3>
             <div style="overflow: auto" >
-                <template v-for="(item,index) in allFields"
+                <template v-for="(item,index) in allFields" v-if=" !(modelObj[item].excludePage&&modelObj[item].excludePage.includes(action))"
                 >
                     <i-col span="24" style="text-align: center">
                         <Label  style="margin-left:25px;"  :style="[style.conditionLabel]">
@@ -202,6 +202,7 @@
             },
             recordsDisplayProcessed() {
                 let  result = this.recordsDisplayRaw.map((ele)=>{
+                    ele.isExpired = (new Date(ele.registerStartTime).getTime() + ele.registerTimeout) < Date.now()?"是":"否"
                     return  businessUtil.rawDataDisplay(ele,this.modelObj,this.dict)
                 })
 
@@ -253,7 +254,7 @@
                                     },
                                     successCb:(content)=>{
                                         const {qrcodeData} = content
-                                        this.qrcode =  qr.imageSync(JSON.stringify(qrcodeData), { type: 'svg',size:2,parse_url:true})
+                                        this.qrcode =  qr.imageSync(qrcodeData, { type: 'svg',size:2,parse_url:true})
 
                                         this.showQRcodeModal = true
 
@@ -316,12 +317,20 @@
                         title:"有效期",
                         dictType:"timeoutDict"
                     },
+                    isRegistered:{
+                        title:"已注册",
+                        excludePage:['create','modify']
+                    },
+                    isExpired:{
+                        title:"已过期",
+                        excludePage:['create','modify']
+                    }
                 },
                 dict:{
                     timeoutDict:[
                         {
                             label:"半小时",
-                            value:30*60*1000
+                            value:1800000
                         },
                         {
                             label:"一天",
@@ -331,7 +340,8 @@
                             label:"三天",
                             value:1000*60*60*24*3
                         }
-                    ]
+                    ],
+
                 },
                 queryFieldsLocal:this.queryFields?this.queryFields:[],
                 selectedRecordIndex:-1,
@@ -399,8 +409,6 @@
 
                     }
                 })
-
-
             },
             getDatePickerOptions(field){
                 return iviewUtil.getDatePickerOptions(field,this.valueRecordSave,this.modelObj)
@@ -420,13 +428,15 @@
                 this.action = action
                 this.valueRecordSave = iviewUtil.initValueRecordSave({modelObj:this.modelObj})
                 if(action === 'modify'){
-
-
-                    if(this.selectedRecordIndex === -1){
-                        this.$Message.info('请点击选中需要修改的那行记录')
+                    if(this.totalRecords[this.selectedRecordIndex].isRegistered){
+                        this.$Message.warning('已经注册过的管理员不能再被修改')
                     }else{
-                        this.valueRecordSave = _.cloneDeep(this.totalRecords[this.selectedRecordIndex])
-                        this.openSaveModalModifyInit()
+                        if(this.selectedRecordIndex === -1){
+                            this.$Message.info('请点击选中需要修改的那行记录')
+                        }else{
+                            this.valueRecordSave = _.cloneDeep(this.totalRecords[this.selectedRecordIndex])
+                            this.openSaveModalModifyInit()
+                        }
                     }
                 }else{
                     if(this.totalRows === 1){
@@ -529,17 +539,23 @@
                     }
 
                     if(this.action === 'create'){
-                        httpPost({
-                            url:"/api/user/addUser",
-                            param:{
-                                valueRecordSave:this.valueRecordSave
-                            },
-                            successCb:(content)=>{
-                                this.$Message.success("成功添加管理员")
-                                this.showSaveModal = false
-                                this.refreshTable()
-                            }
-                        })
+                        if(this.valueRecordSave.name === 'super'){
+                            this.$Message.warning("super用户已存在,请重新命名")
+                        }else{
+                            httpPost({
+                                url:"/api/user/addUser",
+                                param:{
+                                    valueRecordSave:this.valueRecordSave
+                                },
+                                successCb:(content)=>{
+                                    this.$Message.success("成功添加管理员")
+                                    this.showSaveModal = false
+                                    this.refreshTable()
+                                }
+                            })
+                        }
+
+
                     }else{
                         httpPost({
                             url:"/api/user/updateRecord",
@@ -559,8 +575,6 @@
                         })
                     }
                 })
-
-
             },
             selectionChange(selection){
                 this.selection = selection
@@ -582,7 +596,6 @@
             },
         },
         mounted(){
-
             if(this.showingFields){
                 this.showingFieldsLocal = this.showingFields
             }else{

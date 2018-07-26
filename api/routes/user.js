@@ -29,18 +29,11 @@ router.post('/login',(req,res)=>{
         const ormService =  await ormServicePromise
 
         if(name === 'super'){
-            const recordAry = await ormService.meta.getAllRecords()
-            const {length} = recordAry
+            const record = await ormService.meta.getFirstRecord()
             const md5Val = crypto.createHash('md5').update(password).digest('hex')
             let pass = false
-            if(length === 0){
-                if(md5Val === config.superDefaultPassword){
-                    pass = true
-                }
-            }else{
-                if(md5Val === recordAry[0].superPassword){
-                    pass = true
-                }
+            if(md5Val === record.superPassword){
+                pass = true
             }
             if(pass){
                 user.role = 'super'
@@ -52,13 +45,13 @@ router.post('/login',(req,res)=>{
                 }
             }
         }else{
-            const credentialResult = await ormService['member'].queryExact({
+            const credentialResult = await ormService.user.queryExact({
                 name,
                 password:crypto.createHash('md5').update(password).digest('hex')
             })
             const {length} = credentialResult
             if(length === 0){
-                const userResult = await ormService['member'].queryExact({
+                const userResult = await ormService.user.queryExact({
                     name
                 })
                 let userCount = userResult.length
@@ -75,6 +68,7 @@ router.post('/login',(req,res)=>{
             }else if(length === 1){
                 req.session.user = user
                 user.role = 'admin'
+                user.id = credentialResult[0].id
             }else{
 
             }
@@ -104,7 +98,7 @@ router.post('/changePassword',(req,res)=>{
     const result = {
 
     }
-    const {role} = req.session.user
+    const {role,id} = req.session.user
     if(role === 'super'){
         (async()=>{
             const ormService =  await ormServicePromise
@@ -121,6 +115,23 @@ router.post('/changePassword',(req,res)=>{
             res.json(result)
 
         })()
+    }else{
+        (async()=>{
+            const ormService =  await ormServicePromise
+            const record = await ormService.user.getRecordById(id)
+            if(crypto.createHash('md5').update(oldPassword).digest('hex') === record.password){
+
+                await ormService.user.updateRecord({
+                    password:crypto.createHash('md5').update(newPassword).digest('hex'),
+                    id:record.id
+                })
+            }else{
+                result.errorMsg = "旧密码错误,请核对后重试"
+            }
+            res.json(result)
+
+        })()
+
     }
 })
 
@@ -141,8 +152,6 @@ router.post('/addUser',(req,res)=>{
         const key = new NodeRSA({b: 512});
         const publicKey = key.exportKey(config.encrypt.publicKeyFormat)
         const privateKey = key.exportKey(config.encrypt.privateKeyFormat)
-        console.log(privateKey)
-
 
         record.publicKey = publicKey
         record.privateKey = privateKey
@@ -206,6 +215,7 @@ router.post('/updateRecord',(req,res)=>{
 })
 
 router.post('/qrcode', function(req, res, next) {
+    util.checkLogin(req,res);
     const {id} = req.body;
 
     (async()=>{
@@ -238,6 +248,55 @@ router.post('/qrcode', function(req, res, next) {
 
 });
 
+
+router.post('/registerForAdmin',(req,res)=>{
+    (async()=>{
+        const {id,signature,checkCode} = req.body
+        let errorMsg = ''
+        const ormService = await ormServicePromise
+        let  record = await ormService.user.getRecordById(id)
+        record = record.dataValues
+
+        const key = new NodeRSA()
+        key.importKey(record.privateKey, config.encrypt.privateKeyFormat);
+
+        const pass =  key.verify(id, signature, config.encrypt.sourceFormat,config.encrypt.signatureFormat)
+        if(!pass){
+            errorMsg = "注册失败,该二维码无效"
+        }else{
+            if(!record){
+                errorMsg = "注册失败,该管理员不存在"
+            }else{
+                if(record.isRegistered){
+                    errorMsg = "注册失败,该管理员已经被注册过"
+                }else{
+                    if((record.registerStartTime.getTime() + record.timeout) < Date.now()){
+                        errorMsg = "注册失败,该二维码已过期"
+                    }else{
+                        if(record.password !== checkCode){
+                            errorMsg = "注册失败,验证码不正确"
+                        }else{
+                            record.isRegistered = true
+                            record.password = crypto.createHash('md5').update(record.password).digest('hex')
+                            await ormService.user.updateRecord(record)
+                        }
+                    }
+                }
+            }
+        }
+
+
+        res.json({
+            content:{
+
+            },
+            errorMsg
+        })
+    })()
+
+
+
+})
 
 
 

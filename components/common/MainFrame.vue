@@ -90,7 +90,7 @@
     const axios = require('axios')
 
     const {httpPost} = require('../../frontend/util')
-    import MemberManage from '~/components/MemberManage'
+    import UserManage from '~/components/UserManage'
     import SystemSetting from '~/components/SystemSetting'
 
 
@@ -98,7 +98,7 @@
     export default {
         name: 'Frame',
         components:{
-            SystemSetting,MemberManage
+            SystemSetting,UserManage
         },
         data(){
             return {

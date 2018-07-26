@@ -8,4 +8,12 @@ router.get('/ping',(req,res)=>{
     })
 })
 
+router.get('/pong',(req,res)=>{
+    console.log(req.body)
+    
+    res.json({
+        time:new Date()
+    })
+})
+
 module.exports = router
