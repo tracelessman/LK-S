@@ -5,6 +5,7 @@ var path = require('path');
 const Message = require('./Message');
 const Log = require('./Log');
 const Transfer = require('./Transfer');
+const MCodeManager = require('./MCodeManager');
 
 var LKServer = {
     _hbTimeout: 3 * 60 * 1000,
@@ -164,6 +165,12 @@ var LKServer = {
     },
     ping:function(msg,ws){
         ws._lastHbTime = Date.now();
+        MCodeManager.asyGetTopMemberMCode().then((memberMCode)=>{
+            if(msg.header.memberMCode!=memberMCode){
+//TODO
+            }
+        })
+
         let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
         ws.send(content);
     },
