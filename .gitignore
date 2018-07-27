@@ -12,6 +12,6 @@ dist
 
 # Backpack build
 build
-/test/snippet
 local
 .idea
+static/unversioned
