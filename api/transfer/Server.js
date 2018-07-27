@@ -6,6 +6,9 @@ const Message = require('./Message');
 const Log = require('./Log');
 const Transfer = require('./Transfer');
 const MCodeManager = require('./MCodeManager');
+const Member = require('./Member');
+const Device = require('./Device');
+const Org = require('./Org');
 
 var LKServer = {
     _hbTimeout: 3 * 60 * 1000,
@@ -167,11 +170,51 @@ var LKServer = {
         ws._lastHbTime = Date.now();
         MCodeManager.asyGetTopMemberMCode().then((memberMCode)=>{
             if(msg.header.memberMCode!=memberMCode){
-//TODO
+//TODO 发送org、member的code树
             }
         })
 
         let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
         ws.send(content);
     },
+    login:function (msg,ws) {
+        
+    },
+    register:async function (msg,ws) {
+        let content = msg.body.content;
+        let uid = content.uid;
+        let did = content.did;
+        let venderDid = content.venderDid;
+        let pk = content.pk;
+        let checkCode = content.checkCode;
+        let qrCode = content.qrCode;
+        let description = content.description;
+        //TODO 验证签名
+        //验证是否存在该人员
+        let member = await Member.asyGetMember(uid);
+        if(member){
+            //设备id是否重复
+            let device = await Device.asyGetDevice(did);
+            if(device){
+                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"device id already exist"}));
+                ws.send(content);
+            }else{
+                Device.asyAddDevice(uid,did,venderDid,pk,description).then(()=>{
+                    //返回全部org、members、该人的好友
+                    let ps = [Org.asyGetAll(),Member.asyGetAll(),Friend.asyGetAllFriends()];
+                    let result = await Promise.all(ps);
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{orgs:result[0],members:result[1],friends:result[2]}));
+                    ws.send(content);
+                }).catch((error)=>{
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:error.toString()}));
+                    ws.send(content);
+                })
+            }
+        }else{
+            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"member not exist"}));
+            ws.send(content);
+        }
+
+        //注册设备
+    }
 }
