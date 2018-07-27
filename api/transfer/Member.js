@@ -1,13 +1,14 @@
+
 const Pool = require('../Store/pool');
 const Log = require('./Log');
-let org = {
-    asyGetTopOrg:function () {
+let Member = {
+    asyGetMember:function (uid) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select * from org
-                where parentId is null
+                select * from member
+                where id=?
             `;
-            Pool.query(sql,[], (error,results,fields) =>{
+            Pool.query(sql,[uid], (error,results,fields) =>{
                 if(error){
                     resolve(null);
                 }else if(results.length==0){
@@ -21,7 +22,7 @@ let org = {
     asyGetAll:function () {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select * from org
+                select * from member
             `;
             Pool.query(sql,[], (error,results,fields) =>{
                 if(error){
@@ -33,4 +34,4 @@ let org = {
         });
     }
 }
-module.exports = org;
+module.exports = Member;

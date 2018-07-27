@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS device
     description varchar(100),
     pk TEXT,
     lastActiveTime int,
+    alive int,
     reserve1 TEXT,
     PRIMARY KEY (id)
 )

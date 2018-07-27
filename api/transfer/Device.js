@@ -1,13 +1,15 @@
+
+
 const Pool = require('../Store/pool');
 const Log = require('./Log');
-let org = {
-    asyGetTopOrg:function () {
+let Device = {
+    asyGetDevice:function (did) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select * from org
-                where parentId is null
+                select * from device
+                where id=?
             `;
-            Pool.query(sql,[], (error,results,fields) =>{
+            Pool.query(sql,[did], (error,results,fields) =>{
                 if(error){
                     resolve(null);
                 }else if(results.length==0){
@@ -18,19 +20,20 @@ let org = {
             });
         });
     },
-    asyGetAll:function () {
+    asyAddDevice:function (uid,did,venderDid,pk,des) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select * from org
+                insert into device
+                set ?
             `;
-            Pool.query(sql,[], (error,results,fields) =>{
+            Pool.query(sql,{id:did,memberId:uid,venderDid:venderDid,pk:pk,description:des,lastActiveTime:Date.now(),alive:1}, (error,results,fields) =>{
                 if(error){
-                    resolve(null);
+                    reject(error);
                 }else{
-                    resolve(results);
+                    resolve();
                 }
             });
         });
     }
 }
-module.exports = org;
+module.exports = Member;
