@@ -6,6 +6,9 @@ const {ormServicePromise} = require('../store/ormService')
 const util = require('../util')
 const uuid = require('uuid')
 const crypto = require('crypto')
+const config = require('../../config')
+const NodeRSA = require('node-rsa');
+const aesjs = require('aes-js')
 
 
 
@@ -223,6 +226,104 @@ function getTree(ary){
     return result
 }
 
+
+
+router.post('/qrcode', function(req, res, next) {
+    util.checkLogin(req,res);
+    const {id} = req.body;
+
+    (async()=>{
+        const ormService = await ormServicePromise
+        const record = await ormService.user.getRecordById(req.session.user.id)
+        const member = await ormService.member.queryExactOne({id})
+        const key = new NodeRSA();
+
+        key.importKey(record.privateKey, config.encrypt.privateKeyFormat);
+
+        const metaData = {
+            action:"register",
+            code:"LK",
+            id,
+            ip:"172.18.1.181",
+            port:3000,
+            orgId:member.orgId,
+            serverPublicKey:record.publicKey.toString(),
+            mCode:member.mCode
+        }
+        const qrcodeData = {
+            ...metaData,
+            signature:key.sign(JSON.stringify(metaData),config.encrypt.signatureFormat,config.encrypt.sourceFormat)
+        }
+        const textBytes = aesjs.utils.utf8.toBytes(JSON.stringify(qrcodeData));
+        const aesCtr = new aesjs.ModeOfOperation.ctr(config.encrypt.aesKey, new aesjs.Counter(5));
+        const encryptedBytes = aesCtr.encrypt(textBytes);
+        const encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes);
+
+        res.json({
+            content:{
+                qrcodeData:encryptedHex
+            }
+
+        });
+
+    })()
+
+
+});
+
+
+// router.post('/register',(req,res)=>{
+//     (async()=>{
+//         const {id,signature,checkCode,code,action} = req.body
+//         let errorMsg = ''
+//         const ormService = await ormServicePromise
+//         let  record = await ormService.user.getFirstRecord()
+//         record = record.dataValues
+//
+//         const key = new NodeRSA()
+//         key.importKey(record.privateKey, config.encrypt.privateKeyFormat);
+//
+//         const pass =  key.verify(JSON.stringify({
+//             action,
+//             code,
+//             id,
+//         }), signature, config.encrypt.sourceFormat,config.encrypt.signatureFormat)
+//         if(!pass){
+//             errorMsg = "注册失败,该二维码无效"
+//         }else{
+//             const member = await ormService.member.getRecordById(id)
+//             if(!member){
+//                 errorMsg = "注册失败,该管理员不存在"
+//             }else{
+//                 if(member.isRegistered){
+//                     errorMsg = "注册失败,该管理员已经被注册过"
+//                 }else{
+//                     if((member.registerStartTime.getTime() + member.timeout) < Date.now()){
+//                         errorMsg = "注册失败,该二维码已过期"
+//                     }else{
+//                         if(member.checkCode !== checkCode){
+//                             errorMsg = "注册失败,验证码不正确"
+//                         }else{
+//                             member.isRegistered = true
+//                             await ormService.user.updateRecord(member)
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//
+//
+//         res.json({
+//             content:{
+//
+//             },
+//             errorMsg
+//         })
+//     })()
+//
+//
+//
+// })
 
 
 module.exports = router

@@ -246,9 +246,14 @@ const ormUtil = {
                     })
                 },
                 queryExact(queryCondition){
-                    console.log(queryCondition)
-                    
+
                    return ormModel[key].modelSequelized.findAll({
+                        where:queryCondition,
+                        order:sequelizeUtil.defaultOrder
+                    })
+                },
+                queryExactOne(queryCondition){
+                    return ormModel[key].modelSequelized.findOne({
                         where:queryCondition,
                         order:sequelizeUtil.defaultOrder
                     })

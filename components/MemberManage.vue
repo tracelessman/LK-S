@@ -248,9 +248,9 @@
                         render: (h, params) => {
                             let onClick1 = ()=>{
                                 httpPost({
-                                    url:"/api/user/qrcode",
+                                    url:"/api/member/qrcode",
                                     param:{
-                                        id:params.row.id
+                                        id:params.row.memberId
                                     },
                                     successCb:(content)=>{
                                         const {qrcodeData} = content
