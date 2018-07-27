@@ -1,6 +1,6 @@
 <template>
     <div>
-        <MainFrame v-if="isInited" title="LK控制管理系统" :name="user.name"></MainFrame>
+        <MainFrame v-if="isInited" title="LK控制管理系统" :name="user.name" :role="user.role"></MainFrame>
     </div>
 </template>
 
@@ -22,6 +22,7 @@
                 url:"/api/user/checkLogin",
                 successCb:(content)=>{
                     const {user} = content
+
                     if(user){
                         this.isInited = true
                         this.user = user

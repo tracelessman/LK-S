@@ -34,6 +34,7 @@ let sqlObj = {
 let sqlModel
 
 function logging(sql){
+    // console.log(sql)
 
     let type,tableName
     const typeAry = ['INSERT','UPDATE','DELETE']

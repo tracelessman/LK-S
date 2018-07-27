@@ -23,22 +23,17 @@ module.exports = {
             allowNull:true,
             title:"组织ID"
         },
-        mCode:{
+        mCode:{ //name,pic => hash
             allowNull:true,
             title:"节点hash值"
         },
-        role:{
-            title:"权限"
+        isRegistered:{
+            title:'是否注册'
         },
         reserve1:{
             allowNull:true,
             type:Sequelize.TEXT,
-        },
-        password:{
-            allowNull:true,
         }
-
-
     },
 
     tableTitle,

@@ -3,6 +3,7 @@ const uuidV4 = require('uuid/v4')
 const  _ = require("lodash")
 const commonUtil = require('./commonUtil')
 const sequelizeUtil = require('./sequelizeUtil')
+const {Op} = Sequelize
 
 
 
@@ -110,6 +111,18 @@ const ormUtil = {
                     }
                     return Promise.all(promises)
                 },
+                deleteRecordMultipleByIdAry(idAry){
+                    const promiseAry = []
+                    for(let id of idAry){
+                        let promise = ormModel[key].modelSequelized.destroy({
+                            where:{
+                                id:id
+                            }
+                        })
+                        promiseAry.push(promise)
+                    }
+                    return Promise.all(promiseAry)
+                },
                 getAllRecords(){
                     return ormModel[key].modelSequelized.findAll({
                             order:sequelizeUtil.defaultOrder
@@ -137,45 +150,49 @@ const ormUtil = {
                     for(let key in queryCondition){
                         let value = queryCondition[key]
                         if(value){
-                            let fieldObj = modelObj[key]
-                            const {isCascade,isInteger,isDouble} = fieldObj
-                            if(fieldObj.isDateFormat || fieldObj.isTimeFormat){
-                                let valueTemp = _.cloneDeep(value)
+                            if(key === 'id'){
+                                where.id = value
+                            }else{
+                                let fieldObj = modelObj[key]
+                                const {isCascade,isInteger,isDouble} = fieldObj
+                                if(fieldObj.isDateFormat || fieldObj.isTimeFormat){
+                                    let valueTemp = _.cloneDeep(value)
 
-                                if(valueTemp[0] && valueTemp[1]){
-                                    if(typeof valueTemp[0] === 'object'){
+                                    if(valueTemp[0] && valueTemp[1]){
+                                        if(typeof valueTemp[0] === 'object'){
+                                            valueTemp[1] = new Date(valueTemp[1].getFullYear(),valueTemp[1].getMonth(),valueTemp[1].getDate()+1)
+                                        }else{
+                                            console.log('in query condition value of date format is string')
+                                        }
+                                        where[key] = {
+                                            [Op.between]:valueTemp
+                                        }
+                                    }else if(!valueTemp[0] && valueTemp[1]){
                                         valueTemp[1] = new Date(valueTemp[1].getFullYear(),valueTemp[1].getMonth(),valueTemp[1].getDate()+1)
-                                    }else{
-                                        console.log('in query condition value of date format is string')
+                                        where[key] = {
+                                            [Op.lte]:valueTemp[1]
+                                        }
+                                    }else if(valueTemp[0] && !valueTemp[1]){
+                                        where[key] = {
+                                            [Op.gte]:valueTemp[0]
+                                        }
                                     }
+                                }else if(fieldObj.dictType && !isCascade || isInteger) {
+                                    where[key] = value
+                                }else if(isDouble){
+                                    let intVal = parseInt(value)
                                     where[key] = {
-                                        [Op.between]:valueTemp
+                                        [Op.between]:[intVal,intVal+1]
                                     }
-                                }else if(!valueTemp[0] && valueTemp[1]){
-                                    valueTemp[1] = new Date(valueTemp[1].getFullYear(),valueTemp[1].getMonth(),valueTemp[1].getDate()+1)
+                                }else if(!fieldObj.isArray){
                                     where[key] = {
-                                        [Op.lte]:valueTemp[1]
+                                        [Op.like]:`%${value}%`
                                     }
-                                }else if(valueTemp[0] && !valueTemp[1]){
-                                    where[key] = {
-                                        [Op.gte]:valueTemp[0]
-                                    }
-                                }
-                            }else if(fieldObj.dictType && !isCascade || isInteger) {
-                                where[key] = value
-                            }else if(isDouble){
-                                let intVal = parseInt(value)
-                                where[key] = {
-                                    [Op.between]:[intVal,intVal+1]
-                                }
-                            }else if(!fieldObj.isArray){
-                                where[key] = {
-                                    [Op.like]:`%${value}%`
                                 }
                             }
                         }
                     }
-
+                    // console.log(where)
 
                     return new Promise((resolve,reject)=>{
                         ormModel[key].modelSequelized.findAll({
@@ -229,7 +246,8 @@ const ormUtil = {
                     })
                 },
                 queryExact(queryCondition){
-
+                    console.log(queryCondition)
+                    
                    return ormModel[key].modelSequelized.findAll({
                         where:queryCondition,
                         order:sequelizeUtil.defaultOrder

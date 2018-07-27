@@ -13,15 +13,14 @@ module.exports = {
         name:{
             title:"组织名称",
         },
-
         parentId:{
             title:"父ID"
         },
         mCode:{
-            title:"节点hash值"
+            title:"节点hash值"//name - >hash
         },
         memberMCode:{
-            title:"成员hash值"
+            title:"成员hash值"//id排序 => hash
         },
         reserve1:{
             type:Sequelize.TEXT,

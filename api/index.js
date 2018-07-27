@@ -21,6 +21,7 @@ const test = require('./routes/test')
 const orm = require('./routes/orm')
 const meta = require('./routes/meta')
 const member = require('./routes/member')
+const org = require('./routes/org')
 
 
 
@@ -30,6 +31,7 @@ app.use('/orm',orm)
 app.use('/test',test)
 app.use('/meta',meta)
 app.use('/member',member)
+app.use('/org',org)
 
 // Export the server middleware
 module.exports = {

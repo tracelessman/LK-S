@@ -20,16 +20,18 @@
             </div>
             <div>
                 <i-menu style="width:15%;float:left" active-name="item1" @on-select="menuOnSelect">
-                    <Menu-Item name="item1">用户管理</Menu-Item>
+                    <Menu-Item name="item1">{{role==='super'?"用户":"组织"}}管理</Menu-Item>
                     <Menu-Item name="item2">日志管理</Menu-Item>
                     <Menu-Item name="item3">系统设置</Menu-Item>
-
                 </i-menu>
                 <div style="padding:20px 50px;width:85%;float:right">
                     <div v-show="activeMenuName === 'item1'">
-                        <MemberManage >
+                        <UserManage v-if="role==='super'">
 
-                        </MemberManage>
+                        </UserManage>
+                        <OrgManage v-else>
+
+                        </OrgManage>
                     </div>
                     <div v-show="activeMenuName === 'item2'">
                         日志管理
@@ -92,13 +94,14 @@
     const {httpPost} = require('../../frontend/util')
     import UserManage from '~/components/UserManage'
     import SystemSetting from '~/components/SystemSetting'
+    import OrgManage from '~/components/OrgManage'
 
 
 
     export default {
         name: 'Frame',
         components:{
-            SystemSetting,UserManage
+            SystemSetting,UserManage,OrgManage
         },
         data(){
             return {
@@ -183,6 +186,11 @@
                 default:()=>{
                     return ""
                 }
+            },
+            role:{
+                required:false,
+                type:String,
+
             },
         }
     }

@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS member
     pic TEXT,
     orgId varchar(36),
     mCode varchar(32),
+    isRegistered boolean,
     reserve1 TEXT,
     PRIMARY KEY (id)
 )
@@ -65,7 +66,7 @@ CREATE TABLE IF NOT EXISTS ticket
 (
     id varchar(36),
     memberId varchar(36),
-    startTime int,
+    startTime datetime,
     timeout int,
     checkCode varchar(6),
     reserve1 TEXT,
