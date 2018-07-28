@@ -1,8 +1,10 @@
 const express = require('express')
 const session = require('express-session')
 const bodyParser = require('body-parser')
+const LKServer = require('./transfer/Server')
+const config = require('../config')
 
-
+LKServer.init(config.wsPort)
 //初始化数据库连接
 require('./store')
 

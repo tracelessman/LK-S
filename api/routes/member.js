@@ -230,12 +230,13 @@ function getTree(ary){
 
 router.post('/qrcode', function(req, res, next) {
     util.checkLogin(req,res);
-    const {id} = req.body;
+    const {memberId,ticketId} = req.body;
 
     (async()=>{
         const ormService = await ormServicePromise
         const record = await ormService.user.getRecordById(req.session.user.id)
-        const member = await ormService.member.queryExactOne({id})
+        const member = await ormService.member.queryExactOne({id:memberId})
+        const ticket = await ormService.ticket.queryExactOne({id:ticketId})
         const key = new NodeRSA();
 
         key.importKey(record.privateKey, config.encrypt.privateKeyFormat);
@@ -243,12 +244,13 @@ router.post('/qrcode', function(req, res, next) {
         const metaData = {
             action:"register",
             code:"LK",
-            id,
-            ip:"172.18.1.181",
-            port:3000,
+            id:memberId,
+            ip:config.ip,
+            port:config.wsPort,
             orgId:member.orgId,
             serverPublicKey:record.publicKey.toString(),
-            mCode:member.mCode
+            mCode:member.mCode,
+            hasCheckCode:!!ticket.checkCode
         }
         const qrcodeData = {
             ...metaData,

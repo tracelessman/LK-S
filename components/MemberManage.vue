@@ -203,6 +203,7 @@
             recordsDisplayProcessed() {
                 let  result = this.recordsDisplayRaw.map((ele)=>{
                     ele.isExpired = (new Date(ele.startTime).getTime() + ele.timeout) < Date.now()?"是":"否"
+                    ele.isRegistered = (ele.isRegistered === 1)?"是":"否"
                     return  businessUtil.rawDataDisplay(ele,this.modelObj,this.dict)
                 })
 
@@ -250,7 +251,8 @@
                                 httpPost({
                                     url:"/api/member/qrcode",
                                     param:{
-                                        id:params.row.memberId
+                                        memberId:params.row.memberId,
+                                        ticketId:params.row.id,
                                     },
                                     successCb:(content)=>{
                                         const {qrcodeData} = content
@@ -313,7 +315,6 @@
                         excludePage:['create','modify']
                     },
                     checkCode:{
-                        allowNull:false,
                         title:"验证码"
                     },
                     timeout:{

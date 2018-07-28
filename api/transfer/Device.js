@@ -26,7 +26,7 @@ let Device = {
                 insert into device
                 set ?
             `;
-            Pool.query(sql,{id:did,memberId:uid,venderDid:venderDid,pk:pk,description:des,lastActiveTime:Date.now(),alive:1}, (error,results,fields) =>{
+            Pool.query(sql,{id:did,memberId:uid,venderDid:venderDid,pk:pk,description:des,lastActiveTime:new Date(),alive:1}, (error,results,fields) =>{
                 if(error){
                     reject(error);
                 }else{
@@ -36,4 +36,4 @@ let Device = {
         });
     }
 }
-module.exports = Member;
+module.exports = Device;

@@ -8,6 +8,7 @@ const Transfer = require('./Transfer');
 const MCodeManager = require('./MCodeManager');
 const Member = require('./Member');
 const Device = require('./Device');
+const Friend = require('./Friend');
 const Org = require('./Org');
 
 var LKServer = {
@@ -33,9 +34,10 @@ var LKServer = {
         };
     },
     init: function (port) {
-        LKServer.wss = new WebSocket.Server({port: port, path: "/transfer"});
+        LKServer.wss = new WebSocket.Server({port: port});
         LKServer.wss.on('connection', function connection(ws, req) {
             ws.on('message', function incoming(message) {
+
                 let msg = JSON.parse(message);
                 let header = msg.header;
                 let action = header.action;
@@ -211,6 +213,7 @@ var LKServer = {
         });
     },
     register:async function (msg,ws) {
+
         let content = msg.body.content;
         let uid = content.uid;
         let did = content.did;
@@ -238,6 +241,8 @@ var LKServer = {
                     let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{orgs:result[0],members:result[1],friends:result[2]}));
                     ws.send(content);
                 }catch(error){
+                    console.log(error)
+
                     let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:error.toString()}));
                     ws.send(content);
                 }
@@ -251,3 +256,5 @@ var LKServer = {
         //注册设备
     }
 }
+
+module.exports = LKServer

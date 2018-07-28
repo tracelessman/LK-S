@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS device
     venderDid varchar(100),
     description varchar(100),
     pk TEXT,
-    lastActiveTime int,
+    lastActiveTime datetime,
     alive int,
     reserve1 TEXT,
     PRIMARY KEY (id)
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS contactDevice
 CREATE TABLE IF NOT EXISTS friend 
 (
     memberId varchar(36),
-    contactId varchar(36)
+    contactId varchar(36),
     PRIMARY KEY (memberId,contactId)
 )
 `,(err,result)=>{
@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS log
 (
     uid varchar(36),
     action varchar(50),
-    description TEXT
+    description TEXT,
     time int,
     type int
 )
