@@ -117,7 +117,7 @@ var LKServer = {
         return msg;
     },
     _sendLocalRetainMsgs:function (ws,rows) {
-        if(rows){
+        if(rows&&rows.length>0){
             let msgs = [];
             for(let i=0;i<rows.length;i++){
                 let row = rows[i];
@@ -178,7 +178,37 @@ var LKServer = {
         ws.send(content);
     },
     login:function (msg,ws) {
-        
+        let uid = msg.header.uid;
+        let did = msg.header.did;
+        Member.asyGetMember(uid).then((member)=>{
+            if(member){
+                var wsS = this.clients.get(uid);
+                if (!wsS) {
+                    wsS = new Map();
+                    this.clients.set(uid,wsS);
+                }
+                if(wsS.has(ws._did)){
+                    let old = wsS.get(ws._did);
+                    wsS.delete(ws._did);
+                    if(old!=ws){
+                        old.close();
+                    }
+                }
+                ws._uid = uid;
+                ws._did = did;
+                ws._lastHbTime = Date.now();
+                wsS.set(did,ws);
+
+                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
+                ws.send(content);
+                Message.asyGetAllRetainMsg(uid,did).then((rows)=>{
+                    this._sendLocalRetainMsgs(ws,rows);
+                });
+            }else{
+                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"not exist"}));
+                ws.send(content);
+            }
+        });
     },
     register:async function (msg,ws) {
         let content = msg.body.content;
