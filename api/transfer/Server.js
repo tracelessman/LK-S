@@ -17,7 +17,7 @@ var LKServer = {
     generateWsId: function () {
         return this.seed++;
     },
-    clients: new Map(),//对应多个ws uid:{_id:ws}
+    clients: new Map(),//对应多个ws uid:{_did:ws}
     newResponseMsg: function (msgId,content) {
         return {
             header:{
@@ -49,14 +49,14 @@ var LKServer = {
                         return;
                     } else if (ws._uid) {
                         var wsS = LKServer.clients.get(ws._uid);
-                        if (wsS&&wsS.has(ws._id)) {
+                        if (wsS&&wsS.has(ws._did)) {
                             LKServer[action](msg, ws);
                             return;
                         }
                     }
                     //非法请求或需要重新登录的客户端请求
                     let date = new Date();
-                    Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._name + "," + ws._uid + "," + ws._cid + "," + ws._id + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                    Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                     ws.close();
                 } else {
                     var content = JSON.stringify(LKServer.newResponseMsg(msg, {err: "无法识别的请求"}));
@@ -66,13 +66,13 @@ var LKServer = {
             });
 
             ws.on('close', function (msg) {
-                console.info("auto close:" + ws._name + "," + ws._uid + "," + ws._cid + "," + ws._id);
+                console.info("auto close:" + ws._uid + "," + ws._did );
                 if (ws._uid) {
                     var wsS = LKServer.clients.get(ws._uid);
-                    if (wsS&&wsS.has(ws._id)) {
-                        wsS.delete(ws._id);
+                    if (wsS&&wsS.has(ws._did)) {
+                        wsS.delete(ws._did);
                         let date = new Date();
-                        Log.info("logout:" + ws._name + "," + ws._uid + "," + ws._cid + "," + ws._id + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                        Log.info("logout:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                         if (wsS.size==0) {
                             LKServer.clients.delete(ws._uid);
                         }
