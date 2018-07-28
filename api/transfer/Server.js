@@ -229,16 +229,19 @@ var LKServer = {
                 let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"device id already exist"}));
                 ws.send(content);
             }else{
-                Device.asyAddDevice(uid,did,venderDid,pk,description).then(()=>{
+                try{
+                    await Device.asyAddDevice(uid,did,venderDid,pk,description)
                     //返回全部org、members、该人的好友
+
                     let ps = [Org.asyGetAll(),Member.asyGetAll(),Friend.asyGetAllFriends()];
                     let result = await Promise.all(ps);
                     let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{orgs:result[0],members:result[1],friends:result[2]}));
                     ws.send(content);
-                }).catch((error)=>{
+                }catch(error){
                     let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:error.toString()}));
                     ws.send(content);
-                })
+                }
+
             }
         }else{
             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"member not exist"}));

@@ -19,4 +19,4 @@ let Friend = {
         });
     }
 }
-module.exports = Member;
+module.exports = Friend;
