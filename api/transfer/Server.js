@@ -222,7 +222,7 @@ var LKServer = {
         let checkCode = content.checkCode;
         let qrCode = content.qrCode;
         let description = content.description;
-        //TODO 验证签名
+        //TODO 验证签名,checkCode,修改ticket,memeber记录
         //验证是否存在该人员
         let member = await Member.asyGetMember(uid);
         if(member){
