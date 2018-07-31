@@ -32,6 +32,20 @@ let Member = {
                 }
             });
         });
+    },
+    asyGetAllMCodes:function () {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select id,orgId,mCode from member
+            `;
+            Pool.query(sql,[], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results);
+                }
+            });
+        });
     }
 }
 module.exports = Member;

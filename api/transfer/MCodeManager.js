@@ -44,6 +44,6 @@ let MCodeManager = {
                 })
             }
         });
-    },
+    }
 }
 module.exports = MCodeManager;

@@ -168,15 +168,39 @@ var LKServer = {
         await Promise.all(ps2);
         setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
     },
-    ping:function(msg,ws){
+    ping: async function(msg,ws){
         ws._lastHbTime = Date.now();
-        MCodeManager.asyGetTopMemberMCode().then((memberMCode)=>{
-            if(msg.header.memberMCode!=memberMCode){
-//TODO 发送org、member的code树
-            }
-        })
+        let result = await Promise.all([MCodeManager.asyGetTopOrgMCode(),MCodeManager.asyGetTopMemberMCode()]);
+        let topOrgMCode = result[0];
+        let topMemberMCode = result[1];
+        let ps = [];
+        if(msg.header.orgMCode!=topOrgMCode){
+            ps.push(Org.asyGetBaseOrgTree(msg.header.memberMCode!=result[1]));
+        }
+        if(msg.header.memberMCode!=topMemberMCode){
+            if(msg.header.orgMCode!=topOrgMCode){
+                //only all members mcode
+                ps.push( Member.asyGetAllMCodes());
 
-        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
+            }else{
+                ps.push(Org.asyGetMemberCodeTree());
+                ps.push(Member.asyGetAllMCodes());
+            }
+            // 发送org、member的code树
+        }
+        result = await Promise.all(ps)
+
+
+        let content = JSON.stringify(
+            LKServer.newResponseMsg(msg.header.id,
+                {
+                    topOrgMCode:topOrgMCode,
+                    topMemberMCode:topMemberMCode,
+                    orgTree:msg.header.orgMCode!=topOrgMCode?result[0]:null,
+                    members:msg.header.memberMCode!=topMemberMCode?result[1]:null
+                }
+
+        ));
         ws.send(content);
     },
     login:function (msg,ws) {
@@ -236,9 +260,9 @@ var LKServer = {
                     await Device.asyAddDevice(uid,did,venderDid,pk,description)
                     //返回全部org、members、该人的好友
 
-                    let ps = [Org.asyGetAll(),Member.asyGetAll(),Friend.asyGetAllFriends()];
+                    let ps = [Org.asyGetTopOrg(),Org.asyGetBaseOrgTree(true),Member.asyGetAll(),Friend.asyGetAllFriends()];
                     let result = await Promise.all(ps);
-                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{orgs:result[0],members:result[1],friends:result[2]}));
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{topOrgMCode:result[0].mCode,orgs:result[1],members:result[2],friends:result[3]}));
                     ws.send(content);
                 }catch(error){
                     console.log(error)
