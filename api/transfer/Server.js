@@ -170,23 +170,15 @@ var LKServer = {
     },
     ping: async function(msg,ws){
         ws._lastHbTime = Date.now();
-        let result = await Promise.all([MCodeManager.asyGetTopOrgMCode(),MCodeManager.asyGetTopMemberMCode()]);
-        let topOrgMCode = result[0];
-        let topMemberMCode = result[1];
+        let result = await Promise.all([MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode]);
+        let orgMCode = result[0];
+        let memberMCode = result[1];
         let ps = [];
-        if(msg.header.orgMCode!=topOrgMCode){
-            ps.push(Org.asyGetBaseOrgTree(msg.header.memberMCode!=result[1]));
+        if(msg.header.orgMCode!=orgMCode){
+            ps.push(Org.asyGetBaseList());
         }
-        if(msg.header.memberMCode!=topMemberMCode){
-            if(msg.header.orgMCode!=topOrgMCode){
-                //only all members mcode
-                ps.push( Member.asyGetAllMCodes());
-
-            }else{
-                ps.push(Org.asyGetMemberCodeTree());
-                ps.push(Member.asyGetAllMCodes());
-            }
-            // 发送org、member的code树
+        if(msg.header.memberMCode!=memberMCode){
+            ps.push(Member.asyGetAllMCodes())
         }
         result = await Promise.all(ps)
 
@@ -194,10 +186,10 @@ var LKServer = {
         let content = JSON.stringify(
             LKServer.newResponseMsg(msg.header.id,
                 {
-                    topOrgMCode:topOrgMCode,
-                    topMemberMCode:topMemberMCode,
-                    orgTree:msg.header.orgMCode!=topOrgMCode?result[0]:null,
-                    members:msg.header.memberMCode!=topMemberMCode?result[1]:null
+                    orgMCode:orgMCode,
+                    memberMCode:memberMCode,
+                    orgs:msg.header.orgMCode!=orgMCode?result[0]:null,
+                    members:msg.header.memberMCode!=memberMCode?result[1]:null
                 }
 
         ));
@@ -260,9 +252,9 @@ var LKServer = {
                     await Device.asyAddDevice(uid,did,venderDid,pk,description)
                     //返回全部org、members、该人的好友
 
-                    let ps = [Org.asyGetTopOrg(),Org.asyGetBaseOrgTree(true),Member.asyGetAll(),Friend.asyGetAllFriends()];
+                    let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseOrgTree(true),Member.asyGetAll(),Friend.asyGetAllFriends()];
                     let result = await Promise.all(ps);
-                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{topOrgMCode:result[0].mCode,orgs:result[1],members:result[2],friends:result[3]}));
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4]}));
                     ws.send(content);
                 }catch(error){
                     console.log(error)

@@ -14,6 +14,25 @@ const pool  = mysql.createPool({
 pool.execute(`CREATE DATABASE if not exists ${config.db.database}`, function (err, result) {
     if (err) throw err;
 
+    const p0 = new Promise(resolve => {
+        pool.query(`
+CREATE TABLE IF NOT EXISTS magicCode 
+(
+    
+    orgMCode varchar(32),
+    memberMCode varchar(32),
+    reserve1 TEXT,
+    PRIMARY KEY (id)
+)
+`,(err,result)=>{
+            if(err){
+                console.log(err)
+                throw err
+            }else{
+                resolve(result)
+            }
+        })
+    })
 
     const p1 = new Promise(resolve => {
         pool.query(`
@@ -23,7 +42,6 @@ CREATE TABLE IF NOT EXISTS org
     name varchar(100),
     parentId varchar(36),
     mCode varchar(32),
-    memberMCode varchar(32),
     reserve1 TEXT,
     PRIMARY KEY (id)
 )
@@ -47,7 +65,6 @@ CREATE TABLE IF NOT EXISTS member
     pic TEXT,
     orgId varchar(36),
     mCode varchar(32),
-    isRegistered boolean,
     reserve1 TEXT,
     PRIMARY KEY (id)
 )
@@ -241,7 +258,7 @@ CREATE TABLE IF NOT EXISTS log
             }
         })
     })
-    Promise.all([p1,p2,p3,p4,p5,p6,p7,p8,p9,p10])
+    Promise.all([p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10])
 });
 
 module.exports = pool

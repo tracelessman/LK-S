@@ -32,25 +32,9 @@ let org = {
             });
         });
     },
-    asyGetBaseOrgTree:function (includeMemberCode) {
+    asyGetBaseList:function () {
         return new Promise((resolve,reject)=>{
-            let sql = "select id,name,parentId";
-            if(includeMemberCode){
-                sql+=",memberMCode";
-            }
-            sql += " from org";
-            Pool.query(sql,[], (error,results,fields) =>{
-                if(error){
-                    resolve(null);
-                }else{
-                    resolve(results);
-                }
-            });
-        });
-    },
-    asyGetMemberCodeTree:function () {
-        return new Promise((resolve,reject)=>{
-            let sql = "select id,parentId,memberMCode from org";
+            let sql = "select id,name,parentId from org";
             Pool.query(sql,[], (error,results,fields) =>{
                 if(error){
                     resolve(null);

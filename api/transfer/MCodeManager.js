@@ -1,12 +1,12 @@
-const Org = require('./Org');
+const MagicCode = require('./MagicCode');
 let MCodeManager = {
 
-    _asyGetTopMCode:function () {
+    _asyGetMagicCode:function () {
         return new Promise( (resolve,reject)=> {
-            Org.asyGetTopOrg().then( (result) =>{
+            MagicCode.asyGetMagicCode().then( (result) =>{
                 if(result){
-                    this._topOrgMCode = result.mCode;
-                    this._topMemberMCode = result.memberMCode;
+                    this._orgMCode = result.orgMCode;
+                    this._memberMCode = result.memberMCode;
                 }
                 resolve();
             });
@@ -15,32 +15,32 @@ let MCodeManager = {
 
     },
 
-    setTopOrgMCode:function (topOrgMCode) {
-        this._topOrgMCode = topOrgMCode;
+    setOrgMagicCode:function (topOrgMCode) {
+        this._orgMCode = topOrgMCode;
     },
 
-    setTopMemberMCode:function (topMemberMCode) {
-        this._topMemberMCode = topMemberMCode;
+    setMemberMagicCode:function (topMemberMCode) {
+        this._memberMCode = topMemberMCode;
     },
 
-    asyGetTopMemberMCode:function () {
+    asyGetMemberMagicCode:function () {
         return new Promise( (resolve,reject)=> {
-            if(this._topMemberMCode){
-                resolve(this._topMemberMCode);
+            if(this._memberMCode){
+                resolve(this._memberMCode);
             }else{
-                this._asyGetTopMCode().then(()=>{
-                    resolve(this._topMemberMCode);
+                this._asyGetMagicCode().then(()=>{
+                    resolve(this._memberMCode);
                 })
             }
         });
     },
-    asyGetTopOrgMCode:function () {
+    asyGetOrgMagicCode:function () {
         return new Promise( (resolve,reject)=> {
-            if(this._topOrgMCode){
-                resolve(this._topOrgMCode);
+            if(this._orgMCode){
+                resolve(this._orgMCode);
             }else{
-                this._asyGetTopMCode().then(()=>{
-                    resolve(this._topOrgMCode);
+                this._asyGetMagicCode().then(()=>{
+                    resolve(this._orgMCode);
                 })
             }
         });

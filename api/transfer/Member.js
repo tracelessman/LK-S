@@ -36,7 +36,7 @@ let Member = {
     asyGetAllMCodes:function () {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select id,orgId,mCode from member
+                select id,mCode from member
             `;
             Pool.query(sql,[], (error,results,fields) =>{
                 if(error){
