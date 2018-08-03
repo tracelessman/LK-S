@@ -97,6 +97,9 @@ var LKServer = {
     getPort:function () {
 
     },
+    getPK:function () {
+
+    },
     _newMsgFromRow:function (row) {
         let msg = {
             header:{}
@@ -259,7 +262,7 @@ var LKServer = {
 
                     let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseOrgTree(true),Member.asyGetAll(),Friend.asyGetAllFriends()];
                     let result = await Promise.all(ps);
-                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4]}));
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:this.getPK(),orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4]}));
                     ws.send(content);
                 }catch(error){
                     console.log(error)
