@@ -181,8 +181,6 @@ var LKServer = {
             ps.push(Member.asyGetAllMCodes())
         }
         result = await Promise.all(ps)
-
-
         let content = JSON.stringify(
             LKServer.newResponseMsg(msg.header.id,
                 {
@@ -194,6 +192,13 @@ var LKServer = {
 
         ));
         ws.send(content);
+    },
+    fetchMembers:function (msg,ws) {
+        let ids = msg.content.members;
+        Member.asyGetMembers(ids).then(function (members) {
+            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{members:members}));
+            ws.send(content);
+        });
     },
     login:function (msg,ws) {
         let uid = msg.header.uid;

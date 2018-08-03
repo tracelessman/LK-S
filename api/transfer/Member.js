@@ -46,6 +46,29 @@ let Member = {
                 }
             });
         });
+    },
+    asyGetMembers:function (ids) {
+        return new Promise((resolve,reject)=>{
+            if(ids&&ids.length>0){
+                let sql = "select * from member where id in(";
+                for(let i=0;i<ids.length;i++){
+                    sql += "?";
+                    if(i<ids.length-1){
+                        sql+=","
+                    }
+                }
+                sql+=")";
+                Pool.query(sql,ids, (error,results,fields) =>{
+                    if(error){
+                        resolve(null);
+                    }else{
+                        resolve(results);
+                    }
+                });
+
+            }
+            resolve(null);
+        });
     }
 }
 module.exports = Member;
