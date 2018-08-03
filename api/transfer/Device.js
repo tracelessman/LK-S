@@ -34,6 +34,21 @@ let Device = {
                 }
             });
         });
+    },
+    asyRemoveDevice:function (uid,did) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                delete from device
+                where id=?
+            `;
+            Pool.query(sql,[did], (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
+        });
     }
 }
 module.exports = Device;

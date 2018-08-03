@@ -275,6 +275,16 @@ var LKServer = {
         }
 
         //注册设备
+    },
+    unRegister:async function (msg,ws) {
+        let header = msg.header;
+        let uid = header.uid;
+        let did = header.did;
+        Device.asyRemoveDevice(uid,did).then(function () {
+            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
+            ws.send(content);
+            Message.deleteFlows(did);
+        })
     }
 }
 

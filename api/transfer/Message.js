@@ -109,6 +109,15 @@ let Message = {
                 }
             });
         });
+    },
+    deleteFlows:function (did) {
+        let sql = `
+            delete from flow
+            where targetDid=?
+        `;
+        Pool.query(sql,[did], (error,results,fields) =>{
+
+        });
     }
 }
 module.exports = Message;
