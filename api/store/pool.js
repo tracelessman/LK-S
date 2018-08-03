@@ -21,8 +21,7 @@ CREATE TABLE IF NOT EXISTS magicCode
     
     orgMCode varchar(32),
     memberMCode varchar(32),
-    reserve1 TEXT,
-    PRIMARY KEY (id)
+    reserve1 TEXT
 )
 `,(err,result)=>{
             if(err){
