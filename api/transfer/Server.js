@@ -10,6 +10,9 @@ const Member = require('./Member');
 const Device = require('./Device');
 const Friend = require('./Friend');
 const Org = require('./Org');
+const rootPath = path.resolve(__dirname,'../../')
+const config = require(path.resolve(rootPath,'config'))
+const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 
 var LKServer = {
     _hbTimeout: 3 * 60 * 1000,
@@ -92,13 +95,18 @@ var LKServer = {
         setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
     },
     getIP:function () {
+        return config.ip
 
     },
+
     getPort:function () {
+        return config.wsPort
 
     },
-    getPK:function () {
-
+    async asyGetPK(encoding = 'base64') {
+       const ormService =  await ormServicePromise
+        const record = await ormService.user.getFirstRecord()
+        return record.publicKey.toString(encoding)
     },
     _newMsgFromRow:function (row) {
         let msg = {
@@ -262,7 +270,8 @@ var LKServer = {
 
                     let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseOrgTree(true),Member.asyGetAll(),Friend.asyGetAllFriends()];
                     let result = await Promise.all(ps);
-                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:this.getPK(),orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4]}));
+                    const publicKey = await this.asyGetPK()
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4]}));
                     ws.send(content);
                 }catch(error){
                     console.log(error)

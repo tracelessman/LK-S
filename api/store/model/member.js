@@ -27,9 +27,6 @@ module.exports = {
             allowNull:true,
             title:"节点hash值"
         },
-        isRegistered:{
-            title:'是否注册'
-        },
         reserve1:{
             allowNull:true,
             type:Sequelize.TEXT,
