@@ -60,13 +60,13 @@ let Message = {
 
     },
 
-    markSent:function (msgId) {
+    markSent:function (msgId,targetUid,targetDid) {
         return new Promise((resolve,reject)=>{
             let sql = `
                 update flow set lastSendTime=?
-                where msgId=?
+                where msgId=? and targetUid=? and targetDid=?
             `;
-            Pool.query(sql,[Date.now(),msgId], (error,results,fields) =>{
+            Pool.query(sql,[Date.now(),msgId,targetUid,targetDid], (error,results,fields) =>{
                 resolve();
             });
         });
@@ -117,6 +117,42 @@ let Message = {
         `;
         Pool.query(sql,[did], (error,results,fields) =>{
 
+        });
+    },
+    asyAddMessage:function (msg) {
+        let header = msg.header;
+        let sendTime = new Date()
+        sendTime.setTime(header.time);
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                insert into message
+                set ?
+            `;
+            Pool.query(sql,{id:header.id,action:header.action,senderUid:header.uid,senderDid:header.did,body:msg.body,senderTime:sendTime,time:new Date(),timeout:header.timeout}, (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
+        });
+    },
+    asyAddFlow:function (msgId,uid,did,random) {
+        let header = msg.header;
+        let sendTime = new Date()
+        sendTime.setTime(header.time);
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                insert into flow
+                set ?
+            `;
+            Pool.query(sql,{msgId:msgId,targetUid:uid,targetDid:did,random:random}, (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
         });
     }
 }
