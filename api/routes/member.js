@@ -155,6 +155,7 @@ router.post('/getMemberByOrg',(req,res)=>{
             }
         }
 
+
         _f(orgTree)
 
         let promiseAry = []
@@ -246,10 +247,10 @@ router.post('/qrcode', function(req, res, next) {
             ip:config.ip,
             port:config.wsPort,
             orgId:member.orgId,
-            // serverPublicKey:record.publicKey.toString(),
             mCode:member.mCode,
-            hasCheckCode:!!ticket.checkCode
-        }
+            hasCheckCode:!!ticket.checkCode,
+            name:member.name
+        }//md5
         const qrcodeData = {
             ...metaData,
             signature:key.sign(JSON.stringify(metaData),config.encrypt.signatureFormat,config.encrypt.sourceFormat)

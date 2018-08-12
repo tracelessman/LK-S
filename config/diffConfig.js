@@ -1,5 +1,5 @@
-
-
+const childProcess = require('child_process')
+const os = require('os')
 
 const diffConfig = {
     db:{
@@ -8,9 +8,18 @@ const diffConfig = {
     },
     port:"3000",
     wsPort:"3001",
-    ip:"192.168.8.101"
+    ip:""
 
 
 }
+if(os.platform()==='darwin'){
+    const cmd = 'ipconfig getifaddr en0'
+    const localIp = childProcess.execSync(cmd,{encoding:'utf8'})
+    diffConfig.ip = localIp.trim()
+    console.log(diffConfig.ip)
+
+}
+
+Object.freeze(diffConfig)
 
 module.exports = diffConfig
