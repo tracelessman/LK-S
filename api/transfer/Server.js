@@ -317,6 +317,7 @@ var LKServer = {
                                 uid:header.uid,
                                 did:header.did,
                                 action:header.action,
+                                chatId:header.chatId,
                                 time:header.time,
                                 timeout:header.timeout,
                                 target:{
@@ -334,6 +335,8 @@ var LKServer = {
             })
 
         });
+        let content = JSON.stringify(this.newResponseMsg(msgId));
+        ws.send(content);
     }
 }
 
