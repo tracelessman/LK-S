@@ -138,7 +138,7 @@ var LKServer = {
             }
             ws.send(JSON.stringify(msgs),function () {
                 msgs.forEach(function (msg) {
-                    Message.markSent(msg.header.id);
+                    Message.markSent(msg.header.id,ws._uid,ws._did);
                 })
             });
         }
@@ -288,7 +288,7 @@ var LKServer = {
 
         //注册设备
     },
-    unRegister:async function (msg,ws) {
+    unRegister: function (msg,ws) {
         let header = msg.header;
         let uid = header.uid;
         let did = header.did;
@@ -296,7 +296,44 @@ var LKServer = {
             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
             ws.send(content);
             Message.deleteFlows(did);
-        })
+        });
+    },
+    sendMsg: async function (msg,ws) {
+        let msg = await Message.asyAddMessage(msg);
+        let header = msg.header;
+        let targets = header.targets;
+        let msgId = header.id;
+        targets.forEach((target)=>{
+            let devices = target.devices;
+            devices.forEach((device)=>{
+                Message.asyAddFlow(msgId,target.id,device.id,device.random).then(()=>{
+                    var wsS = this.clients.get(target.id);
+                    if (!wsS) {
+                        let ws = wsS.get(device.id);
+                        if(ws){
+                            let flowMsg = {header:{
+                                version:header.version,
+                                id:header.id,
+                                uid:header.uid,
+                                did:header.did,
+                                action:header.action,
+                                time:header.time,
+                                timeout:header.timeout,
+                                target:{
+                                    id:target.id,
+                                    did:device.id,
+                                    random:device.random,
+                                }
+                            },body:msg.body};
+                            ws.send(JSON.stringify(flowMsg),()=> {
+                                Message.markSent(header.id,target.id,device.id);
+                            });
+                        }
+                    }
+                });
+            })
+
+        });
     }
 }
 

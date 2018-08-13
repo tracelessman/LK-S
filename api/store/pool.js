@@ -196,8 +196,8 @@ CREATE TABLE IF NOT EXISTS message
     senderServerPort int,
     sign TEXT,
     body TEXT,
-    senderTime int,
-    time int,
+    senderTime datetime,
+    time datetime,
     timeout int,
     reserve1 TEXT,
     PRIMARY KEY (id)
