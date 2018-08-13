@@ -290,7 +290,7 @@ var LKServer = {
         });
     },
     sendMsg: async function (msg,ws) {
-        let msg = await Message.asyAddMessage(msg);
+        await Message.asyAddMessage(msg);
         let header = msg.header;
         let targets = header.targets;
         let msgId = header.id;
@@ -328,6 +328,41 @@ var LKServer = {
         });
         let content = JSON.stringify(this.newResponseMsg(msgId));
         ws.send(content);
+    },
+
+    readReport:async function (msg,ws) {
+        await Message.asyAddMessage(msg);
+        let header = msg.header;
+        let msgId = header.id;
+        let target = header.target;
+        let devices = target.devices;
+        devices.forEach((device)=>{
+            Message.asyAddFlow(msgId,target.id,device.id).then(()=>{
+                var wsS = this.clients.get(target.id);
+                if (!wsS) {
+                    let ws = wsS.get(device.id);
+                    if(ws){
+                        let flowMsg = {header:{
+                            version:header.version,
+                            id:header.id,
+                            uid:header.uid,
+                            did:header.did,
+                            action:header.action,
+                            time:header.time,
+                            timeout:header.timeout,
+                            target:{
+                                id:target.id,
+                                did:device.id
+                            }
+                        },body:msg.body};
+                        ws.send(JSON.stringify(flowMsg),()=> {
+                            Message.markSent(header.id,target.id,device.id);
+                        });
+                    }
+                }
+            });
+        });
+
     }
 }
 
