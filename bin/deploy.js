@@ -31,7 +31,7 @@ const assert = require('assert');
         await execCommand(cmd,testingFolder)
         await execCommand(`npm install --production`,projectFolder,{print:true})
     }
-    const result = await execCommand(`git pull`,projectFolder)
+    const result = await execCommand(`git pull`,projectFolder,{print:true})
     if(result.includes('package.json')){
         await execCommand(`npm install --production`,projectFolder,{print:true})
     }
