@@ -40,7 +40,6 @@ module.exports = {
         "dot-notation": 1,
         "no-loop-func": 1,
         "no-script-url": 1,
-        "no-process-exit": 1,
         "accessor-pairs": 2,
         "array-callback-return": 2,
         "curly": ["error", "all"],

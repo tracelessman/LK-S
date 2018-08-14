@@ -46,6 +46,7 @@ const assert = require('assert');
 
 })().catch(err=>{
     console.log(err)
+    process.exit()
 })
 
 async function execCommand(cmd,cwd,option={}){
