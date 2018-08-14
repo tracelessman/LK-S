@@ -13,6 +13,7 @@
     "lint": "eslint --ext .js,.vue ."
   },
   "dependencies": {
+    "@ys/external": "file:external",
     "aes-js": "^3.1.1",
     "apn": "^2.2.0",
     "axios": "^0.16.2",
