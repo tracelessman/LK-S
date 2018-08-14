@@ -45,10 +45,8 @@ async function execCommand(cmd,cwd,option={}){
 
     const {stdout,stderr} = result
     if(stdout){
-        console.log(print)
-
         if(print){
-            console.log(print)
+            console.log(stdout)
         }
         return stdout
     }
