@@ -1,5 +1,5 @@
 
-const Pool = require('../Store/pool');
+const Pool = require('../store/pool');
 const Log = require('./Log');
 let Friend = {
     asyGetAllFriends:function (uid) {
