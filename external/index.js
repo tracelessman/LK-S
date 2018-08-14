@@ -1,7 +1,9 @@
 const cmdUtil = require('./util/cmdUtil')
+const objectUtil = require('./util/objectUtil')
 
 const external = {
-    cmdUtil
+    cmdUtil,
+    objectUtil
 }
 
 Object.freeze(external)

@@ -2,9 +2,13 @@
 // to version control
 const diffConfig = {
     db:{
-        username:"root",
-        password:"spirit12#"
+        username:"",
+        password:""
     },
+    sshInfo:{
+        username:"",
+        password:""
+    }
 }
 
 

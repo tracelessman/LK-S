@@ -1,6 +1,6 @@
 
 
-const diffConfig = require('./diffConfig')
+const diffConfig = require('./diffConfigInterface')
 const _ = require('lodash')
 const assert = require('assert')
 const txServerIp = "192.144.172.30"
