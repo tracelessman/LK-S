@@ -38,6 +38,7 @@ const assert = require('assert');
 
     await execCommand(`node remoteDeploy.js`,path.resolve(projectFolder,'bin'),{print:true})
     ssh.dispose()
+    console.log('testing deployment updated')
 
 })().catch(err=>{
     console.log(err)
