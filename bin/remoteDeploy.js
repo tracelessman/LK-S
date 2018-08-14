@@ -2,6 +2,8 @@
 const path = require('path')
 const rootPath = path.resolve(__dirname,'../')
 const childProcess = require('child_process')
+console.log('sdfaf')
+
 
 const gitCmd = require('simple-git')(rootPath)
 console.log('noew')
