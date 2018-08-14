@@ -9,6 +9,7 @@ assert(process.env.NODE_ENV)
 
 const envConfig = require(`./config.${process.env.NODE_ENV}.js`)
 
+
 const config = {
     db:{
         database:"LK_S",
@@ -30,6 +31,7 @@ const config = {
 
 }
 //diffConfg override envConfig,envConfig override config
+
 _.merge(config,envConfig,diffConfig)
 
 
