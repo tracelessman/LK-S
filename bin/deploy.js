@@ -38,7 +38,7 @@ const assert = require('assert');
     console.log(err)
 })
 
-async function execCommand(cmd,cwd,option){
+async function execCommand(cmd,cwd,option={}){
     const {print} = option
 
     const result = await ssh.execCommand(cmd, { cwd })
@@ -46,6 +46,7 @@ async function execCommand(cmd,cwd,option){
     const {stdout,stderr} = result
     if(stdout){
         if(print){
+
             console.log(print)
         }
         return stdout
