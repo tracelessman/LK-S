@@ -31,8 +31,9 @@ const assert = require('assert');
         await execCommand(cmd,testingFolder)
         await execCommand(`npm install --production`,projectFolder)
     }
+    await execCommand(`git pull`,projectFolder)
 
-    await execCommand(`node serverDeploy.js`,path.resolve(projectFolder,'bin'))
+    await execCommand(`node remoteDeploy.js`,path.resolve(projectFolder,'bin'))
     ssh.dispose()
 
 })().catch(err=>{
@@ -44,10 +45,8 @@ async function execCommand(cmd,cwd){
 
     const result = await ssh.execCommand(cmd, { cwd })
 
-
     const {stdout,stderr} = result
     if(stdout){
-        console.log(stdout)
         return stdout
     }
     if(stderr){
