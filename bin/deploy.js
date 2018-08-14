@@ -29,8 +29,13 @@ const assert = require('assert');
         console.log(cmd)
         console.log('git cloning ....')
         await execCommand(cmd,testingFolder)
-        await execCommand(`npm install --production`,projectFolder)
+        await execCommand(`npm install --production`,projectFolder,{print:true})
     }
+    const result = await execCommand(`git pull`,projectFolder)
+    if(result.includes('package.json')){
+        await execCommand(`npm install --production`,projectFolder,{print:true})
+    }
+
     await execCommand(`node remoteDeploy.js`,path.resolve(projectFolder,'bin'),{print:true})
     ssh.dispose()
 
