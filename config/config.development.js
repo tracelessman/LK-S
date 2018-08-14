@@ -7,7 +7,11 @@ const cmd = 'ipconfig getifaddr en0'
 const ip = childProcess.execSync(cmd).toString().trim()
 
 const config = {
-    ip
+    ip,
+    db:{
+        username:"root",
+        password:"spirit12#"
+    },
 }
 
 Object.freeze(config)
