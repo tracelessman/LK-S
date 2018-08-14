@@ -6,7 +6,7 @@ const objectUtil = {
         assert(typeof option === 'object')
         const assertOption = option.assert
         const f = (obj)=>{
-            for(let key of obj){
+            for(let key in obj){
                 const value = obj[key]
                 if(value === undefined){
                     return false

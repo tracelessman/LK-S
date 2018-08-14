@@ -10,7 +10,8 @@
     "build": "nuxt build",
     "start": "nuxt build && nuxt start",
     "precommit": "npm run lint",
-    "lint": "eslint --ext .js,.vue ."
+    "lint": "eslint --ext .js,.vue .",
+    "deploy:testing":"cross-env NODE_ENV=testing node bin/deploy"
   },
   "dependencies": {
     "@ys/external": "file:external",
