@@ -25,7 +25,8 @@ const config = {
     ip:txServerIp,
     port:"3000",
     wsPort:"3001",
-    repo:"https://github.com/tracelessman/LK-S.git"
+    repo:"https://github.com/tracelessman/LK-S.git",
+    branch:"master"
 
 }
 //diffConfg override envConfig,envConfig override config
