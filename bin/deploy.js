@@ -1,6 +1,10 @@
 /* eslint-disable no-console */
 
-//git,node,pm2 should be installed on the remote server
+/*
+1.git,node,pm2 should be installed on the remote server
+2.this file is just for updating git repo on the remote server and should not contain too much logic,most operation should be
+put into remoteDeploy.js
+ */
 const NodeSSH = require('node-ssh')
 const ssh = new NodeSSH()
 const path = require('path')
