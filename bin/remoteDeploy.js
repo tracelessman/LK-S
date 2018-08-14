@@ -6,7 +6,10 @@ try{
     childProcess.execSync(`pm2 show testing`).toString()
 }catch(err){
     const startPath = path.resolve(rootPath,'bin/start.js')
-    childProcess.execSync(`pm2 start ${startPath}`)
+    const cmd = `pm2 start ${startPath} --name=testing`
+    console.log(cmd)
+
+    childProcess.execSync(cmd)
 }
-const result = childProcess.execSync(`pm2 show testing`).toString()
-console.log(result)
+// const result = childProcess.execSync(`pm2 show testing`).toString()
+// console.log(result)
