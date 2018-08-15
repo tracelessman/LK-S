@@ -1,11 +1,12 @@
 const { Router } = require('express')
-
+const path = require('path')
+const rootPath = path.resolve(__dirname,'../../')
 const router = Router()
 const {ormModelPromise} = require('../store/ormModel')
 const {ormServicePromise} = require('../store/ormService')
 const util = require('../util')
+const codeUtil = require(path.resolve(rootPath,'api/util/codeUtil'))
 const uuid = require('uuid')
-const crypto = require('crypto')
 const config = require('../../config')
 const NodeRSA = require('node-rsa');
 const aesjs = require('aes-js');
@@ -23,9 +24,8 @@ router.post('/addMember',(req,res)=>{
             id:uuid(),
             name,
             orgId,
-            isRegistered:false
         }
-        member.mCode = util.getMemberMCode()
+        member.mCode = await codeUtil.getMemberMCode()
         const ticket = {
             memberId:member.id,
             timeout,
@@ -115,22 +115,15 @@ router.post('/deleteRecordMultiple',(req,res)=>{
     })()
 })
 
-router.post('/getMemberByOrg',(req,res)=>{
 
+router.post('/getMemberByOrg',(req,res)=>{
     util.checkLogin(req,res);
+
     (async()=>{
         const {orgId} = req.body
-        const ormService =  await ormServicePromise
-
-        const orgTreePromise = new Promise(resolve => {
-            (async()=>{
-                const ormService = await ormServicePromise
-                const recordAry = await ormService.org.getAllRecords()
-                const result = getTree(recordAry)
-                resolve(result)
-            })()
-        })
-        const orgTree = await orgTreePromise
+        const ormService = await ormServicePromise
+        const recordAry = await ormService.org.getAllRecords()
+        const orgTree = getTree(recordAry)
 
         const idAry = []
         const _f2 = (obj)=>{
@@ -150,7 +143,9 @@ router.post('/getMemberByOrg',(req,res)=>{
                     break
                 }else{
                     const {children} = ele
-                    _f(children)
+                    if(children){
+                        _f(children)
+                    }
                 }
             }
         }

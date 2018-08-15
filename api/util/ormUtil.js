@@ -82,11 +82,14 @@ const ormUtil = {
             ormService[key] = {
                 ...ormService[key],
                 addRecord(record){
+                    console.log(record)
+
                     preProcess(record,modelObj)
 
                     if(!record.id){
                         record.id = uuidV4()
                     }
+
                     return ormModel[key].modelSequelized.create(record)
                 },
                 addRecordMultiple(recordAry){

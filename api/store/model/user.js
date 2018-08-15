@@ -31,9 +31,6 @@ module.exports = {
         privateKey:{
             type:Sequelize.BLOB
         },
-        isRegistered:{
-            type:Sequelize.BOOLEAN
-        }
     },
     tableTitle,
 }

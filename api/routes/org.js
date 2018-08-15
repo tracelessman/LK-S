@@ -1,8 +1,12 @@
 const { Router } = require('express')
+const path = require('path')
+const rootPath = path.resolve(__dirname,'../../')
+
 
 const router = Router()
 const {ormServicePromise} = require('../store/ormService')
 const util = require('../util')
+const codeUtil = require(path.resolve(rootPath,'api/util/codeUtil'))
 const _ = require('lodash')
 
 router.post('/getTreeData',(req,res)=>{
@@ -33,7 +37,7 @@ router.post('/setRoot',(req,res)=>{
             let org = {
                 name:orgName,
             }
-            org = addCode(org)
+            org = await addCode(org)
             await ormService.org.addRecord(org)
 
             result = {}
@@ -50,10 +54,10 @@ router.post('/setRoot',(req,res)=>{
 })
 
 
-function addCode(option){
+async function addCode(option){
     const org = _.cloneDeep(option)
-    org.mCode = util.getOrgMcode(org)
-    org.memberMCode = util.getOrgMemberMCode(org)
+    org.mCode = await codeUtil.getOrgMcode(org)
+    org.memberMCode = await codeUtil.getOrgMemberMCode(org)
     return org
 }
 
@@ -63,7 +67,7 @@ router.post('/addOrg',(req,res)=>{
     (async()=>{
         let  {record} = req.body
         const ormService = await ormServicePromise
-        record = addCode(record)
+        record = await addCode(record)
 
         await ormService.org.addRecord(record)
 
