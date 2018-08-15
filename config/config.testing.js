@@ -1,11 +1,10 @@
 const config = {
-    port:"4000",
-    wsPort:"4001",
     branch:"testing",
     db:{
         username:"root",
-        password:"EO:hR>lHu3Dqa"
+        password:"spirit12#"
     },
+    ip:"192.144.200.234"
 }
 
 Object.freeze(config)
