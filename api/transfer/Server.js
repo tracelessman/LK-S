@@ -206,8 +206,8 @@ var LKServer = {
     login:function (msg,ws) {
         let uid = msg.header.uid;
         let did = msg.header.did;
-        Member.asyGetMember(uid).then((member)=>{
-            if(member){
+        // Member.asyGetMember(uid).then((member)=>{
+        //     if(member){
                 var wsS = this.clients.get(uid);
                 if (!wsS) {
                     wsS = new Map();
@@ -230,11 +230,11 @@ var LKServer = {
                 Message.asyGetAllRetainMsg(uid,did).then((rows)=>{
                     this._sendLocalRetainMsgs(ws,rows);
                 });
-            }else{
-                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"not exist"}));
-                ws.send(content);
-            }
-        });
+            // }else{
+            //     let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"not exist"}));
+            //     ws.send(content);
+            // }
+        // });
     },
     register:async function (msg,ws) {
 
