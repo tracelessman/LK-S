@@ -1,16 +1,14 @@
-
-
-
+//config in this file varies from users and occations ,or includes credential information that should not be added
+// to version control
 const diffConfig = {
-    db:{
+
+    sshInfo:{
         username:"root",
-        password:"spirit12#"
-    },
-    port:"3000",
-    wsPort:"3001",
-    ip:"192.168.8.101"
-
-
+        password:"abc@147258369"
+    }
 }
+
+
+Object.freeze(diffConfig)
 
 module.exports = diffConfig

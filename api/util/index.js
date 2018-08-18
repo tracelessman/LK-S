@@ -6,7 +6,7 @@ const util = _.merge({},
     require('./sequelizeUtil'),
     require('./ormUtil'),
     require('./routeUtil'),
-    require('./codeUtil'),
+    // require('./codeUtil'),
 )
 
 Object.freeze(util)

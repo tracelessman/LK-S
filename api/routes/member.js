@@ -1,16 +1,15 @@
 const { Router } = require('express')
-
+const path = require('path')
+const rootPath = path.resolve(__dirname,'../../')
 const router = Router()
 const {ormModelPromise} = require('../store/ormModel')
 const {ormServicePromise} = require('../store/ormService')
 const util = require('../util')
+const codeUtil = require(path.resolve(rootPath,'api/util/codeUtil'))
 const uuid = require('uuid')
-const crypto = require('crypto')
 const config = require('../../config')
 const NodeRSA = require('node-rsa');
-const aesjs = require('aes-js')
-
-
+const aesjs = require('aes-js');
 
 
 
@@ -25,9 +24,8 @@ router.post('/addMember',(req,res)=>{
             id:uuid(),
             name,
             orgId,
-            isRegistered:false
         }
-        member.mCode = util.getMemberMCode()
+        member.mCode = await codeUtil.getMemberMCode()
         const ticket = {
             memberId:member.id,
             timeout,
@@ -117,22 +115,15 @@ router.post('/deleteRecordMultiple',(req,res)=>{
     })()
 })
 
-router.post('/getMemberByOrg',(req,res)=>{
 
+router.post('/getMemberByOrg',(req,res)=>{
     util.checkLogin(req,res);
+
     (async()=>{
         const {orgId} = req.body
-        const ormService =  await ormServicePromise
-
-        const orgTreePromise = new Promise(resolve => {
-            (async()=>{
-                const ormService = await ormServicePromise
-                const recordAry = await ormService.org.getAllRecords()
-                const result = getTree(recordAry)
-                resolve(result)
-            })()
-        })
-        const orgTree = await orgTreePromise
+        const ormService = await ormServicePromise
+        const recordAry = await ormService.org.getAllRecords()
+        const orgTree = getTree(recordAry)
 
         const idAry = []
         const _f2 = (obj)=>{
@@ -152,10 +143,13 @@ router.post('/getMemberByOrg',(req,res)=>{
                     break
                 }else{
                     const {children} = ele
-                    _f(children)
+                    if(children){
+                        _f(children)
+                    }
                 }
             }
         }
+
 
         _f(orgTree)
 
@@ -248,10 +242,10 @@ router.post('/qrcode', function(req, res, next) {
             ip:config.ip,
             port:config.wsPort,
             orgId:member.orgId,
-            serverPublicKey:record.publicKey.toString(),
             mCode:member.mCode,
-            hasCheckCode:!!ticket.checkCode
-        }
+            hasCheckCode:!!ticket.checkCode,
+            name:member.name
+        }//md5
         const qrcodeData = {
             ...metaData,
             signature:key.sign(JSON.stringify(metaData),config.encrypt.signatureFormat,config.encrypt.sourceFormat)
@@ -274,58 +268,6 @@ router.post('/qrcode', function(req, res, next) {
 });
 
 
-// router.post('/register',(req,res)=>{
-//     (async()=>{
-//         const {id,signature,checkCode,code,action} = req.body
-//         let errorMsg = ''
-//         const ormService = await ormServicePromise
-//         let  record = await ormService.user.getFirstRecord()
-//         record = record.dataValues
-//
-//         const key = new NodeRSA()
-//         key.importKey(record.privateKey, config.encrypt.privateKeyFormat);
-//
-//         const pass =  key.verify(JSON.stringify({
-//             action,
-//             code,
-//             id,
-//         }), signature, config.encrypt.sourceFormat,config.encrypt.signatureFormat)
-//         if(!pass){
-//             errorMsg = "注册失败,该二维码无效"
-//         }else{
-//             const member = await ormService.member.getRecordById(id)
-//             if(!member){
-//                 errorMsg = "注册失败,该管理员不存在"
-//             }else{
-//                 if(member.isRegistered){
-//                     errorMsg = "注册失败,该管理员已经被注册过"
-//                 }else{
-//                     if((member.registerStartTime.getTime() + member.timeout) < Date.now()){
-//                         errorMsg = "注册失败,该二维码已过期"
-//                     }else{
-//                         if(member.checkCode !== checkCode){
-//                             errorMsg = "注册失败,验证码不正确"
-//                         }else{
-//                             member.isRegistered = true
-//                             await ormService.user.updateRecord(member)
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//
-//
-//         res.json({
-//             content:{
-//
-//             },
-//             errorMsg
-//         })
-//     })()
-//
-//
-//
-// })
 
 
 module.exports = router

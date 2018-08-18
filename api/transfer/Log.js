@@ -1,4 +1,4 @@
-const Pool = require('../Store/pool');
+const Pool = require('../store/pool');
 let Log = {
 
     _addLog:function (uid,action,des,type) {
