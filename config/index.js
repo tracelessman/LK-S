@@ -27,12 +27,20 @@ const config = {
     port:"3000",
     wsPort:"3001",
     repo:"https://github.com/tracelessman/LK-S.git",
-    branch:"master"
-
+    branch:"master",
+    http:true
 }
 //diffConfg override envConfig,envConfig override config
 
 _.merge(config,envConfig,diffConfig)
+
+let protocol
+if(config.http){
+    protocol = 'http'
+}else{
+    protocol = 'https'
+}
+config.url = `${protocol}://${config.ip}:${config.port}`
 
 
 Object.freeze(config)

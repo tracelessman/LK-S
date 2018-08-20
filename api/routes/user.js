@@ -9,6 +9,7 @@ const util = require('../util')
 const config = require('../../config')
 const NodeRSA = require('node-rsa');
 const aesjs = require('aes-js')
+
 //role:super,admin,common
 router.post('/login',(req,res)=>{
 
@@ -188,7 +189,6 @@ router.post('/deleteRecordMultiple',(req,res)=>{
     util.checkLogin(req,res);
     (async()=>{
         const ormService = await ormServicePromise
-
         await ormService.user.deleteRecordMultiple(req.body.idAry)
 
         res.json()
@@ -226,6 +226,7 @@ router.post('/qrcode', function(req, res, next) {
         key.importKey(record.privateKey, config.encrypt.privateKeyFormat);
 
         const qrcodeData = {
+            url:config.url,
             action:"registerForAdmin",
             code:"LK",
             id,
@@ -240,9 +241,7 @@ router.post('/qrcode', function(req, res, next) {
             content:{
                 qrcodeData:encryptedHex
             }
-
-        });
-
+        })
     })()
 
 
