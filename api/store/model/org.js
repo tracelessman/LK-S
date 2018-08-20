@@ -19,9 +19,9 @@ module.exports = {
         mCode:{
             title:"节点hash值"//name - >hash
         },
-        memberMCode:{
-            title:"成员hash值"//id排序 => hash
-        },
+        // memberMCode:{
+        //     title:"成员hash值"//id排序 => hash
+        // },
         reserve1:{
             type:Sequelize.TEXT,
         }

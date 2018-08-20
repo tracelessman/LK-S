@@ -8,17 +8,12 @@ const option = {
     password        : config.db.password,
     database        : config.db.database
 }
-console.log(option)
-
-
 const pool  = mysql.createPool(option);
-
-
 
 pool.execute(`CREATE DATABASE if not exists ${config.db.database}`, function (err, result) {
     if (err) throw err;
     console.log(result)
-    
+
     const p0 = new Promise(resolve => {
         pool.query(`
 CREATE TABLE IF NOT EXISTS magicCode 
