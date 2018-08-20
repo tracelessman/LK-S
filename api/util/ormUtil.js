@@ -22,12 +22,6 @@ const ormUtil = {
                     displayPage:[]
                 },
                 ...modelContent,
-                extra:{
-                    type: Sequelize.JSON,
-                    allowNull:true,
-                    title:"额外信息或者用于改变表结构",
-                    displayPage:[]
-                }
             }
 
             sequelizeUtil.preProcessModelObj({
