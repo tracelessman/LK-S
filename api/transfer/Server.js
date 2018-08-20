@@ -40,7 +40,8 @@ var LKServer = {
         LKServer.wss = new WebSocket.Server({port: port});
         LKServer.wss.on('connection', function connection(ws, req) {
             ws.on('message', function incoming(message) {
-
+                console.log(message)
+                
                 let msg = JSON.parse(message);
                 let header = msg.header;
                 let action = header.action;
