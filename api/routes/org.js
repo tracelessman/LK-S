@@ -57,7 +57,6 @@ router.post('/setRoot',(req,res)=>{
 async function addCode(option){
     const org = _.cloneDeep(option)
     org.mCode = await codeUtil.getOrgMcode(org)
-    org.memberMCode = await codeUtil.getOrgMemberMCode(org)
     return org
 }
 

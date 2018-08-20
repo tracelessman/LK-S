@@ -50,7 +50,8 @@
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
     "jest": "^23.4.0",
-    "node-ssh": "^5.1.2"
+    "node-ssh": "^5.1.2",
+    "suppose": "^0.6.2"
   },
   "config": {
     "nuxt": {
