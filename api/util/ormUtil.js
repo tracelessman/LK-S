@@ -32,7 +32,9 @@ const ormUtil = {
 
             let modelSequelized =   database.define(tableName,modelObjParam, {
                 paranoid:false,
-                freezeTableName:true
+                freezeTableName:true,
+                createdAt:false,
+                updatedAt:false
             })
             modelSequelized.sync().then(()=>{
                 if(afterSync){
