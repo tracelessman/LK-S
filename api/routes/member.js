@@ -11,8 +11,6 @@ const config = require('../../config')
 const NodeRSA = require('node-rsa');
 const aesjs = require('aes-js');
 
-
-
 router.post('/addMember',(req,res)=>{
     util.checkLogin(req,res)
     const {valueRecordSave,orgId} = req.body;
