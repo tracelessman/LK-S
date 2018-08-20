@@ -8,6 +8,8 @@ const option = {
     password        : config.db.password,
     database        : config.db.database
 }
+console.log(option)
+
 
 const pool  = mysql.createPool(option);
 
