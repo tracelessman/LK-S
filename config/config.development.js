@@ -11,7 +11,7 @@ if(os.platform() === 'darwin'){
         ip,
         db:{
             username:"root",
-            password:"spirit12#"
+            password:"EO:hR>lHu3Dqa"
         },
     }
 
