@@ -3,7 +3,7 @@
 const diffConfig = require('./diffConfigInterface')
 const _ = require('lodash')
 const assert = require('assert')
-const txServerIp = "192.144.172.30"
+const txServerIp = "http://192.144.200.234/"
 
 assert(process.env.NODE_ENV)
 
