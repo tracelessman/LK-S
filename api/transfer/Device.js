@@ -49,6 +49,21 @@ let Device = {
                 }
             });
         });
+    },
+    asyGetDevices:function (uid) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select * from device
+                where memberId=?
+            `;
+            Pool.query(sql,[uid], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results);
+                }
+            });
+        });
     }
 }
 module.exports = Device;

@@ -154,6 +154,22 @@ let Message = {
                 }
             });
         });
+    },
+    asyGetMsg:function (msgId) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select * 
+                from message 
+                where message.id = ?
+            `;
+            Pool.query(sql,[msgId], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]);
+                }
+            });
+        });
     }
 }
 module.exports = Message;

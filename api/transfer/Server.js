@@ -6,6 +6,7 @@ const Message = require('./Message');
 const Log = require('./Log');
 const Transfer = require('./Transfer');
 const MCodeManager = require('./MCodeManager');
+const DeviceManager = require('./DeviceManager');
 const Member = require('./Member');
 const Device = require('./Device');
 const Friend = require('./Friend');
@@ -265,7 +266,8 @@ var LKServer = {
                 ws.send(content);
             }else{
                 try{
-                    await Device.asyAddDevice(uid,did,venderDid,pk,description)
+                    await Device.asyAddDevice(uid,did,venderDid,pk,description);
+                    DeviceManager.deviceChanged(uid);
                     //返回全部org、members、该人的好友
 
                     let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseList(),Member.asyGetAll(),Friend.asyGetAllFriends()];
@@ -293,49 +295,87 @@ var LKServer = {
         let uid = header.uid;
         let did = header.did;
         Device.asyRemoveDevice(uid,did).then(function () {
+            DeviceManager.deviceChanged(uid);
             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
             ws.send(content);
             Message.deleteFlows(did);
         });
     },
+    _checkDeviceDiff:async function (uid,localDevices,excludeDevice) {
+        let curDevices = await DeviceManager.asyGetDevices(uid);
+        let removed = [];
+        let added = [];
+        for(let j=0;j<localDevices.length;j++){
+            let device = localDevices[j];
+            let exists = false;
+            for(let i=0;i<curDevices.length;i++){
+                let curDevice = curDevices[i];
+                if(curDevice.id===device.id){
+                    exists = true;
+                    curDevices.splice(i,1);
+                    break;
+                }
+            }
+            if(!exists){
+                removed.push(device.id);
+            }
+        }
+        curDevices.forEach(function (device) {
+            if(device.id!==excludeDevice)
+                added.push({id:device.id,pk:device.pk});
+        });
+        return {id:uid,added:added,removed:removed};
+    },
     sendMsg: async function (msg,ws) {
-        await Message.asyAddMessage(msg);
         let header = msg.header;
-        let targets = header.targets;
         let msgId = header.id;
+        let curMsg = await Message.asyGetMsg(msgId);
+        if(!curMsg){
+            await Message.asyAddMessage(msg);
+        }
+        let targets = header.targets;
+        let senderDid = header.did;
+        let diffs = [];
+        let ckDiffPs = [];
         targets.forEach((target)=>{
             let devices = target.devices;
+            ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
             devices.forEach((device)=>{
-                Message.asyAddFlow(msgId,target.id,device.id,device.random).then(()=>{
-                    var wsS = this.clients.get(target.id);
-                    if (!wsS) {
-                        let ws = wsS.get(device.id);
-                        if(ws){
-                            let flowMsg = {header:{
-                                version:header.version,
-                                id:header.id,
-                                uid:header.uid,
-                                did:header.did,
-                                action:header.action,
-                                chatId:header.chatId,
-                                time:header.time,
-                                timeout:header.timeout,
-                                target:{
-                                    id:target.id,
-                                    did:device.id,
-                                    random:device.random,
-                                }
-                            },body:msg.body};
-                            ws.send(JSON.stringify(flowMsg),()=> {
-                                Message.markSent(header.id,target.id,device.id);
-                            });
+                if(diff.removed.indexOf(device.id)!=-1){
+                    Message.asyAddFlow(msgId,target.id,device.id,device.random).then(()=>{
+                        var wsS = this.clients.get(target.id);
+                        if (!wsS) {
+                            let ws = wsS.get(device.id);
+                            if(ws){
+                                let flowMsg = {header:{
+                                    version:header.version,
+                                    id:header.id,
+                                    uid:header.uid,
+                                    did:header.did,
+                                    action:header.action,
+                                    chatId:header.chatId,
+                                    time:header.time,
+                                    timeout:header.timeout,
+                                    target:{
+                                        id:target.id,
+                                        did:device.id,
+                                        random:device.random,
+                                    }
+                                },body:msg.body};
+                                ws.send(JSON.stringify(flowMsg),()=> {
+                                    Message.markSent(header.id,target.id,device.id);
+                                });
+                            }
                         }
-                    }
-                });
+                    });
+                }
             })
 
         });
-        let content = JSON.stringify(this.newResponseMsg(msgId));
+        if(ckDiffPs.length>0){
+            diffs = await Promise.all(ckDiffPs);
+        }
+        let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs}));
         ws.send(content);
     },
 
