@@ -39,7 +39,7 @@ let Message = {
     asyPeriodGetLocalMsgByTarget:function (targetUid,targetDid,time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,message.timeout,
                 flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
@@ -47,7 +47,7 @@ let Message = {
                 and flow.targetDid=?
                 and flow.targetServerIP is null
                 and flow.lastSendTime is not null 
-                and ?-flow.lstSendTime>180000
+                and ?-unix_timestamp(flow.lastSendTime)>180000
             `;
             Pool.query(sql,[targetUid,targetDid,time], (error,results,fields) =>{
                 if(error){
@@ -74,13 +74,13 @@ let Message = {
     asyPeriodGetForeignMsg:function (time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,message.timeout,
                 flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetServerIP is not null
                 and flow.lastSendTime is not null 
-                and ?-flow.lstSendTime>180000
+                and ?-unix_timestamp(flow.lastSendTime)>180000
             `;
             Pool.query(sql,[time], (error,results,fields) =>{
                 if(error){
