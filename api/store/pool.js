@@ -224,7 +224,7 @@ CREATE TABLE IF NOT EXISTS flow
     targetServerPort int,
     targetMCode varchar(32),
     random TEXT,
-    lastSendTime int,
+    lastSendTime datetime,
     reserve1 TEXT,
     PRIMARY KEY (msgId,targetUid,targetDid)
 )

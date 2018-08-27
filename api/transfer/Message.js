@@ -66,7 +66,7 @@ let Message = {
                 update flow set lastSendTime=?
                 where msgId=? and targetUid=? and targetDid=?
             `;
-            Pool.query(sql,[Date.now(),msgId,targetUid,targetDid], (error,results,fields) =>{
+            Pool.query(sql,[new Date(),msgId,targetUid,targetDid], (error,results,fields) =>{
                 resolve();
             });
         });
@@ -138,9 +138,6 @@ let Message = {
         });
     },
     asyAddFlow:function (msgId,uid,did,random) {
-        let header = msg.header;
-        let sendTime = new Date()
-        sendTime.setTime(header.time);
         return new Promise((resolve,reject)=>{
             let sql = `
                 insert into flow
