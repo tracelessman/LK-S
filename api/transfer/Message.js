@@ -47,7 +47,7 @@ let Message = {
                 and flow.targetDid=?
                 and flow.targetServerIP is null
                 and flow.lastSendTime is not null 
-                and ?-flow.lstSendTime>180000
+                and ?-unix_timestamp(flow.lastSendTime)>180000
             `;
             Pool.query(sql,[targetUid,targetDid,time], (error,results,fields) =>{
                 if(error){
@@ -80,7 +80,7 @@ let Message = {
                 where message.id = flow.msgId 
                 and flow.targetServerIP is not null
                 and flow.lastSendTime is not null 
-                and ?-flow.lstSendTime>180000
+                and ?-unix_timestamp(flow.lastSendTime)>180000
             `;
             Pool.query(sql,[time], (error,results,fields) =>{
                 if(error){
