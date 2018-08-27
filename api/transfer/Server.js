@@ -342,7 +342,7 @@ var LKServer = {
             let devices = target.devices;
             ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
             devices.forEach((device)=>{
-                if(diff.removed.indexOf(device.id)!=-1){
+                //if(diff.removed.indexOf(device.id)!=-1){
                     Message.asyAddFlow(msgId,target.id,device.id,device.random).then(()=>{
                         var wsS = this.clients.get(target.id);
                         if (!wsS) {
@@ -369,7 +369,7 @@ var LKServer = {
                             }
                         }
                     });
-                }
+                //}
             })
 
         });
@@ -379,6 +379,8 @@ var LKServer = {
         let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs}));
         ws.send(content);
     },
+
+//TODO 定时清理滞留消息
 
     readReport:async function (msg,ws) {
         await Message.asyAddMessage(msg);
