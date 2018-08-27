@@ -111,22 +111,20 @@ var LKServer = {
     },
     _newMsgFromRow:function (row) {
         let msg = {
-            header:{}
+            header:{target:{}}
         };
         let header = msg.header;
         header.version = "1.0";
         header.id = row.msgId;
         header.action = row.action;
-        header.senderUid = row.senderUid;
-        header.senderDid = row.senderDid;
-        header.senderServerIP = row.senderServerIP;
-        header.senderServerPort = row.senderServerPort;
-        header.targetUid = row.targetUid;
-        header.targetDid = row.targetDid;
-        header.targetServerIP = row.targetServerIP;
-        header.targetServerPort = row.targetServerPort;
-        header.random = row.random;
+        header.uid = row.senderUid;
+        header.did = row.senderDid;
         header.time = row.sendTime;
+        header.timeout = row.timeout,
+
+        header.target.id = row.targetUid;
+        header.target.did = row.targetDid;
+        header.target.random = row.random;
         msg.body = row.body;
         return msg;
     },
@@ -353,7 +351,6 @@ var LKServer = {
                                     uid:header.uid,
                                     did:header.did,
                                     action:header.action,
-                                    chatId:header.chatId,
                                     time:header.time,
                                     timeout:header.timeout,
                                     target:{
