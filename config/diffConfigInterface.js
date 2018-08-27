@@ -4,6 +4,9 @@ const config = {
     sshInfo:{
         username:"",
         password:""
+    },
+    db:{
+        password:""
     }
 }
 Object.assign(config,diffConfig)

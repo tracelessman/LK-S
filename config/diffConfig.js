@@ -5,6 +5,9 @@ const diffConfig = {
     sshInfo:{
         username:"root",
         password:"abc@147258369"
+    },
+    db:{
+
     }
 }
 
