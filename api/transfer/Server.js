@@ -1,7 +1,7 @@
-var url = require('url');
-var WebSocket = require('ws');
-var fs = require('fs');
-var path = require('path');
+const url = require('url');
+const WebSocket = require('ws');
+const fs = require('fs');
+const path = require('path');
 const Message = require('./Message');
 const Log = require('./Log');
 const Transfer = require('./Transfer');
@@ -46,28 +46,35 @@ var LKServer = {
                 let header = msg.header;
                 let action = header.action;
                 let isResponse = header.response;
-                if (isResponse) {//得到接收应答，删除缓存
-                    Message.receiveReport(header.msgId, header.uid, header.did);
-                }
-                else if (LKServer[action]) {
-                    if (action == "ping" || action == "login" || action == "register" || action == "authorize" || action == "errReport") {
-                        LKServer[action](msg, ws);
-                        return;
-                    } else if (ws._uid) {
-                        var wsS = LKServer.clients.get(ws._uid);
-                        if (wsS&&wsS.has(ws._did)) {
+                let serverIP = header.serverIP;
+                let serverPort = header.serverPort;
+                if(serverIP&&serverIP+serverPort!==LKServer.getIP()+LKServer.getPort()){//server to server
+
+                }else{
+                    if (isResponse) {//得到接收应答，删除缓存
+                        Message.receiveReport(header.msgId, header.uid, header.did);
+                    }
+                    else if (LKServer[action]) {
+                        if (action == "ping" || action == "login" || action == "register" || action == "authorize" || action == "errReport") {
                             LKServer[action](msg, ws);
                             return;
+                        } else if (ws._uid) {
+                            var wsS = LKServer.clients.get(ws._uid);
+                            if (wsS&&wsS.has(ws._did)) {
+                                LKServer[action](msg, ws);
+                                return;
+                            }
                         }
+                        //非法请求或需要重新登录的客户端请求
+                        let date = new Date();
+                        Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                        ws.close();
+                    } else {
+                        var content = JSON.stringify(LKServer.newResponseMsg(msg, {err: "无法识别的请求"}));
+                        ws.send(content);
                     }
-                    //非法请求或需要重新登录的客户端请求
-                    let date = new Date();
-                    Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-                    ws.close();
-                } else {
-                    var content = JSON.stringify(LKServer.newResponseMsg(msg, {err: "无法识别的请求"}));
-                    ws.send(content);
                 }
+
 
             });
 
@@ -172,7 +179,7 @@ var LKServer = {
         let ps2 = [];
         if(foreignMsgs){
             foreignMsgs.forEach(function (msg) {
-                ps2.push(Transfer.asyTrans(msg));
+                ps2.push(Transfer.send(msg));
             })
         }
         await Promise.all(ps2);
@@ -342,7 +349,7 @@ var LKServer = {
                 //if(diff.removed.indexOf(device.id)!=-1){
                     Message.asyAddFlow(msgId,target.id,device.id,device.random).then(()=>{
                         var wsS = this.clients.get(target.id);
-                        if (!wsS) {
+                        if (wsS) {
                             let ws = wsS.get(device.id);
                             if(ws){
                                 let flowMsg = {header:{
@@ -411,6 +418,36 @@ var LKServer = {
             });
         });
 
+    },
+    applyMF:async function(msg,ws){
+        let header = msg.header;
+        let msgId = header.id;
+        let target = header.target;
+        if(target.serverIP!==this.getIP()||target.serverPort!==this.getPort()){
+            await Message.asyAddMessage(msg);
+            Message.asyAddFlow(msgId,target.id,null,null,target.serverIP,target.serverPort).then(()=>{
+                let flowMsg = {header:{
+                    version:header.version,
+                    id:header.id,
+                    uid:header.uid,
+                    did:header.did,
+                    action:header.action,
+                    time:header.time,
+                    timeout:header.timeout,
+                    target:{
+                        id:target.id
+                    }
+                },body:msg.body};
+                let content = JSON.stringify(this.newResponseMsg(msgId));
+                ws.send(content);
+                Transfer.send(flowMsg,target.serverIP,target.serverPort).then(()=>{
+
+                });
+            });
+        }else{
+            let content = JSON.stringify(this.newResponseMsg(msgId,{error:"target in the same org"}));
+            ws.send(content);
+        }
     }
 }
 
