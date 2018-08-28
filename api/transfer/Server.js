@@ -125,7 +125,7 @@ var LKServer = {
         header.target.id = row.targetUid;
         header.target.did = row.targetDid;
         header.target.random = row.random;
-        msg.body = row.body;
+        msg.body = JSON.parse(row.body);
         return msg;
     },
     _sendLocalRetainMsgs:function (ws,rows) {

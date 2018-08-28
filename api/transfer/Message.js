@@ -121,14 +121,14 @@ let Message = {
     },
     asyAddMessage:function (msg) {
         let header = msg.header;
-        let sendTime = new Date()
+        let sendTime = new Date();
         sendTime.setTime(header.time);
         return new Promise((resolve,reject)=>{
             let sql = `
                 insert into message
                 set ?
             `;
-            Pool.query(sql,{id:header.id,action:header.action,senderUid:header.uid,senderDid:header.did,body:msg.body,senderTime:sendTime,time:new Date(),timeout:header.timeout}, (error,results,fields) =>{
+            Pool.query(sql,{id:header.id,action:header.action,senderUid:header.uid,senderDid:header.did,body:JSON.stringify(msg.body),senderTime:sendTime,time:new Date(),timeout:header.timeout}, (error,results,fields) =>{
                 if(error){
                     reject(error);
                 }else{
