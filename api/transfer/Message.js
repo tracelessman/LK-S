@@ -23,10 +23,7 @@ let Message = {
     },
 
     receiveReport:function (msgId,uid,did) {
-        let sql = `
-            delete from flow
-            where msgId=? and targetDid=?
-        `;
+        let sql = "delete from flow where msgId=? and targetDid=?";
         Pool.query(sql,[msgId,did], (error,results,fields) =>{
             if(error){
 
@@ -137,13 +134,13 @@ let Message = {
             });
         });
     },
-    asyAddFlow:function (msgId,uid,did,random) {
+    asyAddFlow:function (msgId,uid,did,random,targetServerIP,targetServerPort) {
         return new Promise((resolve,reject)=>{
             let sql = `
                 insert into flow
                 set ?
             `;
-            Pool.query(sql,{msgId:msgId,targetUid:uid,targetDid:did,random:random}, (error,results,fields) =>{
+            Pool.query(sql,{msgId:msgId,targetUid:uid,targetDid:did,random:random,targetServerIP:targetServerIP,targetServerPort:targetServerPort}, (error,results,fields) =>{
                 if(error){
                     reject(error);
                 }else{
