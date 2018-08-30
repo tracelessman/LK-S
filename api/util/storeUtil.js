@@ -98,8 +98,6 @@ const storeUtil = {
     },
     createSchema(option){
         return new Promise(resovle=>{
-            console.log(option)
-            
             let {dialect,host,user,password,database} = option
             if(dialect === 'mysql'){
                 if(!host){
