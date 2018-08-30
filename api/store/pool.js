@@ -230,8 +230,7 @@ CREATE TABLE IF NOT EXISTS flow
     targetMCode varchar(32),
     random TEXT,
     lastSendTime datetime,
-    reserve1 TEXT,
-    PRIMARY KEY (msgId,targetUid,targetDid)
+    reserve1 TEXT
 )
 `,(err,result)=>{
             if(err){

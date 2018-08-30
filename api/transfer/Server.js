@@ -41,40 +41,40 @@ var LKServer = {
         LKServer.wss = new WebSocket.Server({port: port});
         LKServer.wss.on('connection', function connection(ws, req) {
             ws.on('message', function incoming(message) {
-
-                let msg = JSON.parse(message);
-                let header = msg.header;
-                let action = header.action;
-                let isResponse = header.response;
-                let serverIP = header.serverIP;
-                let serverPort = header.serverPort;
-                if(serverIP&&serverIP+serverPort!==LKServer.getIP()+LKServer.getPort()){//server to server
-
-                }else{
+                try{
+                    let msg = JSON.parse(message);
+                    let header = msg.header;
+                    let action = header.action;
+                    let isResponse = header.response;
+                    // let serverIP = header.serverIP;
+                    // let serverPort = header.serverPort;
                     if (isResponse) {//得到接收应答，删除缓存
                         Message.receiveReport(header.msgId, header.uid, header.did);
                     }
                     else if (LKServer[action]) {
-                        if (action == "ping" || action == "login" || action == "register" || action == "authorize" || action == "errReport") {
-                            LKServer[action](msg, ws);
-                            return;
-                        } else if (ws._uid) {
-                            var wsS = LKServer.clients.get(ws._uid);
-                            if (wsS&&wsS.has(ws._did)) {
-                                LKServer[action](msg, ws);
-                                return;
-                            }
-                        }
-                        //非法请求或需要重新登录的客户端请求
-                        let date = new Date();
-                        Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-                        ws.close();
+                        LKServer[action](msg, ws);
+                        // if (action == "ping" || action == "login" || action == "register" || action == "authorize" || action == "errReport") {
+                        //     LKServer[action](msg, ws);
+                        //     return;
+                        // } else if (ws._uid) {
+                        //     var wsS = LKServer.clients.get(ws._uid);
+                        //     if (wsS&&wsS.has(ws._did)) {
+                        //         LKServer[action](msg, ws);
+                        //         return;
+                        //     }
+                        // }
+                        // //非法请求或需要重新登录的客户端请求
+                        // let date = new Date();
+                        // Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                        // ws.close();
                     } else {
                         var content = JSON.stringify(LKServer.newResponseMsg(msg, {err: "无法识别的请求"}));
                         ws.send(content);
                     }
-                }
 
+                }catch (e){
+                    console.info(e);
+                }
 
             });
 
@@ -331,6 +331,9 @@ var LKServer = {
         });
         return {id:uid,added:added,removed:removed};
     },
+
+    //TODO第二次补发应该走另一个函数，此时不在返回diff
+
     sendMsg: async function (msg,ws) {
         let header = msg.header;
         let msgId = header.id;
@@ -342,11 +345,12 @@ var LKServer = {
         let senderDid = header.did;
         let diffs = [];
         let ckDiffPs = [];
-        targets.forEach((target)=>{
-            let devices = target.devices;
-            ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
-            devices.forEach((device)=>{
-                //if(diff.removed.indexOf(device.id)!=-1){
+
+        if(header.transfer){
+            targets.forEach((target)=>{
+                let devices = target.devices;
+                ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
+                devices.forEach((device)=>{
                     Message.asyAddFlow(msgId,target.id,device.id,device.random).then(()=>{
                         var wsS = this.clients.get(target.id);
                         if (wsS) {
@@ -367,20 +371,94 @@ var LKServer = {
                                     }
                                 },body:msg.body};
                                 ws.send(JSON.stringify(flowMsg),()=> {
-                                    Message.markSent(header.id,target.id,device.id);
+                                    Message.markSent(msgId,target.id,device.id);
                                 });
                             }
                         }
-                    });
-                //}
-            })
 
-        });
+                    });
+                })
+
+            });
+        }else{
+            let targetsNeedTrasfer = new Map();
+            targets.forEach((target)=>{
+                let devices = target.devices;
+                if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
+                    let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
+                    if(!targets2){
+                        targets2 = [];
+                        targetsNeedTrasfer.set(target.serverIP+":"+target.serverPort,targets2);
+                    }
+                    targets2.push(target);
+                }else{
+                    ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
+                }
+
+                devices.forEach((device)=>{
+                    Message.asyAddFlow(msgId,target.id,device.id,device.random,target.serverIP,target.serverPort).then(()=>{
+                        if(!target.serverIP||(target.serverIP&&target.serverIP===this.getIP()&&target.serverPort===this.getPort())){//local flow
+                            var wsS = this.clients.get(target.id);
+                            if (wsS) {
+                                let ws = wsS.get(device.id);
+                                if(ws){
+                                    let flowMsg = {header:{
+                                        version:header.version,
+                                        id:header.id,
+                                        uid:header.uid,
+                                        did:header.did,
+                                        action:header.action,
+                                        time:header.time,
+                                        timeout:header.timeout,
+                                        target:{
+                                            id:target.id,
+                                            did:device.id,
+                                            random:device.random,
+                                        }
+                                    },body:msg.body};
+                                    ws.send(JSON.stringify(flowMsg),()=> {
+                                        Message.markSent(header.id,target.id,device.id);
+                                    });
+                                }
+                            }
+                        }
+
+                    });
+                })
+
+            });
+            if(targetsNeedTrasfer.size>0){
+                let msg2 = {header:{
+                    version:header.version,
+                    id:header.id,
+                    uid:header.uid,
+                    did:header.did,
+                    action:header.action,
+                    serverIP:this.getIP(),
+                    serverPort:this.getPort(),
+                    time:header.time,
+                    timeout:header.timeout,
+                    targets:targetsNeedTrasfer
+                },body:msg.body};
+                targetsNeedTrasfer.forEach((v,k)=>{
+                    msg2.targets = v;
+                    let key = k.split(":");
+                    Transfer.send(msg2,key[0],key[1]);
+                })
+            }
+        }
+
+
         if(ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
         }
-        let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs}));
-        ws.send(content);
+        if(header.transfer){
+            let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs,targets:targets}));
+            ws.send(content);
+        }else{
+            let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs}));
+            ws.send(content);
+        }
     },
 
 //TODO 定时清理滞留消息
@@ -390,64 +468,64 @@ var LKServer = {
         let header = msg.header;
         let msgId = header.id;
         let target = header.target;
-        let devices = target.devices;
-        devices.forEach((device)=>{
-            Message.asyAddFlow(msgId,target.id,device.id).then(()=>{
-                var wsS = this.clients.get(target.id);
-                if (!wsS) {
-                    let ws = wsS.get(device.id);
-                    if(ws){
-                        let flowMsg = {header:{
-                            version:header.version,
-                            id:header.id,
-                            uid:header.uid,
-                            did:header.did,
-                            action:header.action,
-                            time:header.time,
-                            timeout:header.timeout,
-                            target:{
-                                id:target.id,
-                                did:device.id
-                            }
-                        },body:msg.body};
-                        ws.send(JSON.stringify(flowMsg),()=> {
-                            Message.markSent(header.id,target.id,device.id);
-                        });
+        let devices = await Device.asyGetDevices(target);
+        if(devices){
+            devices.forEach((device)=>{
+                Message.asyAddFlow(msgId,target,device.id).then(()=>{
+                    var wsS = this.clients.get(target);
+                    if (wsS) {
+                        let ws = wsS.get(device.id);
+                        if(ws){
+                            ws.send(JSON.stringify(msg),()=> {
+                                Message.markSent(header.id,target,device.id);
+                            });
+                        }
                     }
-                }
+                });
             });
-        });
-
+        }
+        let content = JSON.stringify(this.newResponseMsg(msgId));
+        ws.send(content);
     },
     applyMF:async function(msg,ws){
         let header = msg.header;
         let msgId = header.id;
         let target = header.target;
-        if(target.serverIP!==this.getIP()||target.serverPort!==this.getPort()){
+        if(header.transfer){
             await Message.asyAddMessage(msg);
-            Message.asyAddFlow(msgId,target.id,null,null,target.serverIP,target.serverPort).then(()=>{
-                let flowMsg = {header:{
-                    version:header.version,
-                    id:header.id,
-                    uid:header.uid,
-                    did:header.did,
-                    action:header.action,
-                    time:header.time,
-                    timeout:header.timeout,
-                    target:{
-                        id:target.id
-                    }
-                },body:msg.body};
+            Message.asyAddFlow(msgId,target.id).then(()=>{
+                var wsS = this.clients.get(target.id);
+                if (wsS&&wsS.size>0) {
+                    let msgStr = JSON.stringify(msg);
+                    let marked =false;
+                    wsS.forEach((v,k)=>{
+                        v.send(msgStr,()=> {
+                            if(!marked){
+                                marked = true;
+                                Message.markSent(msgId,target.id);
+                            }
+                        });
+                    })
+                }
+            });
+            let content = JSON.stringify(this.newResponseMsg(msgId,target));
+            ws.send(content);
+        }else{
+            if(target.serverIP!==this.getIP()||target.serverPort!==this.getPort()){
+                await Message.asyAddMessage(msg);
+                Message.asyAddFlow(msgId,target.id,null,null,target.serverIP,target.serverPort).then(()=>{
+                    Transfer.send(msg,target.serverIP,target.serverPort).then(()=>{
+                        Message.markSent(msgId,target.id);
+                    });
+                });
                 let content = JSON.stringify(this.newResponseMsg(msgId));
                 ws.send(content);
-                Transfer.send(flowMsg,target.serverIP,target.serverPort).then(()=>{
-
-                });
-            });
-        }else{
-            let content = JSON.stringify(this.newResponseMsg(msgId,{error:"target in the same org"}));
-            ws.send(content);
+            }else{
+                let content = JSON.stringify(this.newResponseMsg(msgId,{error:"target in the same org"}));
+                ws.send(content);
+            }
         }
+
     }
 }
 

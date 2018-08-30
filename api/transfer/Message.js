@@ -33,6 +33,38 @@ let Message = {
         });
     },
 
+    transferReceiveReport:function (msgId,targets,target) {
+        let sql = "delete from flow where msgId=?";
+        let params = [msgId];
+        if(target){
+            sql += " and targetUid=?";
+            params.push(target.id);
+        }else if(targets&&targets.length>0){
+            sql += " and targetDid in(";
+            targets.forEach((t)=>{
+                if(t.devices&&t.devices.length>0){
+                    t.devices.forEach((device)=>{
+                        params.push(device.id);
+                    });
+                }
+            })
+            for(let i=1;i<params.length;i++){
+                sql+="?";
+                if(i<params.length-1){
+                    sql+=",";
+                }
+            }
+            sql += ")";
+        }
+        Pool.query(sql,params, (error,results,fields) =>{
+            if(error){
+
+            }else{
+                this._checkRemoveMsg(msgId);
+            }
+        });
+    },
+
     asyPeriodGetLocalMsgByTarget:function (targetUid,targetDid,time) {
         return new Promise((resolve,reject)=>{
             let sql = `
@@ -59,11 +91,13 @@ let Message = {
 
     markSent:function (msgId,targetUid,targetDid) {
         return new Promise((resolve,reject)=>{
-            let sql = `
-                update flow set lastSendTime=?
-                where msgId=? and targetUid=? and targetDid=?
-            `;
-            Pool.query(sql,[new Date(),msgId,targetUid,targetDid], (error,results,fields) =>{
+            let params = [new Date(),msgId,targetUid];
+            let sql = " update flow set lastSendTime=? where msgId=? and targetUid=? ";
+            if(targetDid){
+                sql += "and targetDid=?";
+                params.push(targetDid);
+            }
+            Pool.query(sql,params, (error,results,fields) =>{
                 resolve();
             });
         });
@@ -125,7 +159,10 @@ let Message = {
                 insert into message
                 set ?
             `;
-            Pool.query(sql,{id:header.id,action:header.action,senderUid:header.uid,senderDid:header.did,body:JSON.stringify(msg.body),senderTime:sendTime,time:new Date(),timeout:header.timeout}, (error,results,fields) =>{
+            Pool.query(sql,{
+                id:header.id,action:header.action,senderUid:header.uid,senderDid:header.did,body:JSON.stringify(msg.body),senderTime:sendTime,time:new Date(),timeout:header.timeout,
+                senderServerIP:header.serverIP,senderServerPort:header.serverPort
+            }, (error,results,fields) =>{
                 if(error){
                     reject(error);
                 }else{
