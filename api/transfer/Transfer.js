@@ -1,12 +1,18 @@
 //TODO 和其他服务器连接并发送消息
 
 const WebSocket = require('ws');
-
+const path = require('path');
+const rootPath = path.resolve(__dirname,'../../')
+const config = require(path.resolve(rootPath,'config'))
+const  Message = require('./Message')
 class WSChannel{
 
-    _reconnectDelay=0
+
 
     constructor(url,keepAlive){
+        this._reconnectDelay=0;
+        this._callbacks={};
+        this._timeout=60000;
         this._url = url;
         this._keepAlive = keepAlive;
     }
@@ -19,8 +25,15 @@ class WSChannel{
                 return Promise.reject(e)
             }
             if(this._ws){
-                this._ws.on('message',()=>{
-
+                this._ws.on('message',(message)=>{
+                    let msg = JSON.parse(message);
+                    if(msg.forEach){
+                        msg.forEach((m)=> {
+                            this._handleMsg(m);
+                        })
+                    }else{
+                        this._handleMsg(msg);
+                    }
                 });
 
                 this._ws.on('close',()=>{
@@ -41,6 +54,24 @@ class WSChannel{
 
 
 
+    }
+    _handleMsg(msg){
+        let header = msg.header;
+        let isResponse = header.response;
+        let action = header.action;
+        if(isResponse){
+            let msgId = header.msgId;
+            let callback = this._callbacks[msgId];
+            if(callback){
+                callback(msg);
+            }
+        }
+        // else if(action){
+        //     let handler = this[action+"Handler"];
+        //     if(handler){
+        //         handler.call(this,msg);
+        //     }
+        // }
     }
     _reconnect(){
         let delay = this._reconnectDelay>=5000?5000:this._reconnectDelay;
@@ -76,19 +107,70 @@ class WSChannel{
     getUrl(){
         return this._url;
     }
+
+    sendMessage(req){
+        return new Promise((resolve,reject)=>{
+            let msgId = req.header.id;
+            this._callbacks[msgId] = (msg)=>{
+                delete this._callbacks[msgId];
+                resolve(msg);
+            }
+            try{
+                this.send(JSON.stringify(req));
+            }catch (e){
+                reject({error:e.toString()});
+            }
+
+            setTimeout(()=>{
+                if(this._callbacks[msgId]){
+                    reject({error:"timeout"});
+                }
+
+            },this._timeout);
+        });
+
+    }
 }
 
 Transfer = {
     _wss:new Map(),
-    send:function (msg,serverIP,serverPort,targetServerIP,targetServerPort) {
+    getIP:function () {
+        return config.ip
+
+    },
+
+    getPort:function () {
+        return config.wsPort
+
+    },
+    _getChannel:function (targetServerIP,targetServerPort) {
         let url = 'ws://'+targetServerIP+':'+targetServerPort;
         let ws = this._wss.get(url);
         if(!ws){
             ws = new WSChannel(url,true);
             this._wss.set(url,ws);
         }
-        ws.applyChannel().then(()=>{
-            ws.send(JSON.stringify(msg));
+        return ws;
+    },
+    send: async function (msg,targetServerIP,targetServerPort) {
+
+        let channel = this._getChannel(targetServerIP,targetServerPort);
+        channel.applyChannel().then(()=>{
+            msg.header.serverIP = this.getIP();
+            msg.header.serverPort = this.getPort();
+            msg.header.transfer = true;
+            channel.sendMessage(msg).then((resp)=>{
+                let msgId = resp.header.id;
+                let targets = resp.body.content.targets;
+                let target = resp.body.content.target;
+                let diff = resp.body.content.diff;
+                //[{id:,devices:[id]},diff:{added:[],removed:[]}]
+                Message.transferReceiveReport(msgId,targets,target);
+                if(diff){
+                    //TODO 向目标客户端发送action使其补发
+                }
+
+            });
         });
 
 
