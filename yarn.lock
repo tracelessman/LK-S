@@ -114,7 +114,7 @@
 
 "@ys/collection@https://github.com/spirit1453/codebase.git#js_collection":
   version "0.0.1"
-  resolved "https://github.com/spirit1453/codebase.git#98f1137e2a87bdf11489a676d6308bb1e96ea4ff"
+  resolved "https://github.com/spirit1453/codebase.git#133782ac755786925585809301337ebb74bf7ba9"
   dependencies:
     "@ys/common_dependency" "git+https://github.com/spirit1453/codebase.git#common_dependency"
 
@@ -2785,6 +2785,10 @@ eslint-plugin-import@^2.7.0:
     lodash.cond "^4.3.0"
     minimatch "^3.0.3"
     read-pkg-up "^2.0.0"
+
+eslint-plugin-jest@^21.22.0:
+  version "21.22.0"
+  resolved "http://registry.npm.taobao.org/eslint-plugin-jest/download/eslint-plugin-jest-21.22.0.tgz#1b9e49b3e5ce9a3d0a51af4579991d517f33726e"
 
 eslint-plugin-node@^5.1.1:
   version "5.1.1"
