@@ -9,11 +9,9 @@ const NodeSSH = require('node-ssh')
 const ssh = new NodeSSH()
 const path = require('path')
 const rootPath = path.resolve(__dirname,'../')
-const {cmdUtil} = require("@ys/external");
 const assert = require('assert');
 
 (async()=>{
-    await cmdUtil.getEnv()
     const config = require(path.resolve(rootPath,'config'))
     const option = {
         host:config.ip,
