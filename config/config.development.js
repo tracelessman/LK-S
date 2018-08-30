@@ -18,6 +18,8 @@ if(os.platform() === 'darwin'){
     }
 
 }
+console.log({configDev:config})
+
 
 Object.freeze(config)
 module.exports = config
