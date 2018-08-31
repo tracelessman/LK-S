@@ -17,7 +17,7 @@ let Message = {
             if(error){
 
             }else{
-                this._checkRemoveMsg(msgId);
+                this._checkRemoveMsg(flowId);
             }
         });
     },
