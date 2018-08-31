@@ -25,11 +25,10 @@ let LKServer = {
       return "f"+(this._flowSeqSeed++);
     },
     clients: new Map(),//对应多个ws uid:{_did:ws}
-    newResponseMsg: function (flowId,msgId,content) {
-        return {
+    newResponseMsg: function (msgId,content,flowId) {
+        let res= {
             header:{
                 version:"1.0",
-                flowId:flowId,
                 msgId:msgId,
                 response:true,
                 // orgMCode:"",
@@ -39,6 +38,10 @@ let LKServer = {
                 content:content
             }
         };
+        if(flowId){
+            res.header.flowId = flowId;
+        }
+        return res;
     },
     init: function (port) {
         LKServer.wss = new WebSocket.Server({port: port});
@@ -69,7 +72,7 @@ let LKServer = {
                         // Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                         // ws.close();
                     } else {
-                        let content = JSON.stringify(LKServer.newResponseMsg(header.flowId, {err: "无法识别的请求"}));
+                        let content = JSON.stringify(LKServer.newResponseMsg(header.msgId, {err: "无法识别的请求"}));
                         ws.send(content);
                     }
 
@@ -423,7 +426,7 @@ let LKServer = {
         if(ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
         }
-        let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs}));
+        let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs},header.flowId));
         ws.send(content);
     },
 
