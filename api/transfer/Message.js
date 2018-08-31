@@ -3,28 +3,17 @@ const Log = require('./Log');
 let Message = {
 
     _checkRemoveMsg:function (msgId) {
-        let sql =`
-            select * from flow where msgId=?
-        `;
-        Pool.query(sql,[msgId],function (error,results,fields) {
+        let sql = `delete from message where id=? and 1>(select count(*) from flow where msgId=?)`;
+        Pool.query(sql,[msgId,msgId],function (error,results,fields) {
             if(error){
 
-            }else{
-                if(results.length==0){
-                    let sql = `delete from message where id=?`;
-                    Pool.query(sql,[msgId],function (error,results,fields) {
-                        if(error){
-
-                        }
-                    });
-                }
             }
         });
     },
 
-    receiveReport:function (msgId,uid,did) {
-        let sql = "delete from flow where msgId=? and targetDid=?";
-        Pool.query(sql,[msgId,did], (error,results,fields) =>{
+    receiveReport:function (flowId) {
+        let sql = "delete from flow where id=?";
+        Pool.query(sql,[flowId], (error,results,fields) =>{
             if(error){
 
             }else{
@@ -33,43 +22,43 @@ let Message = {
         });
     },
 
-    transferReceiveReport:function (msgId,targets,target) {
-        let sql = "delete from flow where msgId=?";
-        let params = [msgId];
-        if(target){
-            sql += " and targetUid=?";
-            params.push(target.id);
-        }else if(targets&&targets.length>0){
-            sql += " and targetDid in(";
-            targets.forEach((t)=>{
-                if(t.devices&&t.devices.length>0){
-                    t.devices.forEach((device)=>{
-                        params.push(device.id);
-                    });
-                }
-            })
-            for(let i=1;i<params.length;i++){
-                sql+="?";
-                if(i<params.length-1){
-                    sql+=",";
-                }
-            }
-            sql += ")";
-        }
-        Pool.query(sql,params, (error,results,fields) =>{
-            if(error){
-
-            }else{
-                this._checkRemoveMsg(msgId);
-            }
-        });
-    },
+    // transferReceiveReport:function (msgId,targets,target) {
+    //     let sql = "delete from flow where msgId=?";
+    //     let params = [msgId];
+    //     if(target){
+    //         sql += " and targetUid=?";
+    //         params.push(target.id);
+    //     }else if(targets&&targets.length>0){
+    //         sql += " and targetDid in(";
+    //         targets.forEach((t)=>{
+    //             if(t.devices&&t.devices.length>0){
+    //                 t.devices.forEach((device)=>{
+    //                     params.push(device.id);
+    //                 });
+    //             }
+    //         })
+    //         for(let i=1;i<params.length;i++){
+    //             sql+="?";
+    //             if(i<params.length-1){
+    //                 sql+=",";
+    //             }
+    //         }
+    //         sql += ")";
+    //     }
+    //     Pool.query(sql,params, (error,results,fields) =>{
+    //         if(error){
+    //
+    //         }else{
+    //             this._checkRemoveMsg(msgId);
+    //         }
+    //     });
+    // },
 
     asyPeriodGetLocalMsgByTarget:function (targetUid,targetDid,time) {
         return new Promise((resolve,reject)=>{
             let sql = `
                 select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,message.timeout,
-                flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
+                flow.id as flowId,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetUid=?
@@ -89,15 +78,10 @@ let Message = {
 
     },
 
-    markSent:function (msgId,targetUid,targetDid) {
+    markSent:function (flowId) {
         return new Promise((resolve,reject)=>{
-            let params = [new Date(),msgId,targetUid];
-            let sql = " update flow set lastSendTime=? where msgId=? and targetUid=? ";
-            if(targetDid){
-                sql += "and targetDid=?";
-                params.push(targetDid);
-            }
-            Pool.query(sql,params, (error,results,fields) =>{
+            let sql = " update flow set lastSendTime=? where id=? ";
+            Pool.query(sql,[new Date(),flowId], (error,results,fields) =>{
                 resolve();
             });
         });
@@ -106,7 +90,7 @@ let Message = {
         return new Promise((resolve,reject)=>{
             let sql = `
                 select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,message.timeout,
-                flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
+                flow.id as flowId,flow.targetServerIP,flow.targetServerPort,flow.targetText 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetServerIP is not null
@@ -122,11 +106,11 @@ let Message = {
             });
         });
     },
-    asyGetAllRetainMsg:function (uid,did) {
+    asyGetAllLocalRetainMsg:function (uid,did) {
         return new Promise((resolve,reject)=>{
             let sql = `
                 select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,
-                flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
+                flow.id as flowId,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetUid=?
@@ -171,13 +155,28 @@ let Message = {
             });
         });
     },
-    asyAddFlow:function (msgId,uid,did,random,targetServerIP,targetServerPort) {
+    asyAddLocalFlow:function (flowId,msgId,uid,did,random) {
         return new Promise((resolve,reject)=>{
             let sql = `
                 insert into flow
                 set ?
             `;
-            Pool.query(sql,{msgId:msgId,targetUid:uid,targetDid:did,random:random,targetServerIP:targetServerIP,targetServerPort:targetServerPort}, (error,results,fields) =>{
+            Pool.query(sql,{id:flowId,msgId:msgId,targetUid:uid,targetDid:did,random:random}, (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
+        });
+    },
+    asyAddForeignFlow:function (flowId,msgId,targetServerIP,targetServerPort,target) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                insert into flow
+                set ?
+            `;
+            Pool.query(sql,{id:flowId,msgId:msgId,targetServerIP:targetServerIP,targetServerPort:targetServerPort,targetText:JSON.stringify(target)}, (error,results,fields) =>{
                 if(error){
                     reject(error);
                 }else{

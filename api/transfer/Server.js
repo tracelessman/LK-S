@@ -1,6 +1,4 @@
-const url = require('url');
 const WebSocket = require('ws');
-const fs = require('fs');
 const path = require('path');
 const Message = require('./Message');
 const Log = require('./Log');
@@ -15,18 +13,23 @@ const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 
-var LKServer = {
+let LKServer = {
     _hbTimeout: 3 * 60 * 1000,
-    seed: 1,
+    _flowSeqSeed:Date.now(),
+    _wsIdSeed: 1,
     //临时内部id，用于标识ws
     generateWsId: function () {
-        return this.seed++;
+        return this._wsIdSeed++;
+    },
+    generateFlowId:function () {
+      return "f"+(this._flowSeqSeed++);
     },
     clients: new Map(),//对应多个ws uid:{_did:ws}
-    newResponseMsg: function (msgId,content) {
+    newResponseMsg: function (flowId,msgId,content) {
         return {
             header:{
                 version:"1.0",
+                flowId:flowId,
                 msgId:msgId,
                 response:true,
                 // orgMCode:"",
@@ -39,17 +42,15 @@ var LKServer = {
     },
     init: function (port) {
         LKServer.wss = new WebSocket.Server({port: port});
-        LKServer.wss.on('connection', function connection(ws, req) {
+        LKServer.wss.on('connection', function connection(ws) {
             ws.on('message', function incoming(message) {
                 try{
                     let msg = JSON.parse(message);
                     let header = msg.header;
                     let action = header.action;
                     let isResponse = header.response;
-                    // let serverIP = header.serverIP;
-                    // let serverPort = header.serverPort;
                     if (isResponse) {//得到接收应答，删除缓存
-                        Message.receiveReport(header.msgId, header.uid, header.did);
+                        Message.receiveReport(header.flowId);
                     }
                     else if (LKServer[action]) {
                         LKServer[action](msg, ws);
@@ -68,7 +69,7 @@ var LKServer = {
                         // Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                         // ws.close();
                     } else {
-                        var content = JSON.stringify(LKServer.newResponseMsg(msg, {err: "无法识别的请求"}));
+                        let content = JSON.stringify(LKServer.newResponseMsg(header.flowId, {err: "无法识别的请求"}));
                         ws.send(content);
                     }
 
@@ -78,15 +79,15 @@ var LKServer = {
 
             });
 
-            ws.on('close', function (msg) {
+            ws.on('close', function () {
                 console.info("auto close:" + ws._uid + "," + ws._did );
                 if (ws._uid) {
-                    var wsS = LKServer.clients.get(ws._uid);
+                    let wsS = LKServer.clients.get(ws._uid);
                     if (wsS&&wsS.has(ws._did)) {
                         wsS.delete(ws._did);
                         let date = new Date();
                         Log.info("logout:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-                        if (wsS.size==0) {
+                        if (wsS.size===0) {
                             LKServer.clients.delete(ws._uid);
                         }
                     }
@@ -116,22 +117,31 @@ var LKServer = {
         const record = await ormService.user.getFirstRecord()
         return record.publicKey.toString(encoding)
     },
-    _newMsgFromRow:function (row) {
+    _newMsgFromRow:function (row,local) {
         let msg = {
             header:{target:{}}
         };
         let header = msg.header;
         header.version = "1.0";
         header.id = row.msgId;
+        header.flowId = row.flowId;
         header.action = row.action;
         header.uid = row.senderUid;
         header.did = row.senderDid;
         header.time = row.sendTime;
-        header.timeout = row.timeout,
-
-        header.target.id = row.targetUid;
-        header.target.did = row.targetDid;
-        header.target.random = row.random;
+        header.timeout = row.timeout;
+        if(local){
+            header.target.id = row.targetUid;
+            header.target.did = row.targetDid;
+            header.target.random = row.random;
+        }else{
+            let target = JSON.parse(row.targetText);
+            if(target.forEach){
+                header.targets = target;
+            }else{
+                header.target = target;
+            }
+        }
         msg.body = JSON.parse(row.body);
         return msg;
     },
@@ -140,18 +150,18 @@ var LKServer = {
             let msgs = [];
             for(let i=0;i<rows.length;i++){
                 let row = rows[i];
-                msgs.push(this._newMsgFromRow(row));
+                msgs.push(this._newMsgFromRow(row,true));
             }
             ws.send(JSON.stringify(msgs),function () {
                 msgs.forEach(function (msg) {
-                    Message.markSent(msg.header.id,ws._uid,ws._did);
+                    Message.markSent(msg.header.flowId);
                 })
             });
         }
 
     },
     _checkSingalWSTimeoutMsgs:function (ws,time) {
-        return new Promise((resolve,reject)=>{
+        return new Promise((resolve)=>{
             if(time-ws._lastHbTime>this._hbTimeout){
                 ws.close();
                 resolve();
@@ -168,21 +178,20 @@ var LKServer = {
         //local members's retain msg
         let time = Date.now();
          let ps = [Message.asyPeriodGetForeignMsg(time)];
-         this.clients.forEach( (wsS,uid)=>{
-            wsS.forEach((ws,id)=>{
+         this.clients.forEach( (wsS)=>{
+            wsS.forEach((ws)=>{
                 ps.push(this._checkSingalWSTimeoutMsgs(ws,time))
             })
         })
         let results = await Promise.all(ps);
         //foreign contact's retain msg
         let foreignMsgs = results[0];
-        let ps2 = [];
         if(foreignMsgs){
-            foreignMsgs.forEach(function (msg) {
-                ps2.push(Transfer.send(msg));
+            foreignMsgs.forEach( (row) =>{
+                let msg = this._newMsgFromRow(row,false);
+                Transfer.send(msg,row.serverIP,row.serverPort);
             })
         }
-        await Promise.all(ps2);
         setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
     },
     ping: async function(msg,ws){
@@ -191,10 +200,10 @@ var LKServer = {
         let orgMCode = result[0];
         let memberMCode = result[1];
         let ps = [];
-        if(msg.header.orgMCode!=orgMCode){
+        if(msg.header.orgMCode!==orgMCode){
             ps.push(Org.asyGetBaseList());
         }
-        if(msg.header.memberMCode!=memberMCode){
+        if(msg.header.memberMCode!==memberMCode){
             ps.push(Member.asyGetAllMCodes())
         }
         result = await Promise.all(ps)
@@ -203,8 +212,8 @@ var LKServer = {
                 {
                     orgMCode:orgMCode,
                     memberMCode:memberMCode,
-                    orgs:msg.header.orgMCode!=orgMCode?result[0]:null,
-                    members:msg.header.memberMCode!=memberMCode?result[1]:null
+                    orgs:msg.header.orgMCode!==orgMCode?result[0]:null,
+                    members:msg.header.memberMCode!==memberMCode?result[1]:null
                 }
 
         ));
@@ -222,7 +231,7 @@ var LKServer = {
         let did = msg.header.did;
         // Member.asyGetMember(uid).then((member)=>{
         //     if(member){
-                var wsS = this.clients.get(uid);
+                let wsS = this.clients.get(uid);
                 if (!wsS) {
                     wsS = new Map();
                     this.clients.set(uid,wsS);
@@ -230,7 +239,7 @@ var LKServer = {
                 if(wsS.has(ws._did)){
                     let old = wsS.get(ws._did);
                     wsS.delete(ws._did);
-                    if(old!=ws){
+                    if(old!==ws){
                         old.close();
                     }
                 }
@@ -241,7 +250,7 @@ var LKServer = {
 
                 let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
                 ws.send(content);
-                Message.asyGetAllRetainMsg(uid,did).then((rows)=>{
+                Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
                     this._sendLocalRetainMsgs(ws,rows);
                 });
             // }else{
@@ -257,8 +266,8 @@ var LKServer = {
         let did = content.did;
         let venderDid = content.venderDid;
         let pk = content.pk;
-        let checkCode = content.checkCode;
-        let qrCode = content.qrCode;
+        // let checkCode = content.checkCode;
+        // let qrCode = content.qrCode;
         let description = content.description;
         //TODO 验证签名,checkCode,修改ticket,memeber记录
         //验证是否存在该人员
@@ -326,8 +335,9 @@ var LKServer = {
             }
         }
         curDevices.forEach(function (device) {
-            if(device.id!==excludeDevice)
+            if(device.id!==excludeDevice){
                 added.push({id:device.id,pk:device.pk});
+            }
         });
         return {id:uid,added:added,removed:removed};
     },
@@ -346,19 +356,29 @@ var LKServer = {
         let diffs = [];
         let ckDiffPs = [];
 
-        if(header.transfer){
-            targets.forEach((target)=>{
-                let devices = target.devices;
+        let targetsNeedTrasfer = new Map();
+        targets.forEach((target)=>{
+            let devices = target.devices;
+            if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
+                let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
+                if(!targets2){
+                    targets2 = [];
+                    targetsNeedTrasfer.set(target.serverIP+":"+target.serverPort,targets2);
+                }
+                targets2.push(target);
+            }else{
                 ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
-                    Message.asyAddFlow(msgId,target.id,device.id,device.random).then(()=>{
-                        var wsS = this.clients.get(target.id);
+                    let flowId = this.generateFlowId();
+                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
+                        let wsS = this.clients.get(target.id);
                         if (wsS) {
                             let ws = wsS.get(device.id);
                             if(ws){
                                 let flowMsg = {header:{
                                     version:header.version,
                                     id:header.id,
+                                    flowId:flowId,
                                     uid:header.uid,
                                     did:header.did,
                                     action:header.action,
@@ -371,94 +391,40 @@ var LKServer = {
                                     }
                                 },body:msg.body};
                                 ws.send(JSON.stringify(flowMsg),()=> {
-                                    Message.markSent(msgId,target.id,device.id);
+                                    Message.markSent(flowId);
                                 });
                             }
                         }
-
                     });
                 })
-
-            });
-        }else{
-            let targetsNeedTrasfer = new Map();
-            targets.forEach((target)=>{
-                let devices = target.devices;
-                if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
-                    let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
-                    if(!targets2){
-                        targets2 = [];
-                        targetsNeedTrasfer.set(target.serverIP+":"+target.serverPort,targets2);
-                    }
-                    targets2.push(target);
-                }else{
-                    ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
-                }
-
-                devices.forEach((device)=>{
-                    Message.asyAddFlow(msgId,target.id,device.id,device.random,target.serverIP,target.serverPort).then(()=>{
-                        if(!target.serverIP||(target.serverIP&&target.serverIP===this.getIP()&&target.serverPort===this.getPort())){//local flow
-                            var wsS = this.clients.get(target.id);
-                            if (wsS) {
-                                let ws = wsS.get(device.id);
-                                if(ws){
-                                    let flowMsg = {header:{
-                                        version:header.version,
-                                        id:header.id,
-                                        uid:header.uid,
-                                        did:header.did,
-                                        action:header.action,
-                                        time:header.time,
-                                        timeout:header.timeout,
-                                        target:{
-                                            id:target.id,
-                                            did:device.id,
-                                            random:device.random,
-                                        }
-                                    },body:msg.body};
-                                    ws.send(JSON.stringify(flowMsg),()=> {
-                                        Message.markSent(header.id,target.id,device.id);
-                                    });
-                                }
-                            }
-                        }
-
-                    });
-                })
-
-            });
-            if(targetsNeedTrasfer.size>0){
-                let msg2 = {header:{
+            }
+        });
+        targetsNeedTrasfer.forEach((v,k)=>{
+            let key = k.split(":");
+            let ip = key[0];
+            let port = key[1];
+            let flowId = this.generateFlowId();
+            Message.asyAddForeignFlow(flowId,msgId,ip,port,v).then(()=>{
+                let flow = {header:{
                     version:header.version,
-                    id:header.id,
+                    id:msgId,
+                    flowId:flowId,
                     uid:header.uid,
                     did:header.did,
                     action:header.action,
-                    serverIP:this.getIP(),
-                    serverPort:this.getPort(),
                     time:header.time,
                     timeout:header.timeout,
-                    targets:targetsNeedTrasfer
+                    targets : v
                 },body:msg.body};
-                targetsNeedTrasfer.forEach((v,k)=>{
-                    msg2.targets = v;
-                    let key = k.split(":");
-                    Transfer.send(msg2,key[0],key[1]);
-                })
-            }
-        }
-
+                Transfer.send(flow,ip,port);
+            })
+        })
 
         if(ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
         }
-        if(header.transfer){
-            let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs,targets:targets}));
-            ws.send(content);
-        }else{
-            let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs}));
-            ws.send(content);
-        }
+        let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs}));
+        ws.send(content);
     },
 
 //TODO 定时清理滞留消息
@@ -471,13 +437,13 @@ var LKServer = {
         let devices = await Device.asyGetDevices(target);
         if(devices){
             devices.forEach((device)=>{
-                Message.asyAddFlow(msgId,target,device.id).then(()=>{
-                    var wsS = this.clients.get(target);
+                Message.asyAddLocalFlow(msgId,target,device.id).then(()=>{
+                    let wsS = this.clients.get(target);
                     if (wsS) {
                         let ws = wsS.get(device.id);
                         if(ws){
                             ws.send(JSON.stringify(msg),()=> {
-                                Message.markSent(header.id,target,device.id);
+                                Message.markSent(header.flowId);
                             });
                         }
                     }
@@ -493,16 +459,17 @@ var LKServer = {
         let target = header.target;
         if(header.transfer){
             await Message.asyAddMessage(msg);
-            Message.asyAddFlow(msgId,target.id).then(()=>{
-                var wsS = this.clients.get(target.id);
+            let flowId = this.generateFlowId();
+            Message.asyAddLocalFlow(flowId,msgId,target.id).then(()=>{
+                let wsS = this.clients.get(target.id);
                 if (wsS&&wsS.size>0) {
                     let msgStr = JSON.stringify(msg);
                     let marked =false;
-                    wsS.forEach((v,k)=>{
+                    wsS.forEach((v)=>{
                         v.send(msgStr,()=> {
                             if(!marked){
                                 marked = true;
-                                Message.markSent(msgId,target.id);
+                                Message.markSent(flowId);
                             }
                         });
                     })
@@ -513,10 +480,10 @@ var LKServer = {
         }else{
             if(target.serverIP!==this.getIP()||target.serverPort!==this.getPort()){
                 await Message.asyAddMessage(msg);
-                Message.asyAddFlow(msgId,target.id,null,null,target.serverIP,target.serverPort).then(()=>{
-                    Transfer.send(msg,target.serverIP,target.serverPort).then(()=>{
-                        Message.markSent(msgId,target.id);
-                    });
+                let flowId = this.generateFlowId();
+                Message.asyAddForeignFlow(flowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
+                    msg.header.flowId = flowId;
+                    Transfer.send(msg,target.serverIP,target.serverPort);
                 });
                 let content = JSON.stringify(this.newResponseMsg(msgId));
                 ws.send(content);

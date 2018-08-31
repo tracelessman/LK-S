@@ -217,15 +217,17 @@ CREATE TABLE IF NOT EXISTS message
         pool.query(`
 CREATE TABLE IF NOT EXISTS flow 
 (
+    id varchar(15),
     msgId varchar(36),
     targetUid varchar(36),
     targetDid varchar(36),
+    random TEXT,
     targetServerIP varchar(45),
     targetServerPort int,
-    targetMCode varchar(32),
-    random TEXT,
+    targetText TEXT,
     lastSendTime datetime,
-    reserve1 TEXT
+    reserve1 TEXT,
+    PRIMARY KEY (id)
 )
 `,(err,result)=>{
             if(err){
@@ -256,6 +258,7 @@ CREATE TABLE IF NOT EXISTS log
             }
         })
     })
+
     Promise.all([p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10])
 });
 

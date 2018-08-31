@@ -1,5 +1,5 @@
 //TODO 和其他服务器连接并发送消息
-
+const Pool = require('../store/pool');
 const WebSocket = require('ws');
 const path = require('path');
 const rootPath = path.resolve(__dirname,'../../')
@@ -152,6 +152,7 @@ Transfer = {
         }
         return ws;
     },
+
     send: async function (msg,targetServerIP,targetServerPort) {
 
         let channel = this._getChannel(targetServerIP,targetServerPort);
@@ -159,18 +160,19 @@ Transfer = {
             msg.header.serverIP = this.getIP();
             msg.header.serverPort = this.getPort();
             msg.header.transfer = true;
+            Message.markSent(msg.header.flowId);
             channel.sendMessage(msg).then((resp)=>{
                 let msgId = resp.header.id;
                 let targets = resp.body.content.targets;
                 let target = resp.body.content.target;
                 let diff = resp.body.content.diff;
-                //[{id:,devices:[id]},diff:{added:[],removed:[]}]
-                Message.transferReceiveReport(msgId,targets,target);
+                Message.receiveReport(resp.header.flowId);
                 if(diff){
                     //TODO 向目标客户端发送action使其补发
                 }
 
             });
+
         });
 
 
