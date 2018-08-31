@@ -437,13 +437,14 @@ let LKServer = {
         let devices = await Device.asyGetDevices(target);
         if(devices){
             devices.forEach((device)=>{
-                Message.asyAddLocalFlow(msgId,target,device.id).then(()=>{
+                let flowId = this.generateFlowId();
+                Message.asyAddLocalFlow(flowId,msgId,target,device.id).then(()=>{
                     let wsS = this.clients.get(target);
                     if (wsS) {
                         let ws = wsS.get(device.id);
                         if(ws){
                             ws.send(JSON.stringify(msg),()=> {
-                                Message.markSent(header.flowId);
+                                Message.markSent(flowId);
                             });
                         }
                     }
