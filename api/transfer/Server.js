@@ -502,4 +502,6 @@ let LKServer = {
     }
 }
 
+LKServer.init(config.wsPort)
+
 module.exports = LKServer

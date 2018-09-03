@@ -12,7 +12,8 @@
     "start:testing": "cross-env  && NONODE_ENV=testing nuxt buildDE_ENV=testing nuxt start",
     "precommit": "npm run lint",
     "lint": "eslint --ext .js,.vue .",
-    "deploy:testing": "cross-env NODE_ENV=testing node bin/deploy"
+    "deploy:testing": "cross-env NODE_ENV=testing node bin/deploy",
+    "start:ws":"node api/transfer/Server"
   },
   "dependencies": {
     "@ys/collection": "https://github.com/spirit1453/codebase.git#js_collection",
