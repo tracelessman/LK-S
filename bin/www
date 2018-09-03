@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-NODE_ENV=development ./node_modules/.bin/nuxt
+NODE_ENV=development nuxt
