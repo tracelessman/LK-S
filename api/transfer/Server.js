@@ -134,6 +134,8 @@ let LKServer = {
         header.time = row.sendTime;
         header.timeout = row.timeout;
         if(local){
+            header.serverIP = row.senderServerIP;
+            header.serverPort = row.senderServerPort;
             header.target.id = row.targetUid;
             header.target.did = row.targetDid;
             header.target.random = row.random;

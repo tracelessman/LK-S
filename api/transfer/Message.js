@@ -62,7 +62,7 @@ let Message = {
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetUid=?
-                and flow.targetDid=?
+                and (flow.targetDid=? or flow.targetDid is null)
                 and flow.targetServerIP is null
                 and flow.lastSendTime is not null 
                 and ?-unix_timestamp(flow.lastSendTime)>180000
@@ -89,7 +89,7 @@ let Message = {
     asyPeriodGetForeignMsg:function (time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,message.timeout,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,message.senderTime,message.timeout,
                 flow.id as flowId,flow.targetServerIP,flow.targetServerPort,flow.targetText 
                 from message,flow 
                 where message.id = flow.msgId 
