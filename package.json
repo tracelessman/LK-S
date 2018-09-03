@@ -13,7 +13,7 @@
     "precommit": "npm run lint",
     "lint": "eslint --ext .js,.vue .",
     "deploy:testing": "cross-env NODE_ENV=testing node bin/deploy",
-    "start:ws":"pm2 start api/transfer/Server.js  --node-args='--inspect'"
+    "start:ws":"pm2 start api/transfer/Server.js  --node-args='--inspect=[192.144.200.234:9229]'"
   },
   "dependencies": {
     "@ys/collection": "https://github.com/spirit1453/codebase.git#js_collection",
