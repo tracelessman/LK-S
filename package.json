@@ -15,18 +15,15 @@
     "deploy:testing": "cross-env NODE_ENV=testing node bin/deploy"
   },
   "dependencies": {
-    "@ys/external": "file:external",
+    "@ys/collection": "https://github.com/spirit1453/codebase.git#js_collection",
     "aes-js": "^3.1.1",
     "apn": "^2.2.0",
     "axios": "^0.16.2",
     "body-parser": "^1.18.3",
     "cross-env": "^5.0.1",
-    "debug": "^3.1.0",
     "express": "^4.15.3",
     "express-session": "^1.15.6",
-    "fs-extra": "^6.0.1",
     "iview": "^2.14.3",
-    "lodash": "^4.17.10",
     "mysql2": "^1.5.3",
     "node-rsa": "^1.0.0",
     "nuxt": "latest",
@@ -35,10 +32,10 @@
     "sequelize": "^4.38.0",
     "simple-git": "^1.96.0",
     "source-map-support": "^0.4.15",
-    "uuid": "^3.3.2",
     "ws": "^6.0.0"
   },
   "devDependencies": {
+    "@ys/eslint-config-strict": "git+https://github.com/spirit1453/codebase.git#strict_eslint",
     "babel-eslint": "^7.2.3",
     "eslint": "^4.3.0",
     "eslint-config-standard": "^10.2.1",
@@ -46,11 +43,13 @@
     "eslint-plugin-flowtype": "^2.50.0",
     "eslint-plugin-html": "^3.1.1",
     "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-jest": "^21.22.0",
     "eslint-plugin-node": "^5.1.1",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
     "jest": "^23.4.0",
-    "node-ssh": "^5.1.2"
+    "node-ssh": "^5.1.2",
+    "suppose": "^0.6.2"
   },
   "config": {
     "nuxt": {

@@ -1,8 +1,0 @@
-{
-  "name": "@ys/external",
-  "version": "0.0.1",
-  "main":"index.js",
-  "dependencies": {
-    "inquirer":"^6.1.0"
-  }
-}

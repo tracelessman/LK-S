@@ -218,9 +218,7 @@ function getTree(ary){
     return result
 }
 
-
-
-router.post('/qrcode', function(req, res, next) {
+router.post('/qrcode', function(req, res) {
     util.checkLogin(req,res);
     const {memberId,ticketId} = req.body;
 
@@ -242,7 +240,8 @@ router.post('/qrcode', function(req, res, next) {
             orgId:member.orgId,
             mCode:member.mCode,
             hasCheckCode:!!ticket.checkCode,
-            name:member.name
+            name:member.name,
+            url:config.url
         }//md5
         const qrcodeData = {
             ...metaData,

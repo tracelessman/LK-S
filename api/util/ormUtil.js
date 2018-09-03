@@ -22,12 +22,6 @@ const ormUtil = {
                     displayPage:[]
                 },
                 ...modelContent,
-                extra:{
-                    type: Sequelize.JSON,
-                    allowNull:true,
-                    title:"额外信息或者用于改变表结构",
-                    displayPage:[]
-                }
             }
 
             sequelizeUtil.preProcessModelObj({
@@ -38,7 +32,9 @@ const ormUtil = {
 
             let modelSequelized =   database.define(tableName,modelObjParam, {
                 paranoid:false,
-                freezeTableName:true
+                freezeTableName:true,
+                createdAt:false,
+                updatedAt:false
             })
             modelSequelized.sync().then(()=>{
                 if(afterSync){

@@ -10,7 +10,7 @@ const excludeAryBase = ['deletedAt','updatedAt','createdAt','id','extra']
 module.exports = {
     excludeAryBase,
     defaultOrder:[
-        ["createdAt","DESC"]
+        ["id","DESC"]
     ],
     preProcessModelObj(param){
         const {modelObj,dict} = param
