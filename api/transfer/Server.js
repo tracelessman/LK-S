@@ -321,17 +321,20 @@ let LKServer = {
         });
     },
     _checkDeviceDiff:async function (uid,localDevices,excludeDevice) {
+
         let curDevices = await DeviceManager.asyGetDevices(uid);
+        let newCurDevices = [];
+        newCurDevices = newCurDevices.concat(curDevices);
         let removed = [];
         let added = [];
         for(let j=0;j<localDevices.length;j++){
             let device = localDevices[j];
             let exists = false;
-            for(let i=0;i<curDevices.length;i++){
-                let curDevice = curDevices[i];
+            for(let i=0;i<newCurDevices.length;i++){
+                let curDevice = newCurDevices[i];
                 if(curDevice.id===device.id){
                     exists = true;
-                    curDevices.splice(i,1);
+                    newCurDevices.splice(i,1);
                     break;
                 }
             }
@@ -339,17 +342,25 @@ let LKServer = {
                 removed.push(device.id);
             }
         }
-        curDevices.forEach(function (device) {
+        newCurDevices.forEach(function (device) {
             if(device.id!==excludeDevice){
                 added.push({id:device.id,pk:device.pk});
             }
         });
-        return {id:uid,added:added,removed:removed};
+        let result = {id:uid,added:added,removed:removed};
+        console.info("------"+uid);
+        console.info("localDevices："+JSON.stringify(localDevices));
+        console.info(JSON.stringify(result))
+        return result;
     },
 
     //TODO第二次补发应该走另一个函数，此时不在返回diff
 
-    sendMsg: async function (msg,ws) {
+    sendMsg2:function (msg,ws) {
+        this.sendMsg(msg,ws,true);
+    },
+
+    sendMsg: async function (msg,ws,nckDiff) {
         let header = msg.header;
         let msgId = header.id;
         let curMsg = await Message.asyGetMsg(msgId);
@@ -372,7 +383,8 @@ let LKServer = {
                 }
                 targets2.push(target);
             }else{
-                ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
+                if(!nckDiff)
+                    ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
                     let flowId = this.generateFlowId();
                     Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
@@ -424,11 +436,13 @@ let LKServer = {
                 Transfer.send(flow,ip,port);
             })
         })
-
-        if(ckDiffPs.length>0){
+        let content = null;
+        if(!nckDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
+            content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs},header.flowId));
+        }else{
+            content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
         }
-        let content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs},header.flowId));
         ws.send(content);
     },
 
