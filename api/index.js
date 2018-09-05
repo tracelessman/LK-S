@@ -21,7 +21,6 @@ const orm = require('./routes/orm')
 const meta = require('./routes/meta')
 const member = require('./routes/member')
 const org = require('./routes/org')
-
 // Import API Routes
 app.use('/user', user)
 app.use('/orm', orm)
