@@ -153,7 +153,7 @@ Transfer = {
         return ws;
     },
 
-    send: async function (msg,targetServerIP,targetServerPort) {
+    send: async function (msg,targetServerIP,targetServerPort,server) {
 
         let channel = this._getChannel(targetServerIP,targetServerPort);
         channel.applyChannel().then(()=>{
@@ -168,7 +168,7 @@ Transfer = {
                 let diff = resp.body.content.diff;
                 Message.receiveReport(resp.header.flowId);
                 if(diff){
-                    //TODO 向目标客户端发送action使其补发
+                    server._sendNewAction("msgDeviceDiffReport",{diff:diff,msgId:msgId,chatId:msg.body.chatId},msg.header.uid,msg.header.did);
                 }
 
             });

@@ -9,6 +9,7 @@ const Member = require('./Member');
 const Device = require('./Device');
 const Friend = require('./Friend');
 const Org = require('./Org');
+const UUID = require('uuid/v4');
 const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
@@ -360,7 +361,7 @@ let LKServer = {
         this.sendMsg(msg,ws,true);
     },
 
-    sendMsg: async function (msg,ws,nckDiff) {
+    sendMsg: async function (msg,ws,nCkDiff) {
         let header = msg.header;
         let msgId = header.id;
         let curMsg = await Message.asyGetMsg(msgId);
@@ -383,7 +384,7 @@ let LKServer = {
                 }
                 targets2.push(target);
             }else{
-                if(!nckDiff)
+                if(!nCkDiff)
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
                     let flowId = this.generateFlowId();
@@ -433,11 +434,11 @@ let LKServer = {
                     timeout:header.timeout,
                     targets : v
                 },body:msg.body};
-                Transfer.send(flow,ip,port);
+                Transfer.send(flow,ip,port,this);
             })
         })
         let content = null;
-        if(!nckDiff&&ckDiffPs.length>0){
+        if(!nCkDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
             content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs},header.flowId));
         }else{
@@ -446,6 +447,30 @@ let LKServer = {
         ws.send(content);
     },
 
+    _sendNewAction:async function(action,content,targetUid,targetDid){
+        let flowId = this.generateFlowId();
+        let msgId = UUID();
+        let msg = {header:{
+            version:"1.0",
+            id:msgId,
+            flowId:flowId,
+            action:action
+        },body:{
+            content:content
+        }};
+        await Message.asyAddMessage(msg);
+        Message.asyAddLocalFlow(flowId,msgId,targetUid,targetDid).then(()=>{
+            let wsS = this.clients.get(targetUid);
+            if (wsS) {
+                let ws = wsS.get(targetDid);
+                if(ws){
+                    ws.send(JSON.stringify(msg),()=> {
+                        Message.markSent(flowId);
+                    });
+                }
+            }
+        });
+    },
 //TODO 定时清理滞留消息
 
     readReport:async function (msg,ws) {
@@ -473,7 +498,7 @@ let LKServer = {
         let content = JSON.stringify(this.newResponseMsg(msgId));
         ws.send(content);
     },
-    applyMF:async function(msg,ws){
+    _transRemote:async function(msg,ws){
         let header = msg.header;
         let msgId = header.id;
         let target = header.target;
@@ -498,21 +523,21 @@ let LKServer = {
             let content = JSON.stringify(this.newResponseMsg(msgId,target));
             ws.send(content);
         }else{
-            if(target.serverIP!==this.getIP()||target.serverPort!==this.getPort()){
-                await Message.asyAddMessage(msg);
-                let flowId = this.generateFlowId();
-                Message.asyAddForeignFlow(flowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
-                    msg.header.flowId = flowId;
-                    Transfer.send(msg,target.serverIP,target.serverPort);
-                });
-                let content = JSON.stringify(this.newResponseMsg(msgId));
-                ws.send(content);
-            }else{
-                let content = JSON.stringify(this.newResponseMsg(msgId,{error:"target in the same org"}));
-                ws.send(content);
-            }
+            await Message.asyAddMessage(msg);
+            let flowId = this.generateFlowId();
+            Message.asyAddForeignFlow(flowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
+                header.flowId = flowId;
+                Transfer.send(msg,target.serverIP,target.serverPort);
+            });
+            let content = JSON.stringify(this.newResponseMsg(msgId));
+            ws.send(content);
         }
-
+    },
+    applyMF:function(msg,ws){
+        this._transRemote(msg,ws);
+    },
+    acceptMF:async function(msg,ws){
+        this._transRemote(msg,ws);
     }
 }
 
