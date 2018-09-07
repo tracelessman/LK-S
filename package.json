@@ -14,7 +14,8 @@
     "lint": "eslint --ext .js,.vue .",
     "deploy:testing": "cross-env NODE_ENV=testing node bin/deploy",
     "start:ws": "pm2 start api/transfer/Server.js  --node-args='--inspect=[192.144.200.234:9229]'",
-    "postinstall": "node bin/postinstall"
+    "postinstall": "node bin/postinstall",
+    "ip": "npm i --production"
   },
   "dependencies": {
     "@ys/collection": "git+https://github.com/spirit1453/node_collection.git#publish",
