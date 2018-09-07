@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS ticket
     memberId varchar(36),
     startTime datetime,
     timeout int,
-    checkCode varchar(6),
+    checkCode varchar(200),
     reserve1 TEXT,
     PRIMARY KEY (id)
 )
