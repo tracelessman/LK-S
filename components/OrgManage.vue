@@ -7,11 +7,11 @@
                 <Button @click='deleteRecord' style="margin-right: 5px;width:60px" size="small" type="primary">删除</Button>
                 <Button @click='expandAll' style="margin-right: 5px;width:80px" size="small" type="primary">全部展开</Button>
             </div>
-            <div style="margin-left:10px;float:left;display: inline-block">
+            <div style="margin:20px;float:left;display: inline-block">
 
                 <Tree :data="treeData" empty-text=""  @on-select-change="onSelectChange" ></Tree>
             </div>
-            <div v-show="this.selectedNode" style="margin-top: 10px;min-height:450px;padding-left: 20px;width:700px;float:right;border-left:1px dashed #dddee1;display: inline-block">
+            <div v-show="this.selectedNode" style="margin-top: 10px;min-height:450px;padding-left: 20px;width:800px;border-left:1px dashed #dddee1;display: inline-block">
                 <Tabs v-model="tabName" type="card" >
                     <TabPane name="memberList" label="组织成员">
                         <MemberManage :selectedNode="selectedNode" ></MemberManage>
