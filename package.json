@@ -11,10 +11,13 @@
     "start": "cross-env NODE_ENV=production nuxt build && NODE_ENV=production nuxt start",
     "precommit": "npm run lint",
     "lint": "eslint --ext .js,.vue .",
-    "start:ws": "pm2 start api/transfer/Server.js  --node-args='--inspect=[192.144.200.234:9229]'",
+    "startWs": "pm2 start api/transfer/Server.js  --node-args='--inspect=[192.144.200.234:9229]'",
     "postinstall": "node bin/postinstall",
     "ip": "npm i --production",
-    "dev:4000": "PORT=4000 nuxt"
+    "dev:other": "isOther=true PORT=4000 nuxt",
+    "startWs:other": "isOther=true PORT=4000 pm2 start api/transfer/Server.js",
+    "devAll:other": "npm run startWs:other && npm run dev:other",
+    "devAll": "npm run startWs && npm run dev"
   },
   "dependencies": {
     "@ys/collection": "git+https://github.com/spirit1453/node_collection.git#publish",
