@@ -44,7 +44,7 @@ module.exports = {
     // API middleware
     '~/api/index.js'
   ],
-    plugins: [
-        { src: '~plugins/iview', ssr: true }
-    ],
+  plugins: [
+    { src: '~plugins/iview', ssr: true }
+  ]
 }
