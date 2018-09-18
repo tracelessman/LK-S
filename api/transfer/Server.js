@@ -349,9 +349,6 @@ let LKServer = {
             }
         });
         let result = {id:uid,added:added,removed:removed};
-        console.info("------"+uid);
-        console.info("localDevices："+JSON.stringify(localDevices));
-        console.info(JSON.stringify(result))
         return result;
     },
 
@@ -375,7 +372,6 @@ let LKServer = {
 
         let targetsNeedTrasfer = new Map();
         targets.forEach((target)=>{
-            let devices = target.devices;
             if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
                 let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
                 if(!targets2){
@@ -384,6 +380,7 @@ let LKServer = {
                 }
                 targets2.push(target);
             }else{
+                let devices = target.devices;
                 if(!nCkDiff)
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
@@ -477,61 +474,71 @@ let LKServer = {
         await Message.asyAddMessage(msg);
         let header = msg.header;
         let msgId = header.id;
+        let srcFlowId = header.flowId;
         let target = header.target;
-        let devices = await Device.asyGetDevices(target);
-        if(devices){
-            devices.forEach((device)=>{
-                let flowId = this.generateFlowId();
-                Message.asyAddLocalFlow(flowId,msgId,target,device.id).then(()=>{
-                    let wsS = this.clients.get(target);
-                    if (wsS) {
-                        let ws = wsS.get(device.id);
-                        if(ws){
-                            ws.send(JSON.stringify(msg),()=> {
-                                Message.markSent(flowId);
-                            });
+        if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())) {//to another server
+            let flowId = this.generateFlowId();
+            Message.asyAddForeignFlow(flowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
+                msg.header.flowId = flowId;
+                Transfer.send(msg,target.serverIP,target.serverPort,this);
+            })
+        }else{
+            let devices = await Device.asyGetDevices(target.id);
+            if(devices){
+                devices.forEach((device)=>{
+                    let flowId = this.generateFlowId();
+                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
+                        let wsS = this.clients.get(target.id);
+                        if (wsS) {
+                            let ws = wsS.get(device.id);
+                            if(ws){
+                                msg.header.flowId = flowId;
+                                ws.send(JSON.stringify(msg),()=> {
+                                    Message.markSent(flowId);
+                                });
+                            }
                         }
-                    }
+                    });
                 });
-            });
+            }
         }
-        let content = JSON.stringify(this.newResponseMsg(msgId));
+
+        let content = JSON.stringify(this.newResponseMsg(msgId,null,srcFlowId));
         ws.send(content);
     },
     _transRemote:async function(msg,ws){
         let header = msg.header;
         let msgId = header.id;
         let target = header.target;
+        await Message.asyAddMessage(msg);
+        let srcFlowId = header.flowId;
+        let newFlowId = this.generateFlowId();
         if(header.transfer){
-            await Message.asyAddMessage(msg);
-            let flowId = this.generateFlowId();
-            Message.asyAddLocalFlow(flowId,msgId,target.id).then(()=>{
+            Message.asyAddLocalFlow(newFlowId,msgId,target.id).then(()=>{
                 let wsS = this.clients.get(target.id);
                 if (wsS&&wsS.size>0) {
+                    header.flowId = newFlowId;
                     let msgStr = JSON.stringify(msg);
                     let marked =false;
                     wsS.forEach((v)=>{
                         v.send(msgStr,()=> {
                             if(!marked){
                                 marked = true;
-                                Message.markSent(flowId);
+                                Message.markSent(newFlowId);
                             }
                         });
                     })
                 }
             });
-            let content = JSON.stringify(this.newResponseMsg(msgId,target));
-            ws.send(content);
         }else{
-            await Message.asyAddMessage(msg);
-            let flowId = this.generateFlowId();
-            Message.asyAddForeignFlow(flowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
-                header.flowId = flowId;
+            Message.asyAddForeignFlow(newFlowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
+                header.flowId = newFlowId;
                 Transfer.send(msg,target.serverIP,target.serverPort);
             });
-            let content = JSON.stringify(this.newResponseMsg(msgId));
-            ws.send(content);
+
         }
+        let content = JSON.stringify(this.newResponseMsg(msgId,null,srcFlowId));
+        ws.send(content);
     },
     applyMF:function(msg,ws){
         this._transRemote(msg,ws);
@@ -609,7 +616,18 @@ let LKServer = {
                 let port = key[1];
                 let flowId = this.generateFlowId();
                 Message.asyAddForeignFlow(flowId,msgId,ip,port,v).then(()=>{
-                    Transfer.send(msg,ip,port,this);
+                    let flow = {header:{
+                        version:header.version,
+                        id:msgId,
+                        flowId:flowId,
+                        uid:header.uid,
+                        did:header.did,
+                        action:header.action,
+                        time:header.time,
+                        timeout:header.timeout,
+                        targets : v
+                    },body:msg.body};
+                    Transfer.send(flow,ip,port,this);
                 })
             })
 

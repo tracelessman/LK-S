@@ -163,8 +163,6 @@ Transfer = {
             Message.markSent(msg.header.flowId);
             channel.sendMessage(msg).then((resp)=>{
                 let msgId = resp.header.id;
-                let targets = resp.body.content.targets;
-                let target = resp.body.content.target;
                 let diff = resp.body.content.diff;
                 Message.receiveReport(resp.header.flowId);
                 if(diff){
