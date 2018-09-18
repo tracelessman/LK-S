@@ -9,13 +9,15 @@
     "dev": "cross-env NODE_ENV=development nuxt",
     "build": "nuxt build",
     "start": "cross-env NODE_ENV=production nuxt build && NODE_ENV=production nuxt start",
-    "start:testing": "cross-env  && NONODE_ENV=testing nuxt buildDE_ENV=testing nuxt start",
     "precommit": "npm run lint",
     "lint": "eslint --ext .js,.vue .",
-    "deploy:testing": "cross-env NODE_ENV=testing node bin/deploy",
-    "start:ws": "pm2 start api/transfer/Server.js  --node-args='--inspect=[192.144.200.234:9229]'",
+    "startWs": "pm2 start api/transfer/Server.js  --node-args='--inspect=[192.144.200.234:9229]'",
     "postinstall": "node bin/postinstall",
-    "ip": "npm i --production"
+    "ip": "npm i --production",
+    "dev:other": "isOther=true PORT=4000 nuxt",
+    "startWs:other": "isOther=true PORT=4000 pm2 start api/transfer/Server.js",
+    "devAll:other": "npm run startWs:other && npm run dev:other",
+    "devAll": "npm run startWs && npm run dev"
   },
   "dependencies": {
     "@ys/collection": "git+https://github.com/spirit1453/node_collection.git#publish",
@@ -23,7 +25,6 @@
     "apn": "^2.2.0",
     "axios": "^0.16.2",
     "body-parser": "^1.18.3",
-    "cross-env": "^5.0.1",
     "express": "^4.15.3",
     "express-session": "^1.15.6",
     "iview": "^2.14.3",
