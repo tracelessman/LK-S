@@ -18,6 +18,8 @@ const {getPid} = CliUtilCol
 const _ = require('lodash')
 const debug = require('debug')('restartAllDev')
 const config = require(path.resolve(rootPath, 'config'))
+const {argv} = require('yargs')
+const {i: needInstall} = argv
 
 start()
 
@@ -36,9 +38,11 @@ function start () {
     const projectFolder = path.resolve(testingFolder, getRepoName(config.repo))
     let cmd = `
   git reset --hard;
-  git pull;
-  npm install --production;
+  git pull; 
   `
+    if (needInstall) {
+      cmd += 'npm install --production;'
+    }
     await execCommand(cmd, projectFolder)
     info(['already pulled and installed'])
     await execCommand('node bin/serverScript', projectFolder)
