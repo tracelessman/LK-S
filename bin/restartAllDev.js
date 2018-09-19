@@ -15,14 +15,16 @@ const {info, error} = CliUtil
 const {SSHUtil} = require('@ys/collection')
 const {execCommand: execCommandCollection} = SSHUtil
 const _ = require('lodash')
+const debug = require('debug')('restartAllDev')
 
 const config = require(path.resolve(rootPath, 'config'))
 ;(async () => {
   const option = {
-    host: config.ip,
+    host: config.txServerIp,
     username: config.sshInfo.username,
     password: config.sshInfo.password
   }
+  debug({option})
   await ssh.connect(option)
   const folderName = 'testing'
   const basePath = '/opt'
@@ -31,13 +33,12 @@ const config = require(path.resolve(rootPath, 'config'))
   let cmd = `
   git reset --hard;
   git pull;
+  npm install --production;
   `
-  const result = await execCommand(cmd, projectFolder)
-  if (result.includes('package.json')) {
-    await execCommand(`npm install --production`, projectFolder)
-  }
+  await execCommand(cmd, projectFolder)
+  info(['already pulled and installed'])
+
   cmd = `
-  npm i;
   npm run runAllDev;
   `
   await execCommand(cmd, projectFolder)
