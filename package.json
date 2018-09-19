@@ -17,7 +17,8 @@
     "startWs:other": "isOther=true PORT=4000 pm2 start api/transfer/Server.js --name=lk_other",
     "devAll:other": "npm run startWs:other && npm run dev:other",
     "devAll": "npm run startWs && npm run dev",
-    "runAllNuxt": "npm run dev && npm run dev:other"
+    "runAllNuxt": "npm run dev && npm run dev:other",
+    "startAll": "npm run devAll && npm run devAll:other"
   },
   "dependencies": {
     "@ys/collection": "git+https://github.com/spirit1453/node_collection.git#publish",
