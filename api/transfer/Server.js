@@ -293,7 +293,8 @@ let LKServer = {
                     let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseList(),Member.asyGetAll(),Friend.asyGetAllFriends()];
                     let result = await Promise.all(ps);
                     const publicKey = await this.asyGetPK()
-                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4]}));
+                    //TODO 返回群关系
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4]}));
                     ws.send(content);
                 }catch(error){
                     console.log(error)
