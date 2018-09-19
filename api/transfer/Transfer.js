@@ -160,12 +160,13 @@ Transfer = {
             msg.header.serverIP = this.getIP();
             msg.header.serverPort = this.getPort();
             msg.header.transfer = true;
+            let action = msg.header.action;
             Message.markSent(msg.header.flowId);
             channel.sendMessage(msg).then((resp)=>{
                 let msgId = resp.header.id;
                 let diff = resp.body.content.diff;
                 Message.receiveReport(resp.header.flowId);
-                if(diff){
+                if(diff&&action==="sendMsg"){
                     server._sendNewAction("msgDeviceDiffReport",{diff:diff,msgId:msgId,chatId:msg.body.chatId},msg.header.uid,msg.header.did);
                 }
 

@@ -513,25 +513,27 @@ let LKServer = {
         let target = header.target;
         await Message.asyAddMessage(msg);
         let srcFlowId = header.flowId;
-        let newFlowId = this.generateFlowId();
         if(header.transfer){
-            Message.asyAddLocalFlow(newFlowId,msgId,target.id).then(()=>{
-                let wsS = this.clients.get(target.id);
-                if (wsS&&wsS.size>0) {
-                    header.flowId = newFlowId;
-                    let msgStr = JSON.stringify(msg);
-                    let marked =false;
-                    wsS.forEach((v)=>{
-                        v.send(msgStr,()=> {
-                            if(!marked){
-                                marked = true;
-                                Message.markSent(newFlowId);
+            let devices = await Device.asyGetDevices(target.id);
+            if(devices){
+                devices.forEach((device)=>{
+                    let flowId = this.generateFlowId();
+                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
+                        let wsS = this.clients.get(target.id);
+                        if (wsS) {
+                            let ws = wsS.get(device.id);
+                            if(ws){
+                                header.flowId = flowId;
+                                ws.send(JSON.stringify(msg),()=> {
+                                    Message.markSent(flowId);
+                                });
                             }
-                        });
-                    })
-                }
-            });
+                        }
+                    });
+                });
+            }
         }else{
+            let newFlowId = this.generateFlowId();
             Message.asyAddForeignFlow(newFlowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
                 header.flowId = newFlowId;
                 Transfer.send(msg,target.serverIP,target.serverPort);
@@ -545,7 +547,33 @@ let LKServer = {
         this._transRemote(msg,ws);
     },
     acceptMF:async function(msg,ws){
-        this._transRemote(msg,ws);
+        let header = msg.header;
+        let content = msg.body.content;
+        this._transRemote(msg,ws).then(()=>{
+            if(header.transfer){
+                Friend.asyGetContact(header.uid).then((contact)=>{
+                    if(!contact){
+                        Friend.asyAddContact(header.uid,content.accepter.name,content.accepter.pic,header.serverIP,header.serverPort);
+                    }
+                })
+                Friend.asyGetFriend(header.target.id,header.uid).then((friend)=>{
+                    if(!friend){
+                        Friend.asyAddFriend(header.target.id,header.uid);
+                    }
+                });
+            }else{
+                Friend.asyGetContact(header.target.id).then((contact)=>{
+                    if(!contact){
+                        Friend.asyAddContact(header.target.id,content.applyer.name,content.applyer.pic,header.target.serverIP,header.target.serverPort);
+                    }
+                })
+                Friend.asyGetFriend(header.uid,header.target.id).then((friend)=>{
+                    if(!friend){
+                         Friend.asyAddFriend(header.uid,header.target.id);
+                    }
+                });
+            }
+        });
     },
     addGroupChat:async function (msg,ws) {
         let header = msg.header;
