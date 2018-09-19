@@ -12,8 +12,9 @@ const rootPath = path.resolve(__dirname, '../')
 const {GitUtil, CliUtil} = require('@ys/vanilla')
 const {getRepoName} = GitUtil
 const {info, error} = CliUtil
-const {SSHUtil} = require('@ys/collection')
+const {SSHUtil, CliUtilCol} = require('@ys/collection')
 const {execCommand: execCommandCollection} = SSHUtil
+const {getPid} = CliUtilCol
 const _ = require('lodash')
 const debug = require('debug')('restartAllDev')
 const config = require(path.resolve(rootPath, 'config'))
@@ -43,7 +44,14 @@ function start () {
     await execCommand('node bin/serverScript', projectFolder)
     info(['serverScript finished'])
 
-    cmd = `
+    cmd = ''
+    if (!getPid(3001)) {
+      cmd += 'npm run startWs;'
+    }
+    if (!getPid(4001)) {
+      cmd += 'npm run startWs:other;'
+    }
+    cmd += `
   npm run runAllNuxt;
   `
     await execCommand(cmd, projectFolder)
