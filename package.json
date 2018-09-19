@@ -10,11 +10,11 @@
     "build": "nuxt build",
     "start": "cross-env NODE_ENV=production nuxt build && NODE_ENV=production nuxt start",
     "lint": "eslint --ext .js,.vue .",
-    "startWs": "pm2 start api/transfer/Server.js  --node-args='--inspect=[192.144.200.234:9229]'",
+    "startWs": "pm2 start api/transfer/Server.js --name=lk --node-args='--inspect=[192.144.200.234:9229]'",
     "postinstall": "node bin/postinstall",
     "ip": "npm i --production",
     "dev:other": "isOther=true PORT=4000 nuxt",
-    "startWs:other": "isOther=true PORT=4000 pm2 start api/transfer/Server.js",
+    "startWs:other": "isOther=true PORT=4000 pm2 start api/transfer/Server.js --name=lk_other",
     "devAll:other": "npm run startWs:other && npm run dev:other",
     "devAll": "npm run startWs && npm run dev",
     "runAllNuxt": "npm run dev && npm run dev:other"
