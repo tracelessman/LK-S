@@ -2,7 +2,7 @@
 node_modules
 
 # logs
-npm-debug.log
+*.log
 
 # Nuxt build
 .nuxt
@@ -21,3 +21,5 @@ yarn-error.log
 
 #custom
 unversioned*
+
+

@@ -1,14 +1,13 @@
 const { Router } = require('express')
 const crypto = require('crypto')
 
-const qr = require('qr-image')
 const router = Router()
 const {ormServicePromise} = require('../store/ormService')
-const key = 'user'
 const util = require('../util')
 const config = require('../../config')
 const NodeRSA = require('node-rsa')
-const aesjs = require('aes-js')
+const {CryptoUtil} = require('@ys/vanilla')
+const {encryptAES} = CryptoUtil
 
 // role:super,admin,common
 router.post('/login', (req, res) => {
@@ -208,10 +207,7 @@ router.post('/qrcode', function (req, res, next) {
       id,
       signature: key.sign(id, config.encrypt.signatureFormat, config.encrypt.sourceFormat)
     }
-    const textBytes = aesjs.utils.utf8.toBytes(JSON.stringify(qrcodeData))
-    const aesCtr = new aesjs.ModeOfOperation.ctr(config.encrypt.aesKey, new aesjs.Counter(5))
-    const encryptedBytes = aesCtr.encrypt(textBytes)
-    const encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes)
+    const encryptedHex = encryptAES(JSON.stringify(qrcodeData))
 
     res.json({
       content: {
