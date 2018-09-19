@@ -17,7 +17,7 @@
     "startWs:other": "isOther=true PORT=4000 pm2 start api/transfer/Server.js --name=lk_other",
     "devAll:other": "npm run startWs:other && npm run dev:other",
     "devAll": "npm run startWs && npm run dev",
-    "runAllNuxt": "npm run dev && npm run dev:other",
+    "runAllNuxt": "concurrently 'npm run dev' 'npm run dev:other'",
     "startAll": "npm run devAll && npm run devAll:other"
   },
   "dependencies": {
@@ -26,6 +26,7 @@
     "apn": "^2.2.0",
     "axios": "^0.16.2",
     "body-parser": "^1.18.3",
+    "concurrently": "^4.0.1",
     "express": "^4.15.3",
     "express-session": "^1.15.6",
     "iview": "^2.14.3",
