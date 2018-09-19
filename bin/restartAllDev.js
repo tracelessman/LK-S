@@ -37,9 +37,11 @@ const config = require(path.resolve(rootPath, 'config'))
   `
   await execCommand(cmd, projectFolder)
   info(['already pulled and installed'])
+  await execCommand('node bin/serverScript', projectFolder)
+  info(['serverScript finished'])
 
   cmd = `
-  npm run runAllDev;
+  npm run runAllNuxt;
   `
   await execCommand(cmd, projectFolder)
   ssh.dispose()
