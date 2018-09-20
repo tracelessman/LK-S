@@ -64,6 +64,8 @@ CREATE TABLE IF NOT EXISTS member
     pic TEXT,
     orgId varchar(36),
     mCode varchar(32),
+    serverIP varchar(45),
+    serverPort int,
     reserve1 TEXT,
     PRIMARY KEY (id)
 )
@@ -121,49 +123,49 @@ CREATE TABLE IF NOT EXISTS device
         })
     })
 
-    const p5 = new Promise(resolve => {
-        pool.query(`
-CREATE TABLE IF NOT EXISTS contact 
-(
-    id varchar(36),
-    name varchar(100),
-    pic TEXT,
-    serverIP varchar(45),
-    serverPort int,
-    mCode varchar(32),
-    reserve1 TEXT,
-    PRIMARY KEY (id)
-)
-`,(err,result)=>{
-            if(err){
-                console.log(err)
-                throw err
-            }else{
-                resolve(result)
-            }
-        })
-    })
+//     const p5 = new Promise(resolve => {
+//         pool.query(`
+// CREATE TABLE IF NOT EXISTS contact
+// (
+//     id varchar(36),
+//     name varchar(100),
+//     pic TEXT,
+//     serverIP varchar(45),
+//     serverPort int,
+//     mCode varchar(32),
+//     reserve1 TEXT,
+//     PRIMARY KEY (id)
+// )
+// `,(err,result)=>{
+//             if(err){
+//                 console.log(err)
+//                 throw err
+//             }else{
+//                 resolve(result)
+//             }
+//         })
+//     })
 
-    const p6 = new Promise(resolve => {
-        pool.query(`
-CREATE TABLE IF NOT EXISTS contactDevice 
-(
-    id varchar(36),
-    contactId varchar(36),
-    description varchar(100),
-    pk TEXT,
-    reserve1 TEXT,
-    PRIMARY KEY (id)
-)
-`,(err,result)=>{
-            if(err){
-                console.log(err)
-                throw err
-            }else{
-                resolve(result)
-            }
-        })
-    })
+//     const p6 = new Promise(resolve => {
+//         pool.query(`
+// CREATE TABLE IF NOT EXISTS contactDevice
+// (
+//     id varchar(36),
+//     contactId varchar(36),
+//     description varchar(100),
+//     pk TEXT,
+//     reserve1 TEXT,
+//     PRIMARY KEY (id)
+// )
+// `,(err,result)=>{
+//             if(err){
+//                 console.log(err)
+//                 throw err
+//             }else{
+//                 resolve(result)
+//             }
+//         })
+//     })
 
     const p7 = new Promise(resolve => {
         pool.query(`
@@ -259,7 +261,42 @@ CREATE TABLE IF NOT EXISTS log
         })
     })
 
-    Promise.all([p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10])
+    const p11 = new Promise(resolve => {
+        pool.query(`
+CREATE TABLE IF NOT EXISTS group 
+(
+    id varchar(36),
+    name varchar(100),
+    PRIMARY KEY (id)
+)
+`,(err,result)=>{
+            if(err){
+                console.log(err)
+                throw err
+            }else{
+                resolve(result)
+            }
+        })
+    })
+
+    const p12 = new Promise(resolve => {
+        pool.query(`
+CREATE TABLE IF NOT EXISTS groupMember 
+(
+    gid varchar(36),
+    memberId varchar(36)
+)
+`,(err,result)=>{
+            if(err){
+                console.log(err)
+                throw err
+            }else{
+                resolve(result)
+            }
+        })
+    })
+
+    Promise.all([p0,p1,p2,p3,p4,p7,p8,p9,p10,p11,p12])
 });
 
 module.exports = pool

@@ -6,7 +6,7 @@ let Member = {
         return new Promise((resolve,reject)=>{
             let sql = `
                 select * from member
-                where id=?
+                where id=? and orgId is not null
             `;
             Pool.query(sql,[uid], (error,results,fields) =>{
                 if(error){
@@ -22,7 +22,7 @@ let Member = {
     asyGetAll:function () {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select * from member
+                select * from member where orgId is not null
             `;
             Pool.query(sql,[], (error,results,fields) =>{
                 if(error){
@@ -36,7 +36,7 @@ let Member = {
     asyGetAllMCodes:function () {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select id,mCode from member
+                select id,mCode from member where orgId is not null
             `;
             Pool.query(sql,[], (error,results,fields) =>{
                 if(error){
@@ -68,6 +68,37 @@ let Member = {
 
             }
             resolve(null);
+        });
+    },
+    asyGetContact:function (uid) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select * from member
+                where id=?
+            `;
+            Pool.query(sql,[uid], (error,results,fields) =>{
+                if(error){
+                    reject();
+                }else{
+                    resolve(results[0]);
+                }
+            });
+        });
+    },
+
+    asyAddContact:function (id,name,pic,serverIP,serverPort,mCode) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                insert into member
+                set ?
+            `;
+            Pool.query(sql,{id:id,name:name,pic:pic,serverIP:serverIP,serverPort:serverPort,mCode:mCode}, (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
         });
     }
 }
