@@ -469,7 +469,7 @@ let LKServer = {
             }
         });
     },
-//TODO 定时清理滞留消息
+//TODO 定时清理滞留消息 设备处于激活状态下时，如其未收到元消息，元消息始终保持在库；所以还是要有个激活状态管理，或者还是超时删除元信息，但是当再次激活时需要更新设备的元信息
 
     readReport:async function (msg,ws) {
         await Message.asyAddMessage(msg);
@@ -549,6 +549,7 @@ let LKServer = {
     acceptMF:async function(msg,ws){
         let header = msg.header;
         let content = msg.body.content;
+        //TODO 发给自己的其他设备
         this._transRemote(msg,ws).then(()=>{
             if(header.transfer){
                 Member.asyGetContact(header.uid).then((contact)=>{
@@ -562,6 +563,29 @@ let LKServer = {
                     }
                 });
             }else{
+                Device.asyGetDevices(header.uid).then((devices)=>{
+                    if(devices){
+                        devices.forEach((device)=>{
+                            if(device.id!==header.did){
+                                let flowId = this.generateFlowId();
+                                Message.asyAddLocalFlow(flowId,header.msgId,header.uid,device.id).then(()=>{
+                                    let wsS = this.clients.get(header.uid);
+                                    if (wsS) {
+                                        let ws = wsS.get(device.id);
+                                        if(ws){
+                                            header.flowId = flowId;
+                                            ws.send(JSON.stringify(msg),()=> {
+                                                Message.markSent(flowId);
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+
+                        });
+                    }
+                });
+
                 Member.asyGetContact(header.target.id).then((contact)=>{
                     if(!contact){
                         Member.asyAddContact(header.target.id,content.applyer.name,content.applyer.pic,header.target.serverIP,header.target.serverPort);
