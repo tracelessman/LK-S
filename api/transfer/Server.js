@@ -549,7 +549,7 @@ let LKServer = {
     acceptMF:async function(msg,ws){
         let header = msg.header;
         let content = msg.body.content;
-        //TODO 发给自己的其他设备
+
         this._transRemote(msg,ws).then(()=>{
             if(header.transfer){
                 Member.asyGetContact(header.uid).then((contact)=>{
@@ -656,18 +656,20 @@ let LKServer = {
                             Device.asyGetDevices(target.id).then((devices)=>{
                                 if(devices){
                                     devices.forEach((device)=>{
-                                        let flowId = this.generateFlowId();
-                                        Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
-                                            let wsS = this.clients.get(target.id);
-                                            if (wsS) {
-                                                let ws = wsS.get(device.id);
-                                                if(ws){
-                                                    ws.send(JSON.stringify(msg),()=> {
-                                                        Message.markSent(flowId);
-                                                    });
+                                        if(device.id!==header.did){
+                                            let flowId = this.generateFlowId();
+                                            Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
+                                                let wsS = this.clients.get(target.id);
+                                                if (wsS) {
+                                                    let ws = wsS.get(device.id);
+                                                    if(ws){
+                                                        ws.send(JSON.stringify(msg),()=> {
+                                                            Message.markSent(flowId);
+                                                        });
+                                                    }
                                                 }
-                                            }
-                                        });
+                                            });
+                                        }
                                     });
                                 }
                             });
