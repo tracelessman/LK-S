@@ -702,6 +702,13 @@ let LKServer = {
         });
         let content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
         ws.send(content);
+    },
+    setUserName: async function (msg,ws) {
+        let uid = msg.header.uid;
+        let msgId = msg.header.id;
+        await Member.setUserName(uid,msg.body.content.name);
+        let content = JSON.stringify(this.newResponseMsg(msgId));
+        ws.send(content);
     }
 }
 

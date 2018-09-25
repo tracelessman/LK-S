@@ -100,6 +100,18 @@ let Member = {
                 }
             });
         });
+    },
+    setUserName:function (id,name) {
+        return new Promise((resolve,reject)=>{
+            let sql = " update member set name=? where id=? ";
+            Pool.query(sql,[name,id], (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
+        });
     }
 }
 module.exports = Member;

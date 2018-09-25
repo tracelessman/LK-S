@@ -38,8 +38,8 @@ let Group = {
     asyGetAllGroups:function (uid) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select group.id,group.name from group,groupMember 
-                where group.id = groupMember.gid
+                select groups.id,groups.name from groups,groupMember 
+                where groups.id = groupMember.gid
                 and groupMember.memberId=?
             `;
             Pool.query(sql,[uid], (error,results,fields) =>{
@@ -54,13 +54,13 @@ let Group = {
     asyGetGroupContacts:function (uid) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select member.* from group,groupMember,member 
-                where group.id = groupMember.gid
+                select member.* from groups,groupMember,member 
+                where groups.id = groupMember.gid
                 and groupMember.memberId=member.id
                 and member.orgId is null
-                and group.id in (
-                    select group.id from group,groupMember 
-                    where group.id = groupMember.gid
+                and groups.id in (
+                    select groups.id from groups,groupMember 
+                    where groups.id = groupMember.gid
                     and groupMember.memberId=?
                 )
                 and member.id not in(
@@ -94,7 +94,7 @@ let Group = {
     asyGetGroup:function (id) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select * from group 
+                select * from groups 
                 where id=?
             `;
             Pool.query(sql,[id], (error,results,fields) =>{
@@ -109,7 +109,7 @@ let Group = {
     asyAddGroup:function (id,name) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                insert into group
+                insert into groups
                 set ?
             `;
             Pool.query(sql,{id:id,name:name}, (error,results,fields) =>{
