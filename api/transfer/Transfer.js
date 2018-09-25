@@ -41,6 +41,9 @@ class WSChannel{
                         this._reconnect();
                     }
                 });
+              this._ws.on('error',(error)=>{
+               console.log(error)
+              });
                 this._openPromise = new Promise(resolve => {
                     this._ws.on('open',()=> {
                         resolve(this);
