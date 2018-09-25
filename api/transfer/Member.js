@@ -112,6 +112,18 @@ let Member = {
                 }
             });
         });
+    },
+    setUserPic:function (id,pic) {
+        return new Promise((resolve,reject)=>{
+            let sql = " update member set pic=? where id=? ";
+            Pool.query(sql,[pic,id], (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
+        });
     }
 }
 module.exports = Member;

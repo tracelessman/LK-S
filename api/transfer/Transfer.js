@@ -164,7 +164,8 @@ Transfer = {
             Message.markSent(msg.header.flowId);
             channel.sendMessage(msg).then((resp)=>{
                 let msgId = resp.header.id;
-                let diff = resp.body.content.diff;
+                let content = resp.body.content
+                let diff = content?content.diff:null;
                 Message.receiveReport(resp.header.flowId);
                 if(diff&&action==="sendMsg"){
                     server._sendNewAction("msgDeviceDiffReport",{diff:diff,msgId:msgId,chatId:msg.body.chatId},msg.header.uid,msg.header.did);

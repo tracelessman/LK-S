@@ -709,6 +709,13 @@ let LKServer = {
         await Member.setUserName(uid,msg.body.content.name);
         let content = JSON.stringify(this.newResponseMsg(msgId));
         ws.send(content);
+    },
+    setUserPic: async function (msg,ws) {
+        let uid = msg.header.uid;
+        let msgId = msg.header.id;
+        await Member.setUserPic(uid,msg.body.content.pic);
+        let content = JSON.stringify(this.newResponseMsg(msgId));
+        ws.send(content);
     }
 }
 
