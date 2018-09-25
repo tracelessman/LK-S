@@ -262,7 +262,7 @@ CREATE TABLE IF NOT EXISTS log
 
     const p11 = new Promise(resolve => {
         pool.query(`
-CREATE TABLE IF NOT EXISTS groups 
+CREATE TABLE IF NOT EXISTS groupChat 
 (
     id varchar(36),
     name varchar(100),
