@@ -61,6 +61,7 @@ class WSChannel{
     }
     _handleMsg(msg){
         let header = msg.header;
+        console.log({header})
         let isResponse = header.response;
         let action = header.action;
         if(isResponse){
