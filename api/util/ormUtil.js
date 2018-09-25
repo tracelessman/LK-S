@@ -34,11 +34,11 @@ const ormUtil = {
         createdAt: false,
         updatedAt: false
       })
-      modelSequelized.sync().then(() => {
-        if (afterSync) {
-          afterSync(modelSequelized)
-        }
-      })
+      // modelSequelized.sync().then(() => {
+      //   if (afterSync) {
+      //     afterSync(modelSequelized)
+      //   }
+      // })
       return {
         modelObj,
         modelSequelized,
@@ -313,7 +313,7 @@ function compare (record, queryCondition) {
     }
     const isSame = JSON.stringify(queryCondition[keyInqueryCondition]).trim() !== JSON.stringify(record[keyInqueryCondition]).trim()
     if (isSame) {
-      result = falsecrypto.createHash('md5')
+      result = false
       break
     }
   }

@@ -6,34 +6,31 @@ const key = 'member'
 
 const tableTitle = ''
 
-
 module.exports = {
-    key,
-    modelContent:{
-        name:{
-            title:"姓名",
-        },
-        pic:{
-            allowNull:true,
-            displayPage:[],
-            type:Sequelize.TEXT,
-            title:"头像"
-        },
-        orgId:{
-            allowNull:true,
-            title:"组织ID"
-        },
-        mCode:{ //name,pic => hash
-            allowNull:true,
-            title:"节点hash值"
-        },
-        reserve1:{
-            allowNull:true,
-            type:Sequelize.TEXT,
-        }
+  key,
+  modelContent: {
+    name: {
+      title: '姓名'
     },
+    pic: {
+      allowNull: true,
+      displayPage: [],
+      type: Sequelize.TEXT,
+      title: '头像'
+    },
+    orgId: {
+      allowNull: true,
+      title: '组织ID'
+    },
+    mCode: { // name,pic => hash
+      allowNull: true,
+      title: '节点hash值'
+    },
+    reserve1: {
+      allowNull: true,
+      type: Sequelize.TEXT
+    }
+  },
 
-    tableTitle,
+  tableTitle
 }
-
-
