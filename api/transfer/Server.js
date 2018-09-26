@@ -448,6 +448,7 @@ let LKServer = {
                     timeout:header.timeout,
                     targets : v
                 },body:msg.body};
+                console.log({flow})
                 Transfer.send(flow,ip,port,this);
             })
         })
