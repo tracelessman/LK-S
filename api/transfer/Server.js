@@ -58,6 +58,8 @@ let LKServer = {
                   if (!excludeAry.includes(action)) {
                     const msgClone = _.cloneDeep(msg)
                     const {targets} = msgClone.header
+                    console.log({targets})
+                    console.log(typeof targets)
                     if (targets) {
                       msgClone.header.targets = JSON.stringify(targets)
                     }
