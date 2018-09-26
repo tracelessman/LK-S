@@ -23,6 +23,7 @@ function _f (obj) {
   }
 }
 function  wsSend (ws, content, callback) {
+  console.log(wsSend.caller)
   const obj = JSON.parse(content)
   if (Array.isArray(obj)) {
     obj.forEach(_f)
