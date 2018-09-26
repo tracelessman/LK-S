@@ -60,6 +60,7 @@ let LKServer = {
                     const {targets} = msgClone.header
                     console.log({targets})
                     console.log(typeof targets)
+                    console.log( JSON.stringify(targets))
                     if (targets) {
                       msgClone.header.targets = JSON.stringify(targets)
                     }
