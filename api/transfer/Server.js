@@ -52,7 +52,7 @@ let LKServer = {
         return this._wsIdSeed++;
     },
     generateFlowId:function () {
-      return "f"+(this._flowSeqSeed++);
+      return (this._flowSeqSeed++);
     },
     clients: new Map(),//对应多个ws uid:{_did:ws}
     newResponseMsg: function (msgId,content,flowId) {
