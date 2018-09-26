@@ -1,7 +1,6 @@
 const Sequelize = require('sequelize')
 const uuidV4 = require('uuid/v4')
 const _ = require('lodash')
-const commonUtil = require('./commonUtil')
 const sequelizeUtil = require('./sequelizeUtil')
 const {Op} = Sequelize
 

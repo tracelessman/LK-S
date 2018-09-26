@@ -42,8 +42,8 @@ class WSChannel{
                     }
                 });
               this._ws.on('error',(error)=>{
-               console.log(error)
-                console.log(this._ws)
+               console.log(error.toString())
+                console.log(this._ws.url)
               });
                 this._openPromise = new Promise(resolve => {
                     this._ws.on('open',()=> {
