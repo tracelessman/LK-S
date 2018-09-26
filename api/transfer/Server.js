@@ -27,7 +27,7 @@ function  wsSend (ws, content, callback) {
   const obj = JSON.parse(content)
   if (Array.isArray(obj)) {
     obj.forEach((ele) => {
-      _f(obj, caller)
+      _f(ele, caller)
     })
   } else {
     _f(obj, caller)
