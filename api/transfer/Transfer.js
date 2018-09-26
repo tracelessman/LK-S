@@ -150,9 +150,10 @@ Transfer = {
     },
     _getChannel:function (targetServerIP,targetServerPort) {
         if (!targetServerIP || !targetServerPort) {
-          throw new Error(JSON.stringify({
+          console.log({
             targetServerIP,targetServerPort
-          }))
+          })
+          throw new Error(' targetServerIP || targetServerPort undefined')
         }
         let url = 'ws://'+targetServerIP+':'+targetServerPort;
         let ws = this._wss.get(url);
