@@ -115,9 +115,9 @@ class WSChannel{
 
     sendMessage(req){
         return new Promise((resolve,reject)=>{
-            let msgId = req.header.id;
+            let flowId = req.header.flowId;
             this._callbacks[msgId] = (msg)=>{
-                delete this._callbacks[msgId];
+                delete this._callbacks[flowId];
                 resolve(msg);
             }
             try{

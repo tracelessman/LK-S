@@ -21,7 +21,7 @@ let org = {
     asyGetAll:function () {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select * from org
+                select * from org order by id
             `;
             Pool.query(sql,[], (error,results,fields) =>{
                 if(error){
@@ -40,6 +40,30 @@ let org = {
                     resolve(null);
                 }else{
                     resolve(results);
+                }
+            });
+        });
+    },
+    asyGetOrg:function (orgId) {
+        return new Promise((resolve,reject)=>{
+            let sql = "select * from org where id=?";
+            Pool.query(sql,[orgId], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]);
+                }
+            });
+        });
+    },
+    setMCode:function (id,mCode) {
+        return new Promise((resolve,reject)=>{
+            let sql = " update org set mCode=? where id=? ";
+            Pool.query(sql,[mCode,id], (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
                 }
             });
         });

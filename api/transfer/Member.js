@@ -22,7 +22,7 @@ let Member = {
     asyGetAll:function () {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select * from member where orgId is not null
+                select * from member where orgId is not null order by id
             `;
             Pool.query(sql,[], (error,results,fields) =>{
                 if(error){
@@ -117,6 +117,18 @@ let Member = {
         return new Promise((resolve,reject)=>{
             let sql = " update member set pic=? where id=? ";
             Pool.query(sql,[pic,id], (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
+        });
+    },
+    setMCode:function (id,mCode) {
+        return new Promise((resolve,reject)=>{
+            let sql = " update member set mCode=? where id=? ";
+            Pool.query(sql,[mCode,id], (error,results,fields) =>{
                 if(error){
                     reject(error);
                 }else{
