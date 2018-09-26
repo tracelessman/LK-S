@@ -209,7 +209,7 @@ let LKServer = {
         if(foreignMsgs){
             foreignMsgs.forEach( (row) =>{
                 let msg = this._newMsgFromRow(row,false);
-                Transfer.send(msg,row.serverIP,row.serverPort);
+                Transfer.send(msg,row.targetServerIP,row.targetServerPort);
             })
         }
         setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
