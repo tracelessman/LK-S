@@ -55,6 +55,9 @@ let LKServer = {
                     let header = msg.header;
                     let action = header.action;
                   if (!excludeAry.includes(action)) {
+                    const msgClone = _.cloneDeep(msg)
+                    const {target} = msgClone.header.target
+                    msgClone.header.target = JSON.stringify(target)
                     console.log({serverMsg:msg})
                   }
 
