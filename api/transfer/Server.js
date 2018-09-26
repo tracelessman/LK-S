@@ -18,6 +18,7 @@ const _ = require('lodash')
 
 function  wsSend (ws, content, callback) {
   const obj = JSON.parse(content)
+  console.log(obj)
   const {response} = obj.header
   if (!response) {
     console.log({wsSend:obj})
