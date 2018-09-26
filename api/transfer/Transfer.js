@@ -6,7 +6,7 @@ const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
 const  Message = require('./Message')
 class WSChannel{
-    constructor(url,keepAlive){
+    constructor(url,keepAlive){[]
         this._reconnectDelay=0;
         this._callbacks={};
         this._timeout=60000;
@@ -63,9 +63,10 @@ class WSChannel{
         let action = header.action;
         if(isResponse){
             let msgId = header.msgId;
+            console.log({cbKeys:Object.keys(this._callbacks)})
             let callback = this._callbacks[msgId];
             if(callback){
-                console.log({callback: msg})
+                console.log({callback: msg,src: callback.toString()})
                 callback(msg);
             }
         }
