@@ -6,9 +6,6 @@ const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
 const  Message = require('./Message')
 class WSChannel{
-
-
-
     constructor(url,keepAlive){
         this._reconnectDelay=0;
         this._callbacks={};
@@ -68,6 +65,7 @@ class WSChannel{
             let msgId = header.msgId;
             let callback = this._callbacks[msgId];
             if(callback){
+                console.log({callback: msg})
                 callback(msg);
             }
         }
