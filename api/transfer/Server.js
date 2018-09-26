@@ -16,19 +16,21 @@ const config = require(path.resolve(rootPath,'config'))
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 const _ = require('lodash')
 
-function _f (obj) {
+function _f (obj, caller) {
   const {response} = obj.header
   if (!response) {
-    console.log({wsSend:obj})
+    console.log({wsSend:obj,caller})
   }
 }
 function  wsSend (ws, content, callback) {
-  console.log(wsSend.caller)
+  const caller = {wsSend}
   const obj = JSON.parse(content)
   if (Array.isArray(obj)) {
-    obj.forEach(_f)
+    obj.forEach((ele) => {
+      _f(obj, caller)
+    })
   } else {
-    _f(obj)
+    _f(obj, caller)
   }
 
   ws.send(content, err => {
