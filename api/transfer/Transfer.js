@@ -96,7 +96,7 @@ class WSChannel{
     }
 
     send(message){
-        console.log({send:JSON.stringify(message, null, 2), url: this._ws.url})
+        console.log({send:JSON.stringify(JSON.parse(message), null, 2), url: this._ws.url})
         this._ws.send(message);
         //TODO WebSocket is already in closing or closed state
 

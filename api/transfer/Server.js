@@ -55,7 +55,7 @@ let LKServer = {
                     let header = msg.header;
                     let action = header.action;
                   if (!excludeAry.includes(action)) {
-                    console.log({serverMsg:JSON.stringify(message, null, 2)})
+                    console.log({serverMsg:JSON.stringify(msg, null, 2)})
                   }
 
                     let isResponse = header.response;
