@@ -70,6 +70,8 @@ let MCodeManager = {
                 Member.setMCode(memberId,code).then(()=>{
                     this.resetMemberMagicCode();
                 });
+            }else{
+                this.resetMemberMagicCode();
             }
         })
     },
@@ -85,6 +87,8 @@ let MCodeManager = {
                 Org.setMCode(orgId,code).then(()=>{
                     this.resetOrgMagicCode();
                 });
+            }else{
+                this.resetOrgMagicCode();
             }
         });
     },
@@ -95,6 +99,7 @@ let MCodeManager = {
                 params.push(org.mCode);
             });
             let code = this._magicCode(params);
+            this._orgMCode = code;
             MagicCode.setOrgMagicCode(code);
         })
     },
@@ -105,6 +110,7 @@ let MCodeManager = {
                 params.push(member.mCode);
             });
             let code = this._magicCode(params);
+            this._memberMCode = code;
             MagicCode.setMemberMagicCode(code);
         });
     }

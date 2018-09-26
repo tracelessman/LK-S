@@ -707,6 +707,7 @@ let LKServer = {
         let uid = msg.header.uid;
         let msgId = msg.header.id;
         await Member.setUserName(uid,msg.body.content.name);
+        MCodeManager.resetSingleMemberMagicCode(uid);
         let content = JSON.stringify(this.newResponseMsg(msgId));
         ws.send(content);
     },
@@ -714,6 +715,7 @@ let LKServer = {
         let uid = msg.header.uid;
         let msgId = msg.header.id;
         await Member.setUserPic(uid,msg.body.content.pic);
+        MCodeManager.resetSingleMemberMagicCode(uid);
         let content = JSON.stringify(this.newResponseMsg(msgId));
         ws.send(content);
     }
