@@ -85,13 +85,13 @@ let LKServer = {
             });
 
             ws.on('close', function () {
-                console.info("auto close:" + ws._uid + "," + ws._did );
+                // console.info("auto close:" + ws._uid + "," + ws._did );
                 if (ws._uid) {
                     let wsS = LKServer.clients.get(ws._uid);
                     if (wsS&&wsS.has(ws._did)) {
                         wsS.delete(ws._did);
                         let date = new Date();
-                        Log.info("logout:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                        // Log.info("logout:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                         if (wsS.size===0) {
                             LKServer.clients.delete(ws._uid);
                         }

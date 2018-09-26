@@ -32,7 +32,7 @@ const netUtil = {
                 }
             })
             .catch((error)=>{
-                console.log(error)
+                console.log(error
 
                 axios.get('api/test/ping',{
                 }).then(()=>{
