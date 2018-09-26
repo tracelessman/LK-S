@@ -14,6 +14,7 @@ const UUID = require('uuid/v4');
 const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
+const _ = require('lodash')
 
 let LKServer = {
     _hbTimeout: 3 * 60 * 1000,
