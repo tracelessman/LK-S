@@ -431,6 +431,7 @@ let LKServer = {
                 })
             }
         });
+        console.log({targetsNeedTrasfer})
         targetsNeedTrasfer.forEach((v,k)=>{
             let key = k.split(":");
             let ip = key[0];
