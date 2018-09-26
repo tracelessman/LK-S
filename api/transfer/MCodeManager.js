@@ -1,4 +1,7 @@
 const MagicCode = require('./MagicCode');
+const Member = require('./Member');
+const Org = require('./Org');
+const crypto = require('crypto')
 let MCodeManager = {
 
     _asyGetMagicCode:function () {
@@ -15,13 +18,13 @@ let MCodeManager = {
 
     },
 
-    setOrgMagicCode:function (topOrgMCode) {
-        this._orgMCode = topOrgMCode;
-    },
-
-    setMemberMagicCode:function (topMemberMCode) {
-        this._memberMCode = topMemberMCode;
-    },
+    // setOrgMagicCode:function (topOrgMCode) {
+    //     this._orgMCode = topOrgMCode;
+    // },
+    //
+    // setMemberMagicCode:function (topMemberMCode) {
+    //     this._memberMCode = topMemberMCode;
+    // },
 
     asyGetMemberMagicCode:function () {
         return new Promise( (resolve,reject)=> {
@@ -43,6 +46,66 @@ let MCodeManager = {
                     resolve(this._orgMCode);
                 })
             }
+        });
+    },
+    _magicCode:function (params) {
+        let s = "";
+        params.forEach(function (p) {
+            s+=p?p.toString():"";
+        })
+        //
+        let algorithm =  crypto.createHash('md5');
+        let hashValue = algorithm.update(s,"utf8").digest('hex');
+        return hashValue;
+    },
+    /**
+     * reset the member's mcode
+     * @param memberId
+     */
+    resetSingleMemberMagicCode:function (memberId) {
+        Member.asyGetMember(memberId).then((m)=>{
+            if(m){
+                let params = [m.name,m.pic];
+                let code = this._magicCode(params);
+                Member.setMCode(memberId,code).then(()=>{
+                    this.resetMemberMagicCode();
+                });
+            }
+        })
+    },
+    /**
+     * reset the org's mcode
+     * @param orgId
+     */
+    resetSingleOrgMagicCode:function (orgId) {
+        Org.asyGetOrg(orgId).then(function (org) {
+            if(org){
+                let params = [org.name];
+                let code = this._magicCode(params);
+                Org.setMCode(orgId,code).then(()=>{
+                    this.resetOrgMagicCode();
+                });
+            }
+        });
+    },
+    resetOrgMagicCode:function () {
+        Org.asyGetAll().then( (orgs) =>{
+            let params = [];
+            orgs.forEach(function (org) {
+                params.push(org.mCode);
+            });
+            let code = this._magicCode(params);
+            MagicCode.setOrgMagicCode(code);
+        })
+    },
+    resetMemberMagicCode:function () {
+        Member.asyGetAll().then((members)=>{
+            let params = [];
+            members.forEach(function (member) {
+                params.push(member.mCode);
+            });
+            let code = this._magicCode(params);
+            MagicCode.setMemberMagicCode(code);
         });
     }
 }

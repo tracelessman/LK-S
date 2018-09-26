@@ -17,10 +17,11 @@ pool.execute(`CREATE DATABASE if not exists ${config.db.database}`, function (er
         pool.query(`
 CREATE TABLE IF NOT EXISTS magicCode 
 (
-    
+    id int,
     orgMCode varchar(32),
     memberMCode varchar(32),
-    reserve1 TEXT
+    reserve1 TEXT,
+    PRIMARY KEY (id)
 )
 `,(err,result)=>{
             if(err){
