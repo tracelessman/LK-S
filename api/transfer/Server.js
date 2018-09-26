@@ -389,7 +389,13 @@ let LKServer = {
           localPort: this.getPort()
         })
         targets.forEach((target)=>{
+            console.log({
+              serverPort: target.serverPort,
+              getPort: this.getPort()
+            })
+            console.log(target.serverPort===this.getPort())
             if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
+              console.log('transfer to another server')
                 let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
                 if(!targets2){
                     targets2 = [];
