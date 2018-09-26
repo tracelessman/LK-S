@@ -51,9 +51,13 @@ let LKServer = {
             ws.on('message', function incoming(message) {
                 try{
                     let msg = JSON.parse(message);
-                    console.log({serverMsg:message})
+                    const excludeAry = ['login', 'ping']
                     let header = msg.header;
                     let action = header.action;
+                  if (!excludeAry.includes(action)) {
+                    console.log({serverMsg:message})
+                  }
+
                     let isResponse = header.response;
                     if (isResponse) {//得到接收应答，删除缓存
                         Message.receiveReport(header.flowId);
