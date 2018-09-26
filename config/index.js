@@ -23,8 +23,8 @@ const config = {
   },
   txServerIp,
   ip: txServerIp,
-  port: '3000',
-  wsPort: '3001',
+  port: 3000,
+  wsPort: 3001,
   repo: 'https://github.com/tracelessman/LK-S.git',
   branch: 'master',
   http: true,
@@ -36,8 +36,8 @@ debug({isOther: process.env.isOther})
 if (process.env.isOther) {
   config.db.database = 'LK_S_other'
   config.db.metaDatabase = 'LK_S_META_other'
-  config.port = '4000'
-  config.wsPort = '4001'
+  config.port = 4000
+  config.wsPort = 4001
 }
 
 let protocol
