@@ -16,6 +16,18 @@ const config = require(path.resolve(rootPath,'config'))
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 const _ = require('lodash')
 
+function  wsSend (ws, content, callback) {
+  console.log({wsSend:content})
+  ws.send(content, err => {
+    if (err) {
+      throw err
+    }
+    if (callback) {
+      callback(err)
+    }
+  })
+}
+
 let LKServer = {
     _hbTimeout: 3 * 60 * 1000,
     _flowSeqSeed:Date.now(),
@@ -87,7 +99,7 @@ let LKServer = {
                         // ws.close();
                     } else {
                         let content = JSON.stringify(LKServer.newResponseMsg(header.msgId, {err: "无法识别的请求"}));
-                        ws.send(content);
+                        wsSend(ws, content)
                     }
 
                 }catch (e){
@@ -171,11 +183,11 @@ let LKServer = {
                 let row = rows[i];
                 msgs.push(this._newMsgFromRow(row,true));
             }
-            ws.send(JSON.stringify(msgs),function () {
-                msgs.forEach(function (msg) {
-                    Message.markSent(msg.header.flowId);
-                })
-            });
+            wsSend(ws, JSON.stringify(msgs),function () {
+              msgs.forEach(function (msg) {
+                Message.markSent(msg.header.flowId);
+              })
+            })
         }
 
     },
@@ -238,7 +250,8 @@ let LKServer = {
                     }
 
                 ));
-            ws.send(content);
+
+            wsSend(ws, content);
         }catch (e){
             console.info("ping:"+e);
         }
@@ -248,7 +261,7 @@ let LKServer = {
         let ids = msg.content.members;
         Member.asyGetMembers(ids).then(function (members) {
             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{members:members}));
-            ws.send(content);
+            wsSend(ws, content);
         });
     },
     login:function (msg,ws) {
@@ -274,7 +287,7 @@ let LKServer = {
                 wsS.set(did,ws);
 
                 let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
-                ws.send(content);
+                wsSend(ws, content);
                 Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
                     this._sendLocalRetainMsgs(ws,rows);
                 });
@@ -302,7 +315,7 @@ let LKServer = {
             let device = await Device.asyGetDevice(did);
             if(device){
                 let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"device id already exist"}));
-                ws.send(content);
+                wsSend(ws, content);
             }else{
                 try{
                     await Device.asyAddDevice(uid,did,venderDid,pk,description);
@@ -313,18 +326,18 @@ let LKServer = {
                     let result = await Promise.all(ps);
                     const publicKey = await this.asyGetPK()
                     let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4],groupContacts:result[5],groups:result[6]}));
-                    ws.send(content);
+                    wsSend(ws, content);
                 }catch(error){
                     console.log(error)
 
                     let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:error.toString()}));
-                    ws.send(content);
+                    wsSend(ws, content);
                 }
 
             }
         }else{
             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"member not exist"}));
-            ws.send(content);
+            wsSend(ws, content);
         }
 
         //注册设备
@@ -336,7 +349,7 @@ let LKServer = {
         Device.asyRemoveDevice(uid,did).then(function () {
             DeviceManager.deviceChanged(uid);
             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
-            ws.send(content);
+            wsSend(ws, content);
             Message.deleteFlows(did);
         });
     },
@@ -434,7 +447,7 @@ let LKServer = {
                                         random:device.random,
                                     }
                                 },body:msg.body};
-                                ws.send(JSON.stringify(flowMsg),()=> {
+                                wsSend(ws, JSON.stringify(flowMsg),()=> {
                                     Message.markSent(flowId);
                                 });
                             }
@@ -472,7 +485,7 @@ let LKServer = {
         }else{
             content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
         }
-        ws.send(content);
+        wsSend(ws, content);
     },
 
     _sendNewAction:async function(action,content,targetUid,targetDid){
@@ -492,7 +505,7 @@ let LKServer = {
             if (wsS) {
                 let ws = wsS.get(targetDid);
                 if(ws){
-                    ws.send(JSON.stringify(msg),()=> {
+                    wsSend(ws, JSON.stringify(msg),()=> {
                         Message.markSent(flowId);
                     });
                 }
@@ -524,7 +537,7 @@ let LKServer = {
                             let ws = wsS.get(device.id);
                             if(ws){
                                 msg.header.flowId = flowId;
-                                ws.send(JSON.stringify(msg),()=> {
+                                wsSend(ws, JSON.stringify(msg),()=> {
                                     Message.markSent(flowId);
                                 });
                             }
@@ -535,7 +548,7 @@ let LKServer = {
         }
 
         let content = JSON.stringify(this.newResponseMsg(msgId,null,srcFlowId));
-        ws.send(content);
+        wsSend(ws, content);
     },
     _transRemote:async function(msg,ws){
         let header = msg.header;
@@ -554,7 +567,7 @@ let LKServer = {
                             let ws = wsS.get(device.id);
                             if(ws){
                                 header.flowId = flowId;
-                                ws.send(JSON.stringify(msg),()=> {
+                                wsSend(ws, JSON.stringify(msg),()=> {
                                     Message.markSent(flowId);
                                 });
                             }
@@ -571,7 +584,7 @@ let LKServer = {
 
         }
         let content = JSON.stringify(this.newResponseMsg(msgId,null,srcFlowId));
-        ws.send(content);
+        wsSend(ws, content);
     },
     applyMF:function(msg,ws){
         this._transRemote(msg,ws);
@@ -604,7 +617,7 @@ let LKServer = {
                                         let ws = wsS.get(device.id);
                                         if(ws){
                                             header.flowId = flowId;
-                                            ws.send(JSON.stringify(msg),()=> {
+                                            wsSend(ws, JSON.stringify(msg),()=> {
                                                 Message.markSent(flowId);
                                             });
                                         }
@@ -662,7 +675,7 @@ let LKServer = {
                                         if (wsS) {
                                             let ws = wsS.get(device.id);
                                             if(ws){
-                                                ws.send(JSON.stringify(msg),()=> {
+                                                wsSend(ws, JSON.stringify(msg),()=> {
                                                     Message.markSent(flowId);
                                                 });
                                             }
@@ -693,7 +706,7 @@ let LKServer = {
                                                 if (wsS) {
                                                     let ws = wsS.get(device.id);
                                                     if(ws){
-                                                        ws.send(JSON.stringify(msg),()=> {
+                                                        wsSend(ws, JSON.stringify(msg),()=> {
                                                             Message.markSent(flowId);
                                                         });
                                                     }
@@ -732,7 +745,7 @@ let LKServer = {
             }
         });
         let content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
-        ws.send(content);
+        wsSend(ws, content);
     },
     addGroupMembers:function (msg,ws) {
         //split msg to 2 msgs one for old members and one for new members
@@ -743,7 +756,7 @@ let LKServer = {
         await Member.setUserName(uid,msg.body.content.name);
         MCodeManager.resetSingleMemberMagicCode(uid);
         let content = JSON.stringify(this.newResponseMsg(msgId));
-        ws.send(content);
+        wsSend(ws, content);
     },
     setUserPic: async function (msg,ws) {
         let uid = msg.header.uid;
@@ -751,7 +764,7 @@ let LKServer = {
         await Member.setUserPic(uid,msg.body.content.pic);
         MCodeManager.resetSingleMemberMagicCode(uid);
         let content = JSON.stringify(this.newResponseMsg(msgId));
-        ws.send(content);
+        wsSend(ws, content);
     }
 }
 
