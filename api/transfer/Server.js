@@ -23,7 +23,7 @@ function _f (obj, caller) {
   }
 }
 function  wsSend (ws, content, callback) {
-  const caller = _.cloneDeep(wsSend.caller)
+  const caller = wsSend.caller.toString()
   const obj = JSON.parse(content)
   if (Array.isArray(obj)) {
     obj.forEach((ele) => {
