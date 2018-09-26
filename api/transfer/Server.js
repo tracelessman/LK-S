@@ -202,29 +202,34 @@ let LKServer = {
         setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
     },
     ping: async function(msg,ws){
-        ws._lastHbTime = Date.now();
-        let result = await Promise.all([MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode]);
-        let orgMCode = result[0];
-        let memberMCode = result[1];
-        let ps = [];
-        if(msg.header.orgMCode!==orgMCode){
-            ps.push(Org.asyGetBaseList());
-        }
-        if(msg.header.memberMCode!==memberMCode){
-            ps.push(Member.asyGetAllMCodes())
-        }
-        result = await Promise.all(ps)
-        let content = JSON.stringify(
-            LKServer.newResponseMsg(msg.header.id,
-                {
-                    orgMCode:orgMCode,
-                    memberMCode:memberMCode,
-                    orgs:msg.header.orgMCode!==orgMCode?result[0]:null,
-                    members:msg.header.memberMCode!==memberMCode?result[1]:null
-                }
+        try{
+            ws._lastHbTime = Date.now();
+            let result = await Promise.all([MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode]);
+            let orgMCode = result[0];
+            let memberMCode = result[1];
+            let ps = [];
+            if(msg.header.orgMCode!==orgMCode){
+                ps.push(Org.asyGetBaseList());
+            }
+            if(msg.header.memberMCode!==memberMCode){
+                ps.push(Member.asyGetAllMCodes())
+            }
+            result = await Promise.all(ps)
+            let content = JSON.stringify(
+                LKServer.newResponseMsg(msg.header.id,
+                    {
+                        orgMCode:orgMCode,
+                        memberMCode:memberMCode,
+                        orgs:msg.header.orgMCode!==orgMCode?result[0]:null,
+                        members:msg.header.memberMCode!==memberMCode?result[1]:null
+                    }
 
-        ));
-        ws.send(content);
+                ));
+            ws.send(content);
+        }catch (e){
+            console.info("ping:"+e);
+        }
+
     },
     fetchMembers:function (msg,ws) {
         let ids = msg.content.members;
@@ -702,6 +707,9 @@ let LKServer = {
         });
         let content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
         ws.send(content);
+    },
+    addGroupMembers:function (msg,ws) {
+        //split msg to 2 msgs one for old members and one for new members
     },
     setUserName: async function (msg,ws) {
         let uid = msg.header.uid;
