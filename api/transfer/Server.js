@@ -51,6 +51,7 @@ let LKServer = {
             ws.on('message', function incoming(message) {
                 try{
                     let msg = JSON.parse(message);
+                    console.log({serverMsg:message})
                     let header = msg.header;
                     let action = header.action;
                     let isResponse = header.response;
