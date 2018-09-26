@@ -127,7 +127,7 @@ class WSChannel{
             }
 
             setTimeout(()=>{
-                if(this._callbacks[msgId]){
+                if(this._callbacks[flowId]){
                     reject({error:"timeout"});
                 }
 
