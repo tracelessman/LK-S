@@ -384,6 +384,10 @@ let LKServer = {
         let ckDiffPs = [];
 
         let targetsNeedTrasfer = new Map();
+        console.log({
+          localIp: this.getIP(),
+          localPort: this.getPort()
+        })
         targets.forEach((target)=>{
             if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
                 let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
