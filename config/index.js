@@ -30,7 +30,8 @@ const config = {
   http: true,
   sshInfo: {
     username: 'root'
-  }
+  },
+  msgTimeout: 10 * 1000
 }
 debug({isOther: process.env.isOther})
 if (process.env.isOther) {

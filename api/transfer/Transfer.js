@@ -4,13 +4,13 @@ const WebSocket = require('ws');
 const path = require('path');
 const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
+const {msgTimeout} = config
 const  Message = require('./Message')
 class WSChannel{
     constructor(url,keepAlive){[]
         this._reconnectDelay=0;
         this._callbacks={};
-        this._timeout=60000;
-        this._timeout=10000;
+        this._timeout = msgTimeout
         this._url = url;
         this._keepAlive = keepAlive;
     }
