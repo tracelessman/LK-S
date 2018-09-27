@@ -133,7 +133,7 @@ class WSChannel{
                 if(this._callbacks[flowId]){
                     reject({
                       error:"timeout",
-                      req
+                      req: JSON.stringify(req)
                     });
                 }
 
