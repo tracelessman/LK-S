@@ -96,7 +96,10 @@ class WSChannel{
     }
 
     send(message){
-        console.log({send:JSON.parse(message), url: this._ws.url})
+        const obj = JSON.parse(message)
+        const {targets} = obj.header
+        console.log({targets})
+        console.log({send:obj, url: this._ws.url})
         this._ws.send(message);
         //TODO WebSocket is already in closing or closed state
 
