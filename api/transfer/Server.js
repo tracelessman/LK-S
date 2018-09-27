@@ -500,6 +500,7 @@ let LKServer = {
         })
         if(!nCkDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
+            console.log({diffs})
             content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs},header.flowId));
         }else{
             content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
