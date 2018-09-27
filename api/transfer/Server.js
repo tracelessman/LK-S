@@ -786,9 +786,11 @@ let LKServer = {
 LKServer.init(config.wsPort)
 
 process.on('uncaughtException' ,(err) => {
+  console.log(err)
   throw err
 })
 process.on('unhandledRejection' ,(err) => {
+  console.log(err)
   throw err
 })
 
