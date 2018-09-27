@@ -9,6 +9,7 @@ class WSChannel{
     constructor(url,keepAlive){[]
         this._reconnectDelay=0;
         this._callbacks={};
+        this._timeout=60000;
         this._timeout=10000;
         this._url = url;
         this._keepAlive = keepAlive;
@@ -60,11 +61,10 @@ class WSChannel{
         let header = msg.header;
         console.log({recieve: msg})
         let isResponse = header.response;
-        let action = header.action;
         if(isResponse){
-            let msgId = header.msgId;
+            let {flowId} = header;
             console.log({cbKeys:Object.keys(this._callbacks)})
-            let callback = this._callbacks[msgId];
+            let callback = this._callbacks[flowId];
             if(callback){
                 console.log({callback: msg,src: callback.toString()})
                 callback(msg);
