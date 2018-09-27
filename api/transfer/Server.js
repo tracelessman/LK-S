@@ -145,7 +145,7 @@ let LKServer = {
         LKServer.wss.on('error', function (err) {
             console.info("ws server error:" + err);
         });
-        setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
+       this._asyCheckTimeoutRetainMsgs()
     },
     getIP:function () {
         return config.ip
