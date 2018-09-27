@@ -569,7 +569,10 @@ let LKServer = {
         let header = msg.header;
         let msgId = header.id;
         let target = header.target;
-        await Message.asyAddMessage(msg);
+        let curMsg = await Message.asyGetMsg(msgId);
+        if(!curMsg){
+            await Message.asyAddMessage(msg);
+        }
         let srcFlowId = header.flowId;
         if(header.transfer){
             let devices = await Device.asyGetDevices(target.id);
