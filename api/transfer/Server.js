@@ -232,7 +232,9 @@ let LKServer = {
         let results = await Promise.all(ps);
         //foreign contact's retain msg
         let foreignMsgs = results[0];
-        console.log({foreignMsgs})
+        if (foreignMsgs.length) {
+          console.log({foreignMsgs})
+        }
         if(foreignMsgs){
             foreignMsgs.forEach( (row) =>{
                 let msg = this._newMsgFromRow(row,false);
