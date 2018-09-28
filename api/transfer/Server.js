@@ -26,6 +26,7 @@ function _f (obj, caller) {
   }
 }
 function  wsSend (ws, content, callback) {
+  console.log({caller: wsSendCaller})
   const caller = wsSend.caller.name
   const obj = JSON.parse(content)
   if (Array.isArray(obj)) {
