@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS magicCode
     memberMCode varchar(32),
     reserve1 TEXT,
     PRIMARY KEY (id)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS org
     mCode varchar(32),
     reserve1 TEXT,
     PRIMARY KEY (id)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS member
     serverPort int,
     reserve1 TEXT,
     PRIMARY KEY (id)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS ticket
     checkCode varchar(200),
     reserve1 TEXT,
     PRIMARY KEY (id)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS device
     alive int,
     reserve1 TEXT,
     PRIMARY KEY (id)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS friend
     memberId varchar(36),
     contactId varchar(36),
     PRIMARY KEY (memberId,contactId)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -203,7 +203,7 @@ CREATE TABLE IF NOT EXISTS message
     timeout int,
     reserve1 TEXT,
     PRIMARY KEY (id)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -230,7 +230,7 @@ CREATE TABLE IF NOT EXISTS flow
     lastSendTime datetime,
     reserve1 TEXT,
     PRIMARY KEY (id)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -250,7 +250,7 @@ CREATE TABLE IF NOT EXISTS log
     description TEXT,
     time int,
     type int
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -268,7 +268,7 @@ CREATE TABLE IF NOT EXISTS groupChat
     id varchar(36),
     name varchar(100),
     PRIMARY KEY (id)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
@@ -285,7 +285,7 @@ CREATE TABLE IF NOT EXISTS groupMember
 (
     gid varchar(36),
     memberId varchar(36)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
