@@ -809,11 +809,11 @@ process.on('uncaughtException' ,(err) => {
   console.log({uncaughtException: err})
   throw err
 })
-process.on('unhandledRejection' ,(err) => {
-  console.log({
-    unhaledRejection: err
-  })
-  throw err
-})
+// process.on('unhandledRejection' ,(err) => {
+//   console.log({
+//     unhaledRejection: err
+//   })
+//   throw err
+// })
 
 module.exports = LKServer
