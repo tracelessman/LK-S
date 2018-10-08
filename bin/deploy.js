@@ -9,10 +9,10 @@ const NodeSSH = require('node-ssh')
 const ssh = new NodeSSH()
 const path = require('path')
 const rootPath = path.resolve(__dirname, '../')
-const assert = require('assert');
+const assert = require('assert')
+const config = require(path.resolve(rootPath, 'config'))
 
-(async () => {
-  const config = require(path.resolve(rootPath, 'config'))
+;(async () => {
   const option = {
     host: config.ip,
     username: config.sshInfo.username,
