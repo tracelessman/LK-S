@@ -135,6 +135,7 @@ let Message = {
         });
     },
     asyAddMessage:function (msg) {
+      console.log({asyAddMessage: msg})
         let header = msg.header;
         let sendTime = new Date();
         sendTime.setTime(header.time);
