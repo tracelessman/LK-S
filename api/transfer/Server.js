@@ -289,7 +289,7 @@ let LKServer = {
         let results = await Promise.all(ps);
         //foreign contact's retain msg
         let foreignMsgs = results[0];
-        if (foreignMsgs.length) {
+        if (foreignMsgs && foreignMsgs.length) {
           console.log({foreignMsgs})
         }
         if(foreignMsgs){
