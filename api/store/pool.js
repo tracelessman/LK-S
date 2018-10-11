@@ -223,6 +223,8 @@ CREATE TABLE IF NOT EXISTS flow
     msgId varchar(36),
     targetUid varchar(36),
     targetDid varchar(36),
+    preFlowId varchar(15),
+    flowType varchar(50),
     random TEXT,
     targetServerIP varchar(45),
     targetServerPort int,
@@ -296,7 +298,26 @@ CREATE TABLE IF NOT EXISTS groupMember
         })
     })
 
-    Promise.all([p0,p1,p2,p3,p4,p7,p8,p9,p10,p11,p12])
+    const p13 = new Promise(resolve => {
+        pool.query(`
+CREATE TABLE IF NOT EXISTS transferFlowCursor 
+(
+    serverIP varchar(45),
+    serverPort int,
+    flowType varchar(50),
+    flowId  varchar(15)
+)
+`,(err,result)=>{
+            if(err){
+                console.log(err)
+                throw err
+            }else{
+                resolve(result)
+            }
+        })
+    })
+
+    Promise.all([p0,p1,p2,p3,p4,p7,p8,p9,p10,p11,p12,p13])
 });
 
 module.exports = pool

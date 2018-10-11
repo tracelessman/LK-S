@@ -6,7 +6,7 @@ const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
 const  Message = require('./Message')
 class WSChannel{
-    constructor(url,keepAlive){[]
+    constructor(url,keepAlive){
         this._reconnectDelay=0;
         this._callbacks={};
         this._timeout=60000;
@@ -177,16 +177,18 @@ Transfer = {
             msg.header.serverIP = this.getIP();
             msg.header.serverPort = this.getPort();
             msg.header.transfer = true;
-            let action = msg.header.action;
+            // let action = msg.header.action;
             Message.markSent(msg.header.flowId);
             channel.sendMessage(msg).then((resp)=>{
-                let msgId = resp.header.id;
-                let content = resp.body.content
-                let diff = content?content.diff:null;
+                // let msgId = resp.header.id;
+                // let content = resp.body.content
+                // let diff = content?content.diff:null;
                 Message.receiveReport(resp.header.flowId);
-                if(diff&&action==="sendMsg"){
-                    server._sendNewAction("msgDeviceDiffReport",{diff:diff,msgId:msgId,chatId:msg.body.chatId},msg.header.uid,msg.header.did);
-                }
+                // if(diff&&action==="sendMsg"){
+                //     Message.asyGetLastLocalFlowId(msg.header.uid,msg.header.did,'deviceDiffReport').then((preFlowId)=>{
+                //         server._sendNewAction("msgDeviceDiffReport",{diff:diff,msgId:msgId,chatId:msg.body.chatId},msg.header.uid,msg.header.did,preFlowId,"deviceDiffReport");
+                //     })
+                // }
 
             });
 

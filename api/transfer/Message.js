@@ -58,7 +58,7 @@ let Message = {
         return new Promise((resolve,reject)=>{
             let sql = `
                 select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,message.timeout,
-                flow.id as flowId,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
+                flow.id as flowId,flow.targetUid,flow.targetDid,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetUid=?
@@ -90,7 +90,7 @@ let Message = {
         return new Promise((resolve,reject)=>{
             let sql = `
                 select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,message.senderTime,message.timeout,
-                flow.id as flowId,flow.targetServerIP,flow.targetServerPort,flow.targetText 
+                flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.targetText 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetServerIP is not null
@@ -110,7 +110,7 @@ let Message = {
         return new Promise((resolve,reject)=>{
             let sql = `
                 select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,
-                flow.id as flowId,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
+                flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetUid=?
@@ -155,31 +155,37 @@ let Message = {
             });
         });
     },
-    asyAddLocalFlow:function (flowId,msgId,uid,did,random) {
+    asyAddLocalFlow:function (flowId,msgId,uid,did,random,preFlowId,flowType) {
         return new Promise((resolve,reject)=>{
             let sql = `
                 insert into flow
                 set ?
             `;
-            Pool.query(sql,{id:flowId,msgId:msgId,targetUid:uid,targetDid:did,random:random}, (error,results,fields) =>{
+            Pool.query(sql,{id:flowId,msgId:msgId,targetUid:uid,targetDid:did,random:random,preFlowId:preFlowId,flowType:flowType}, (error,results,fields) =>{
                 if(error){
                     reject(error);
                 }else{
+                    if(flowType){
+                        this.setLastLocalFlowId(uid,did,flowType,flowId);
+                    }
                     resolve();
                 }
             });
         });
     },
-    asyAddForeignFlow:function (flowId,msgId,targetServerIP,targetServerPort,target) {
+    asyAddForeignFlow:function (flowId,msgId,targetServerIP,targetServerPort,target,preFlowId,flowType) {
         return new Promise((resolve,reject)=>{
             let sql = `
                 insert into flow
                 set ?
             `;
-            Pool.query(sql,{id:flowId,msgId:msgId,targetServerIP:targetServerIP,targetServerPort:targetServerPort,targetText:JSON.stringify(target)}, (error,results,fields) =>{
+            Pool.query(sql,{id:flowId,msgId:msgId,targetServerIP:targetServerIP,targetServerPort:targetServerPort,targetText:JSON.stringify(target),preFlowId:preFlowId,flowType:flowType}, (error,results,fields) =>{
                 if(error){
                     reject(error);
                 }else{
+                    if(flowType){
+                        this.setLastForeignFlowId(uid,did,flowType,flowId);
+                    }
                     resolve();
                 }
             });
@@ -193,6 +199,53 @@ let Message = {
                 where message.id = ?
             `;
             Pool.query(sql,[msgId], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]);
+                }
+            });
+        });
+    },
+    _lastFlowIds:new Map(),
+    asyGetLastLocalFlowId: async function (targetUid,targetDid,flowType) {
+        let flowId = this._lastFlowIds.get(targetUid+targetDid+flowType);
+        if(!flowId){
+            flowId = await this._getLastLocalFlowId(targetUid,targetDid,flowType);
+            this._lastFlowIds.set(targetUid+targetDid+flowType,flowId);
+        }
+        return flowId;
+    },
+    setLastLocalFlowId:function (targetUid,targetDid,flowType,flowId) {
+        this._lastFlowIds.set(targetUid+targetDid+flowType,flowId);
+    },
+    _getLastLocalFlowId:function (targetUid,targetDid,flowType) {
+        return new Promise((resolve,reject)=>{
+            let sql = 'select MAX(cast(id as SIGNED INTEGER)) from flow where targetUid=? and targetDid=? and flowType=?';
+            Pool.query(sql,[targetUid,targetDid,flowType], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]);
+                }
+            });
+        });
+    },
+    asyGetLastForeignFlowId: async function (targetServerIP,targetServerPort,flowType) {
+        let flowId = this._lastFlowIds.get(targetServerIP+targetServerPort+flowType);
+        if(!flowId){
+            flowId = await this._getLastForeignFlowId(targetServerIP,targetServerPort,flowType);
+            this._lastFlowIds.set(targetServerIP+targetServerPort+flowType,flowId);
+        }
+        return flowId;
+    },
+    setLastForeignFlowId:function (targetServerIP,targetServerPort,flowType,flowId) {
+        this._lastFlowIds.set(targetServerIP+targetServerPort+flowType,flowId);
+    },
+    _getLastForeignFlowId:function (targetServerIP,targetServerPort,flowType) {
+        return new Promise((resolve,reject)=>{
+            let sql = 'select MAX(cast(id as SIGNED INTEGER)) from flow where targetServerIP=? and targetServerPort=? and flowType=?';
+            Pool.query(sql,[targetServerIP,targetServerPort,flowType], (error,results,fields) =>{
                 if(error){
                     resolve(null);
                 }else{

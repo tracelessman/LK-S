@@ -15,6 +15,7 @@ const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 const _ = require('lodash')
+const TransferFlowCursor = require('./TransferFlowCursor');
 
 function _f (obj, caller) {
   const {response} = obj.header
@@ -47,15 +48,46 @@ let LKServer = {
     _hbTimeout: 3 * 60 * 1000,
     _flowSeqSeed:Date.now(),
     _wsIdSeed: 1,
-    //临时内部id，用于标识ws
     generateWsId: function () {
         return this._wsIdSeed++;
     },
     generateFlowId:function () {
       return (this._flowSeqSeed++);
     },
-    clients: new Map(),//对应多个ws uid:{_did:ws}
-    newResponseMsg: function (msgId,content,flowId) {
+    clients: new Map(),//ws uid:{_did:ws}
+
+    //the receiving end,flow pool
+    _transferFlowPool : new Map(),
+    _transferWS:new Map(),
+    _putTransferFlowPool:function(serverIP,serverPort,preFlowId,msg,ws){
+        this._transferWS.set(serverIP+serverPort,ws);
+        let ary = this._transferFlowPool.get(serverIP+serverPort+preFlowId);
+        if(!ary){
+            ary = [];
+            this._transferFlowPool.set(serverIP+serverPort+preFlowId,ary);
+        }
+        ary.push(msg);
+    },
+
+    _resolveTransferFlowPool:function(serverIP,serverPort,lastFlowId){
+        let ary = this._transferFlowPool.get(serverIP+serverPort+lastFlowId);
+        if(ary){
+            ary.forEach((msg)=>{
+                let action = msg.header.action;
+                if(this[action]){
+                    this[action](msg, this._transferWS.get(serverIP+serverPort));
+                }
+            });
+        }
+    },
+
+    newResponseMsg: function (msgId,content,flowId,serverIP,serverPort,flowType) {
+        if(serverIP&&serverPort&&flowType){
+            //notify the pool a flow from the transfer has been finished,so next flow from the transfer can be dealt
+            TransferFlowCursor.setLastFlowId(serverIP,serverPort,flowType,flowId).then(()=>{
+                this._resolveTransferFlowPool(serverIP,serverPort,flowId);
+            });
+        }
         let res= {
             header:{
                 version:"1.0",
@@ -97,7 +129,22 @@ let LKServer = {
                         Message.receiveReport(header.flowId);
                     }
                     else if (LKServer[action]) {
-                        LKServer[action](msg, ws);
+                        if(header.preFlowId){
+                            TransferFlowCursor.getLastFlowId(header.serverIP,header.serverPort,header.flowType).then((lastFlowId)=>{
+                                if(lastFlowId){
+                                    if(header.preFlowId===lastFlowId){
+                                        LKServer[action](msg, ws);
+                                    }else{
+                                        this._putTransferFlowPool(header.serverIP,header.serverPort,header.preFlowId,msg,ws);
+                                    }
+                                }else{
+                                    LKServer[action](msg, ws);
+                                }
+                            });
+                        }else{
+                            LKServer[action](msg, ws);
+                        }
+
                         // if (action == "ping" || action == "login" || action == "register" || action == "authorize" || action == "errReport") {
                         //     LKServer[action](msg, ws);
                         //     return;
@@ -174,6 +221,8 @@ let LKServer = {
         header.did = row.senderDid;
         header.time = row.senderTime;
         header.timeout = row.timeout;
+        header.preFlowId = row.preFlowId;
+        header.flowType = row.flowType;
         if(local){
             header.serverIP = row.senderServerIP;
             header.serverPort = row.senderServerPort;
@@ -395,7 +444,9 @@ let LKServer = {
                 added.push({id:device.id,pk:device.pk});
             }
         });
-        let result = {id:uid,added:added,removed:removed};
+        let result = null;
+        if(added.length>0||removed.length>0)
+            result = {id:uid,added:added,removed:removed};
         return result;
     },
 
@@ -502,27 +553,77 @@ let LKServer = {
         if(!nCkDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
             console.log({diffs})
-            content = JSON.stringify(this.newResponseMsg(msgId,{diff:diffs},header.flowId));
+            let dffRes = [];
+            diffs.forEach(function (res) {
+                if(res){
+                    dffRes.push(res);
+                }
+            })
+
+            content = JSON.stringify(this.newResponseMsg(msgId,{hasDiff:dffRes.length>0?true:false},header.flowId));
+            if(dffRes.length>0){
+                if(header.transfer){
+                    Message.asyGetLastForeignFlowId(msg.header.serverIP,msg.header.serverPort,'deviceDiffReport').then((preFlowId)=>{
+                        this._sendForeignNewAction("msgDeviceDiffReport",{diff:dffRes,msgId:msgId,chatId:msg.body.chatId},{id:header.uid,did:header.did},preFlowId,"deviceDiffReport");
+                    })
+                }else{
+                    Message.asyGetLastLocalFlowId(msg.header.uid,msg.header.did,'deviceDiffReport').then((preFlowId)=>{
+                        this._sendLocalNewAction("msgDeviceDiffReport",{diff:dffRes,msgId:msgId,chatId:msg.body.chatId},msg.header.uid,msg.header.did,preFlowId,"deviceDiffReport");
+                    })
+                }
+            }
+
+
             console.log({content})
         }else{
             content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
         }
         wsSend(ws, content);
     },
+    msgDeviceDiffReport:async function (msg,ws) {
+        let header = msg.header;
+        let msgId = header.id;
+        let target = header.target;
+        let curMsg = await Message.asyGetMsg(msgId);
+        if(!curMsg){
+            await Message.asyAddMessage(msg);
+        }
+        let srcFlowId = header.flowId;
+        if(header.transfer){
+            let content = JSON.stringify(this.newResponseMsg(msgId,null,srcFlowId,header.serverIP,header.serverPort,header.flowType));
+            wsSend(ws, content);
+            let flowId = this.generateFlowId();
+            Message.asyAddLocalFlow(flowId,msgId,target.id,target.did).then(()=>{
+                let wsS = this.clients.get(target.id);
+                if (wsS) {
+                    let ws = wsS.get(target.did);
+                    if(ws){
+                        header.flowId = flowId;
+                        wsSend(ws, JSON.stringify(msg),()=> {
+                            Message.markSent(flowId);
+                        });
+                    }
+                }
+            });
+        }
 
-    _sendNewAction:async function(action,content,targetUid,targetDid){
+    },
+
+    _sendLocalNewAction:async function(action,content,targetUid,targetDid,preFlowId,flowType){
         let flowId = this.generateFlowId();
         let msgId = UUID();
         let msg = {header:{
             version:"1.0",
             id:msgId,
             flowId:flowId,
+            preFlowId:preFlowId,
+            flowType:flowType,
             action:action
         },body:{
             content:content
         }};
         await Message.asyAddMessage(msg);
-        Message.asyAddLocalFlow(flowId,msgId,targetUid,targetDid).then(()=>{
+        Message.asyAddLocalFlow(flowId,msgId,targetUid,targetDid,null,preFlowId,flowType).then(()=>{
             let wsS = this.clients.get(targetUid);
             if (wsS) {
                 let ws = wsS.get(targetDid);
@@ -532,6 +633,24 @@ let LKServer = {
                     });
                 }
             }
+        });
+    },
+    _sendForeignNewAction:async function(action,content,targetServerIP,targetServerPort,target,preFlowId,flowType,ws){
+        let flowId = this.generateFlowId();
+        let msgId = UUID();
+        let msg = {header:{
+            version:"1.0",
+            id:msgId,
+            flowId:flowId,
+            preFlowId:preFlowId,
+            flowType:flowType,
+            action:action
+        },body:{
+            content:content
+        }};
+        await Message.asyAddMessage(msg);
+        Message.asyAddForeignFlow(flowId,msgId,targetServerIP,targetServerPort,target,preFlowId,flowType).then(()=>{
+            Transfer.send(msg,targetServerIP,targetServerPort);
         });
     },
 //TODO 定时清理滞留消息 设备处于激活状态下时，如其未收到元消息，元消息始终保持在库；所以还是要有个激活状态管理，或者还是超时删除元信息，但是当再次激活时需要更新设备的元信息
