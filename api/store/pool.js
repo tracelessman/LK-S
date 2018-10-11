@@ -306,7 +306,7 @@ CREATE TABLE IF NOT EXISTS transferFlowCursor
     serverPort int,
     flowType varchar(50),
     flowId  varchar(15)
-)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
 `,(err,result)=>{
             if(err){
                 console.log(err)
