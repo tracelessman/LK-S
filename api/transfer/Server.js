@@ -44,6 +44,7 @@ function  wsSend (ws, content, callback) {
 
   ws.send(content, err => {
     if (err) {
+      console.log(err)
       throw err
     }
     if (callback) {
@@ -479,10 +480,10 @@ let LKServer = {
         let ckDiffPs = [];
 
         let targetsNeedTrasfer = new Map();
-        console.log({
-          localIp: this.getIP(),
-          localPort: this.getPort()
-        })
+        // console.log({
+        //   localIp: this.getIP(),
+        //   localPort: this.getPort()
+        // })
         targets.forEach((target)=>{
             console.log({
               serverPort: target.serverPort,

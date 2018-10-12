@@ -135,7 +135,7 @@ let Message = {
         });
     },
     asyAddMessage:function (msg) {
-      console.log({asyAddMessage: JSON.stringify(msg.body)})
+      // console.log({asyAddMessage: JSON.stringify(msg.body)})
         let header = msg.header;
         let sendTime = new Date();
         sendTime.setTime(header.time);

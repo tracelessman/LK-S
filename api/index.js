@@ -21,6 +21,7 @@ const orm = require('./routes/orm')
 const meta = require('./routes/meta')
 const member = require('./routes/member')
 const org = require('./routes/org')
+const db = require('./routes/db')
 // Import API Routes
 app.use('/user', user)
 app.use('/orm', orm)
@@ -28,6 +29,7 @@ app.use('/test', test)
 app.use('/meta', meta)
 app.use('/member', member)
 app.use('/org', org)
+app.use('/db', db)
 
 // Export the server middleware
 module.exports = {
