@@ -13,6 +13,7 @@ const Org = require('./Org');
 const UUID = require('uuid/v4');
 const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
+const {isDebugging} = config
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 const _ = require('lodash')
 const TransferFlowCursor = require('./TransferFlowCursor');
@@ -1010,15 +1011,18 @@ let LKServer = {
 
 LKServer.init(config.wsPort)
 
-process.on('uncaughtException' ,(err) => {
-  console.log({uncaughtException: err})
-  throw err
-})
-// process.on('unhandledRejection' ,(err) => {
-//   console.log({
-//     unhaledRejection: err
-//   })
-//   throw err
-// })
+if (isDebugging) {
+  process.on('uncaughtException' ,(err) => {
+    console.log({uncaughtException: err})
+    process.exit(1)
+  })
+  process.on('unhandledRejection' ,(err) => {
+    console.log({
+      unhaledRejection: err
+    })
+    process.exit(1)
+  })
+}
+
 
 module.exports = LKServer
