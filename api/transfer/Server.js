@@ -17,8 +17,11 @@ const {isDebugging} = config
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 const _ = require('lodash')
 const TransferFlowCursor = require('./TransferFlowCursor');
+const {ErrorUtil} = require('@ys/collection')
+const {exitOnUnexpected} = ErrorUtil
 
-function _f (obj, caller) {
+
+  function _f (obj, caller) {
   const {body, header} = obj
   const {response, target} = obj.header
   const {content} = body
@@ -1012,16 +1015,7 @@ let LKServer = {
 LKServer.init(config.wsPort)
 
 if (isDebugging) {
-  process.on('uncaughtException' ,(err) => {
-    console.log({uncaughtException: err})
-    process.exit(1)
-  })
-  process.on('unhandledRejection' ,(err) => {
-    console.log({
-      unhaledRejection: err
-    })
-    process.exit(1)
-  })
+  exitOnUnexpected()
 }
 
 
