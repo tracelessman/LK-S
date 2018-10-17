@@ -344,37 +344,34 @@ let LKServer = {
         });
     },
     login:function (msg,ws) {
-        let uid = msg.header.uid;
-        let did = msg.header.did;
-        // Member.asyGetMember(uid).then((member)=>{
-        //     if(member){
-                let wsS = this.clients.get(uid);
-                if (!wsS) {
-                    wsS = new Map();
-                    this.clients.set(uid,wsS);
-                }
-                if(wsS.has(ws._did)){
-                    let old = wsS.get(ws._did);
-                    wsS.delete(ws._did);
-                    if(old!==ws){
-                        old.close();
-                    }
-                }
-                ws._uid = uid;
-                ws._did = did;
-                ws._lastHbTime = Date.now();
-                wsS.set(did,ws);
+        this.getAllDetainedMsg({msg, ws})
+    },
+    getAllDetainedMsg ({msg, ws}) {
+      let uid = msg.header.uid;
+      let did = msg.header.did;
 
-                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
-                wsSend(ws, content);
-                Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
-                    this._sendLocalRetainMsgs(ws,rows);
-                });
-            // }else{
-            //     let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"not exist"}));
-            //     ws.send(content);
-            // }
-        // });
+      let wsS = this.clients.get(uid);
+      if (!wsS) {
+        wsS = new Map();
+        this.clients.set(uid,wsS);
+      }
+      if(wsS.has(ws._did)){
+        let old = wsS.get(ws._did);
+        wsS.delete(ws._did);
+        if(old!==ws){
+          old.close();
+        }
+      }
+      ws._uid = uid;
+      ws._did = did;
+      ws._lastHbTime = Date.now();
+      wsS.set(did,ws);
+
+      let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
+      wsSend(ws, content);
+      Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
+        this._sendLocalRetainMsgs(ws,rows);
+      });
     },
     register:async function (msg,ws) {
 
