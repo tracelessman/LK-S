@@ -344,9 +344,9 @@ let LKServer = {
         });
     },
     login:function (msg,ws) {
-        this.getAllDetainedMsg({msg, ws})
+        this.getAllDetainedMsg(msg, ws)
     },
-    getAllDetainedMsg ({msg, ws}) {
+    getAllDetainedMsg (msg, ws) {
       let uid = msg.header.uid;
       let did = msg.header.did;
 
