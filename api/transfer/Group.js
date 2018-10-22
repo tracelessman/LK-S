@@ -135,6 +135,22 @@ let Group = {
                 }
             });
         });
-    }
+    },
+    asyGetGroupMembers:function (gid) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select member.* from groupMember,member 
+                where groupMember.memberId=member.id
+                and groupMember.gid=?
+            `;
+            Pool.query(sql,[gid], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results);
+                }
+            });
+        });
+    },
 }
 module.exports = Group;
