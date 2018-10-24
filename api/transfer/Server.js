@@ -248,13 +248,39 @@ let LKServer = {
         msg.body = JSON.parse(row.body);
         return msg;
     },
-    _sendLocalRetainMsgs:function (ws,rows) {
+    _sendLocalRetainMsgs:async function (ws,rows) {
         if(rows&&rows.length>0){
             let msgs = [];
+            //check relative flow exist
+            let relativeMsgIds = new Map();
             for(let i=0;i<rows.length;i++){
                 let row = rows[i];
-                msgs.push(this._newMsgFromRow(row,true));
+                let msg = this._newMsgFromRow(row,true);
+
+                msgs.push(msg);
+
+                let relativeMsgId = msg.body.relativeMsgId;
+                if(relativeMsgId){
+                    relativeMsgIds.set(relativeMsgId,false);
+                }
             }
+            let ps = [];
+            relativeMsgIds.forEach((v,k)=>{
+                ps.push(Message.asyGetRelativeFlow(k,ws._uid,ws._did));
+            })
+            let rs = await Promise.all(ps);
+            for(let i=0;i<rs.length;i++){
+                let relativeFlow = rs[i];
+                if(relativeFlow){
+                    relativeMsgIds.set(relativeFlow.msgId,true)
+                }
+            }
+            msgs.forEach(function (msg) {
+                if(msg.body.relativeMsgId&&relativeMsgIds.get(msg.body.relativeMsgId)===false){
+                    msg.header.RFExist=0;
+                }
+            })
+
             wsSend(ws, JSON.stringify(msgs),function () {
               msgs.forEach(function (msg) {
                 Message.markSent(msg.header.flowId);
@@ -479,18 +505,9 @@ let LKServer = {
         let ckDiffPs = [];
 
         let targetsNeedTrasfer = new Map();
-        console.log({
-          localIp: this.getIP(),
-          localPort: this.getPort()
-        })
+
         targets.forEach((target)=>{
-            console.log({
-              serverPort: target.serverPort,
-              getPort: this.getPort()
-            })
-            console.log(target.serverPort===this.getPort())
             if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
-              console.log('transfer to another server')
                 let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
                 if(!targets2){
                     targets2 = [];
@@ -501,7 +518,6 @@ let LKServer = {
                 let devices = target.devices;
                 if(!nCkDiff)
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
-                console.log({devices})
                 devices.forEach((device)=>{
                     let flowId = this.generateFlowId();
                     Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
@@ -509,50 +525,44 @@ let LKServer = {
                         if (wsS) {
                             let ws = wsS.get(device.id);
                             if(ws){
-                                let flowMsg = {header:{
-                                    version:header.version,
-                                    id:header.id,
-                                    flowId:flowId,
-                                    uid:header.uid,
-                                    did:header.did,
-                                    action:header.action,
-                                    time:header.time,
-                                    timeout:header.timeout,
-                                    target:{
-                                        id:target.id,
-                                        did:device.id,
-                                        random:device.random,
-                                    }
-                                },body:msg.body};
-                                wsSend(ws, JSON.stringify(flowMsg),()=> {
-                                    Message.markSent(flowId);
-                                });
+                                let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,target:{
+                                    id:target.id,
+                                    did:device.id,
+                                    random:device.random,
+                                }})
+                                //TODO relative msg may not reach as crossing servers, so transfer should sync relative msg and msgs follow it
+
+                                let relativeMsgId = msg.body.relativeMsgId;
+                                if(relativeMsgId){
+                                    Message.asyGetRelativeFlow(relativeMsgId,target.id,device.id).then((relativeFlow)=>{
+                                        if(!relativeFlow){
+                                            flowMsg.header.RFExist=0;
+                                        }
+                                        wsSend(ws, JSON.stringify(flowMsg),()=> {
+                                            Message.markSent(flowId);
+                                        });
+                                    });
+                                }else{
+                                    wsSend(ws, JSON.stringify(flowMsg),()=> {
+                                        Message.markSent(flowId);
+                                    });
+                                }
+
+
                             }
                         }
                     });
                 })
             }
         });
-        console.log({targetsNeedTrasfer})
         targetsNeedTrasfer.forEach((v,k)=>{
             let key = k.split(":");
             let ip = key[0];
             let port = key[1];
             let flowId = this.generateFlowId();
             Message.asyAddForeignFlow(flowId,msgId,ip,port,v).then(()=>{
-                let flow = {header:{
-                    version:header.version,
-                    id:msgId,
-                    flowId:flowId,
-                    uid:header.uid,
-                    did:header.did,
-                    action:header.action,
-                    time:header.time,
-                    timeout:header.timeout,
-                    targets : v
-                },body:msg.body};
-                console.log({flow})
-                Transfer.send(flow,ip,port,this);
+                let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,targets : v})
+                Transfer.send(flowMsg,ip,port,this);
             })
         })
         let content = null;
@@ -1060,16 +1070,17 @@ let LKServer = {
         let header = msg.header;
         let srcHeader = srcMsg.header;
         header.version = "1.0";
-        header.id = option.msgId||srcHeader.msgId;
+        header.id = option.msgId||srcHeader.id;
         header.flowId = option.flowId||srcHeader.flowId;
         header.action = option.action||srcHeader.action;
         header.uid = option.senderUid||srcHeader.uid;
         header.did = option.senderDid||srcHeader.did;
-        header.time = srcHeader.senderTime;
+        header.time = srcHeader.time;
         header.timeout = srcHeader.timeout;
         header.preFlowId = option.preFlowId;
         header.flowType = option.flowType;
         header.targets = option.targets;
+        header.target = option.target;
         msg.body = srcMsg.body;
         return msg;
     },

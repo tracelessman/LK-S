@@ -254,6 +254,25 @@ let Message = {
                 }
             });
         });
-    }
+    },
+    asyGetRelativeFlow:function (msgId,targetUid,targetDid) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select * 
+                from flow 
+                where flow.msgId = ?
+                and targetUid = ?
+                and targetDid = ?
+            `;
+            Pool.query(sql,[msgId,targetUid,targetDid], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]);
+
+                }
+            });
+        });
+    },
 }
 module.exports = Message;
