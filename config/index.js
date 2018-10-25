@@ -32,7 +32,10 @@ const config = {
     username: 'root'
   },
   msgTimeout: 10 * 1000,
-  isDebugging: true
+  isDebugging: true,
+  bundleId: 'com.hfs.LK-M',
+  appId: 'LK_M',
+  appName: 'LK'
 }
 debug({isOther: process.env.isOther})
 if (process.env.isOther) {
