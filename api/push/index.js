@@ -6,10 +6,10 @@ const {bundleId} = config
 
 module.exports = {
   pushIOS ({alert, badge, deviceTokenAry, isProduction}) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       const options = {
         token: {
-          key: path.resolve(rootPath, 'certificate/pushServiceKey.p8'),
+          key: path.resolve(rootPath, 'certificate/serviceKey.p8'),
           keyId: 'XA79Y94CD8',
           teamId: '355R83R4YL'
         },
@@ -23,16 +23,14 @@ module.exports = {
       notification.badge = badge
       notification.topic = bundleId
       apnProvider.send(notification, deviceTokenAry).then((response) => {
-        let result
         if (response.failed.length !== 0) {
-          result = false
           for (let ele of response.failed) {
             console.log(ele.response)
           }
+          reject(new Error('send failed'))
         } else {
-          result = true
+          resolve(response)
         }
-        resolve(result)
       })
     })
   }
