@@ -34,19 +34,8 @@
         location.href = this.url
       }
     },
-    mounted:function(){
-      // alert(navigator.userAgent)
-      if(!navigator.userAgent.includes("iPhone")){
-        // this.isIphone = false
-        // this.$Modal.info({
-        //     title: "提示",
-        //     content: this.info
-        // });
-      }else{
-        if(navigator.userAgent.includes("QQ")&&!navigator.userAgent.includes("QQBrowser")){
-          alert("请在手机浏览器中打开本网页")
-        }
-      }
+    mounted(){
+
     },
   }
 </script>
