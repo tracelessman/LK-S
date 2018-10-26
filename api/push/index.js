@@ -25,6 +25,7 @@ class Push {
       apnProvider.send(notification, deviceTokenAry).then((response) => {
         if (response.failed.length !== 0) {
           for (let ele of response.failed) {
+            // TODO: 有可能是开发模式
             console.log(ele.response)
           }
           reject(new Error('send failed'))
