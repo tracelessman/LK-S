@@ -4,8 +4,8 @@ const rootPath = path.resolve(__dirname, '../../')
 const config = require(path.resolve(rootPath, 'config'))
 const {bundleId} = config
 
-module.exports = {
-  pushIOS ({alert, badge, deviceTokenAry, isProduction}) {
+class Push {
+  static _pushIOS ({alert, badge, deviceTokenAry, isProduction}) {
     return new Promise((resolve, reject) => {
       const options = {
         token: {
@@ -34,4 +34,13 @@ module.exports = {
       })
     })
   }
+
+  static async pushIOS (content, deviceTokenAry) {
+    try {
+      await Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: true})
+    } catch (error) {
+      Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: false})
+    }
+  }
 }
+module.exports = Push
