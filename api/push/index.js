@@ -34,7 +34,12 @@ class Push {
       })
     })
   }
-
+  /**
+   * IOS推送通知
+   * @param {string} content 发送内容
+   * @param {array} deviceTokenAry 需要发送的设备id数组
+   * @return {undefined}
+   */
   static async pushIOS (content, deviceTokenAry) {
     try {
       await Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: true})
