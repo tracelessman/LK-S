@@ -152,5 +152,17 @@ let Group = {
             });
         });
     },
+    setGroupName:function (gid,name) {
+        return new Promise((resolve,reject)=>{
+            let sql = " update groupChat set name=? where id=? ";
+            Pool.query(sql,[name,gid], (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
+        });
+    }
 }
 module.exports = Group;
