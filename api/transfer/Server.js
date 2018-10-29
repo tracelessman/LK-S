@@ -1052,6 +1052,51 @@ let LKServer = {
         wsSend(ws, content);
     },
 
+    setGroupName:async function(msg,ws){
+        let header = msg.header;
+        let msgId = header.id;
+        let curMsg = await Message.asyGetMsg(msgId);
+        if(!curMsg){
+            await Message.asyAddMessage(msg);
+        }
+        let chatId = msg.body.content.chatId;
+        let name = msg.body.content.name;
+        Group.setGroupName(chatId,name).then(function () {
+            Group.asyGetGroupMembers(chatId).then((curMembers)=> {
+                if (curMembers) {
+                    curMembers.forEach((target) => {
+                        Device.asyGetDevices(target.id).then((devices) => {
+                            if (devices) {
+                                devices.forEach((device) => {
+                                    if (device.id !== header.did) {
+                                        Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
+                                            let flowId = this.generateFlowId();
+                                            Message.asyAddLocalFlow(flowId, msgId, target.id, device.id,null,preFlowId,"group").then(() => {
+                                                let wsS = this.clients.get(target.id);
+                                                if (wsS) {
+                                                    let ws = wsS.get(device.id);
+                                                    if (ws) {
+                                                        let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group"});
+                                                        wsSend(ws, JSON.stringify(newMsg),()=> {
+                                                            Message.markSent(flowId);
+                                                        });
+                                                    }
+                                                }
+                                            });
+                                        })
+
+                                    }
+                                });
+                            }
+                        });
+                    });
+                }
+            });
+            let content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
+            wsSend(ws, content);
+        });
+
+    },
     setUserName: async function (msg,ws) {
         let uid = msg.header.uid;
         let msgId = msg.header.id;
