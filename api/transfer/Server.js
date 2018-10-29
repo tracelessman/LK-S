@@ -368,6 +368,8 @@ let LKServer = {
     },
     fetchMembers:function (msg,ws) {
         let ids = msg.body.content.members;
+        console.info(typeof ids);
+        console.info(ids);
         Member.asyGetMembers(ids).then(function (members) {
             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{members:members}));
             wsSend(ws, content);
