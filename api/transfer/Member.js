@@ -58,8 +58,14 @@ let Member = {
                     }
                 }
                 sql+=")";
+                console.info("asyGetMembers");
+                console.info(sql);
+                console.info(ids);
                 Pool.query(sql,ids, (error,results,fields) =>{
+                    console.info("asyGetMembers result:");
+                    console.info(JSON.stringify(results))
                     if(error){
+                        console.info("asyGetMembers error:"+error.toString());
                         resolve(null);
                     }else{
                         resolve(results);

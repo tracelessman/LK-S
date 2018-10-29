@@ -48,8 +48,9 @@ function  wsSend (ws, content, callback) {
 
   ws.send(content, err => {
     if (err) {
-      console.log(err)
-      throw err
+        if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
+            ws.close();
+        }
     }
     if (callback) {
       callback(err)
@@ -123,6 +124,9 @@ let LKServer = {
         LKServer.wss.on('connection', function connection(ws) {
             ws.on('message', function incoming(message) {
                 try{
+                    if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
+                        ws.close();
+                    }
                     let msg = JSON.parse(message);
                     const excludeAry = ['login', 'ping']
                     let header = msg.header;
@@ -334,7 +338,7 @@ let LKServer = {
     ping: async function(msg,ws){
         try{
             ws._lastHbTime = Date.now();
-            let result = await Promise.all([MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode]);
+            let result = await Promise.all([MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode()]);
             let orgMCode = result[0];
             let memberMCode = result[1];
             let ps = [];
