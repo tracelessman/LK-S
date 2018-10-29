@@ -25,15 +25,15 @@ const {exitOnUnexpected} = ErrorUtil
   const {body, header} = obj
   const {response, target} = obj.header
   const {content} = body
-  if (!response) {
-    console.log({wsSend:obj,caller})
-  }
-  if (target) {
-    console.log({target})
-  }
-  if (content) {
-    console.log({content})
-  }
+  // if (!response) {
+  //   console.log({wsSend:obj,caller})
+  // }
+  // if (target) {
+  //   console.log({target})
+  // }
+  // if (content) {
+  //   console.log({content})
+  // }
 }
 function  wsSend (ws, content, callback) {
   const caller = wsSend.caller.name
@@ -135,10 +135,10 @@ let LKServer = {
                     const msgClone = _.cloneDeep(msg)
                     const {targets} = msgClone.header
 
-                    if (targets) {
-                      console.log({targets})
-                    }
-                    console.log({serverMsg:msgClone})
+                    // if (targets) {
+                    //   console.log({targets})
+                    // }
+                    // console.log({serverMsg:msgClone})
                   }
 
                     let isResponse = header.response;
@@ -325,7 +325,7 @@ let LKServer = {
         //foreign contact's retain msg
         let foreignMsgs = results[0];
         if (foreignMsgs && foreignMsgs.length) {
-          console.log({foreignMsgs})
+          // console.log({foreignMsgs})
         }
         if(foreignMsgs){
             foreignMsgs.forEach( (row) =>{
@@ -368,9 +368,12 @@ let LKServer = {
     },
     fetchMembers:function (msg,ws) {
         let ids = msg.body.content.members;
+        console.log('*******************')
         console.info(typeof ids);
         console.info(ids);
-        Member.asyGetMembers(ids).then(function (members) {
+      console.log('*******************')
+
+      Member.asyGetMembers(ids).then(function (members) {
             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{members:members}));
             wsSend(ws, content);
         });
@@ -606,7 +609,7 @@ let LKServer = {
             }
 
 
-            console.log({content})
+            // console.log({content})
         }else{
             content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
         }
