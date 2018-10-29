@@ -374,6 +374,7 @@ let LKServer = {
       console.log('*******************')
 
       Member.asyGetMembers(ids).then(function (members) {
+        console.log({members})
             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{members:members}));
             wsSend(ws, content);
         });
