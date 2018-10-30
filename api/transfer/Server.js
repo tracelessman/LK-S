@@ -373,35 +373,44 @@ let LKServer = {
             wsSend(ws, content);
         });
     },
-    login:function (msg,ws) {
+    login: async function (msg,ws) {
+        let uid = msg.header.uid;
+        let did = msg.header.did;
+        let result = Promise.all(Member.asyGetMember(uid),Device.asyGetDevice(did));
+        let content = {};
+        if(result[0]&&result[1]){
+            let wsS = this.clients.get(uid);
+            if (!wsS) {
+                wsS = new Map();
+                this.clients.set(uid,wsS);
+            }
+            if(wsS.has(ws._did)){
+                let old = wsS.get(ws._did);
+                wsS.delete(ws._did);
+                if(old!==ws){
+                    old.close();
+                }
+            }
+            ws._uid = uid;
+            ws._did = did;
+            ws._lastHbTime = Date.now();
+            wsS.set(did,ws);
+        }else{
+            content.err="invalid user";
+        }
+
+
+        let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,content));
+        wsSend(ws, rep);
+
         this.getAllDetainedMsg(msg, ws)
     },
     getAllDetainedMsg (msg, ws) {
-      let uid = msg.header.uid;
-      let did = msg.header.did;
-
-      let wsS = this.clients.get(uid);
-      if (!wsS) {
-        wsS = new Map();
-        this.clients.set(uid,wsS);
-      }
-      if(wsS.has(ws._did)){
-        let old = wsS.get(ws._did);
-        wsS.delete(ws._did);
-        if(old!==ws){
-          old.close();
-        }
-      }
-      ws._uid = uid;
-      ws._did = did;
-      ws._lastHbTime = Date.now();
-      wsS.set(did,ws);
-
-      let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id));
-      wsSend(ws, content);
-      Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
-        this._sendLocalRetainMsgs(ws,rows);
-      });
+        let uid = msg.header.uid;
+        let did = msg.header.did;
+        Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
+            this._sendLocalRetainMsgs(ws,rows);
+        });
     },
     register:async function (msg,ws) {
 
