@@ -411,6 +411,8 @@ let LKServer = {
         Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
             this._sendLocalRetainMsgs(ws,rows);
         });
+        let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{}));
+       wsSend(ws, rep);
     },
     register:async function (msg,ws) {
 
