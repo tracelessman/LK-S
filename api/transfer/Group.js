@@ -121,6 +121,22 @@ let Group = {
             });
         });
     },
+    asyGetGroupMember:function (gid,contactId) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select * from groupMember 
+                where gid=?
+                and memberId=?
+            `;
+            Pool.query(sql,[gid,contactId], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]);
+                }
+            });
+        });
+    },
     asyAddGroupMember:function (gid,contactId) {
         return new Promise((resolve,reject)=>{
             let sql = `

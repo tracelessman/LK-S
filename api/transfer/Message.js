@@ -134,7 +134,7 @@ let Message = {
 
         });
     },
-    asyAddMessage:function (msg) {
+    asyAddMessage:function (msg,parentMsgId) {
       // console.log({asyAddMessage: JSON.stringify(msg.body)})
         let header = msg.header;
         let sendTime = new Date();
@@ -145,6 +145,7 @@ let Message = {
                 set ?
             `;
             Pool.query(sql,{
+                parentId:parentMsgId,
                 id:header.id,action:header.action,senderUid:header.uid,senderDid:header.did,body:JSON.stringify(msg.body),senderTime:sendTime,time:new Date(),timeout:header.timeout,
                 senderServerIP:header.serverIP,senderServerPort:header.serverPort
             }, (error,results,fields) =>{
@@ -255,7 +256,7 @@ let Message = {
             });
         });
     },
-    asyGetRelativeFlow:function (msgId,targetUid,targetDid) {
+    asyGetLocalFlow:function (msgId,targetUid,targetDid) {
         return new Promise((resolve,reject)=>{
             let sql = `
                 select * 
@@ -265,6 +266,65 @@ let Message = {
                 and targetDid = ?
             `;
             Pool.query(sql,[msgId,targetUid,targetDid], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]);
+
+                }
+            });
+        });
+    },
+    asyGetForeignFlow:function (msgId,serverIP,serverPort) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select * 
+                from flow 
+                where flow.msgId = ?
+                and targetServerIP = ?
+                and targetServerPort = ?
+            `;
+            Pool.query(sql,[msgId,serverIP,serverPort], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]);
+
+                }
+            });
+        });
+    },
+    asyGetLocalFlowbyParentMsgId:function (parentId,targetUid,targetDid) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select flow.* 
+                from message,flow 
+                where flow.msgId=message.id 
+                and  message.parentId=? 
+                and flow.targetUid = ?
+                and flow.targetDid = ?
+            `;
+            Pool.query(sql,[parentId,targetUid,targetDid], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]);
+
+                }
+            });
+        });
+    },
+    asyGetForeignFlowbyParentMsgId:function (parentId,serverIP,serverPort) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select flow.* 
+                from message,flow 
+                where flow.msgId=message.id 
+                and  message.parentId=? 
+                and flow.targetServerIP = ?
+                and flow.targetServerPort = ?
+            `;
+            Pool.query(sql,[parentId,serverIP,serverPort], (error,results,fields) =>{
                 if(error){
                     resolve(null);
                 }else{
