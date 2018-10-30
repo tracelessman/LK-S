@@ -4,11 +4,12 @@ const path = require('path')
 const router = Router()
 const config = require('../../config')
 const rootPath = path.resolve(__dirname, '../../')
-const updateJsonPath = path.resolve(rootPath, 'public/pkg/updateMeta.json')
+const updateJsonPath = path.resolve(rootPath, 'static/public/updateMeta.json')
 const serverVersion = require('../../package.json').version
 const semver = require('semver')
+const crypto = require('crypto')
 
-router.post('/checkUpdateGeneral', (req, res) => {
+router.post('/checkUpdate', (req, res) => {
   const {
     os, __DEV__, customInfo, bundleId, uniqueId, buildNumberClient,
     updateAnyWay, wantPreview, versionLocal, isPreviewVersionClient, previewVersion
@@ -51,22 +52,6 @@ router.post('/checkUpdateGeneral', (req, res) => {
   } else {
     if (wantPreview) {
       if (previewVersionServer && (!previewVersion || semver.gt(previewVersionServer, previewVersion))) {
-        db.all('select * from group_members where gid = ? ', ['d4c5298d-ad56-4d42-aa10-dd0e93ff234e1528292987053'], function (err, rows) {
-          if (err) {
-            result = {
-              error: err.toString()
-            }
-          } else {
-            let isInDevTeam = rows.some(ele => {
-              return ele.uid === id
-            })
-            if (isInDevTeam) {
-              result.needUpdate = true
-              result.isPreviewVersion = true
-              prepareUpdate(true)
-            }
-          }
-        })
       } else {
         prepareUpdate(false)
       }
@@ -95,24 +80,23 @@ router.post('/checkUpdateGeneral', (req, res) => {
       result.isHotUpdate = true
     }
     let fileName, filePath
-    const middlePath = isPreview ? '/preview' : ''
-    const ppkPostFix = `/pkg${middlePath}/ppk/${config.appName}.ppk`
-    const apkPostFix = `/pkg${middlePath}/android/${config.appName}.apk`
+    const ppkPostFix = `/public/ppk/${config.appName}.ppk`
+    const apkPostFix = `/public/android/${config.appName}.apk`
 
     if (result.isHotUpdate) {
       fileName = `${config.appName}.ppk`
-      filePath = path.resolve(rootPath, `public/pkg${middlePath}/ppk/${fileName}`)
+      filePath = path.resolve(rootPath, `static/public/ppk/${fileName}`)
     } else {
       if (os === 'ios') {
         fileName = `${config.appName}.ipa`
       } else {
         fileName = `${config.appName}.apk`
       }
-      filePath = path.resolve(rootPath, `public/pkg${middlePath}/${os}/${fileName}`)
+      filePath = path.resolve(rootPath, `static/public/${os}/${fileName}`)
     }
 
     if (fs.existsSync(filePath)) {
-      result.hash = commonUtil.getMd5(filePath)
+      result.hash = getMd5(filePath)
     } else {
       const error = `${filePath} not founded`
       console.log(error)
@@ -135,5 +119,12 @@ router.post('/checkUpdateGeneral', (req, res) => {
 router.post('/test', (req,res) => {
   res.end('dosth')
 })
+
+function getMd5(filePath){
+  const algorithm =  crypto.createHash('md5')
+  const hashValue = algorithm.update(fs.readFileSync(filePath)).digest('hex')
+
+  return hashValue
+}
 
 module.exports = router

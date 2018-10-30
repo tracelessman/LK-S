@@ -37,6 +37,8 @@ const config = {
   appId: 'LK_M',
   appName: 'LK'
 }
+config.manifestUrl = 'itms-services://?action=download-manifest&url=https://raw.githubusercontent.com/tracelessman/LK-M/master/ios/manifest.plist'
+
 debug({isOther: process.env.isOther})
 if (process.env.isOther) {
   config.db.database = 'LK_S_other'
