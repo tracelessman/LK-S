@@ -191,6 +191,7 @@ CREATE TABLE IF NOT EXISTS friend
 CREATE TABLE IF NOT EXISTS message 
 (
     id varchar(36),
+    parentId varchar(36),
     action varchar(50),
     senderUid varchar(36),
     senderDid varchar(36),

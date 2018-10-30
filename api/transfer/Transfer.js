@@ -170,7 +170,7 @@ Transfer = {
         return ws;
     },
 
-    send: async function (msg,targetServerIP,targetServerPort,server) {
+    send: async function (msg,targetServerIP,targetServerPort) {
 
         let channel = this._getChannel(targetServerIP,targetServerPort);
         channel.applyChannel().then(()=>{

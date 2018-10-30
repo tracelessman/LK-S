@@ -275,7 +275,7 @@ let LKServer = {
             }
             let ps = [];
             relativeMsgIds.forEach((v,k)=>{
-                ps.push(Message.asyGetRelativeFlow(k,ws._uid,ws._did));
+                ps.push(Message.asyGetLocalFlow(k,ws._uid,ws._did));
             })
             let rs = await Promise.all(ps);
             for(let i=0;i<rs.length;i++){
@@ -505,16 +505,24 @@ let LKServer = {
         if(!curMsg){
             await Message.asyAddMessage(msg);
         }
+        if(!nCkDiff){
+            let f = null;
+            if(header.transfer) {
+               f = await Message.asyGetForeignFlowbyParentMsgId(msgId, msg.header.serverIP, msg.header.serverPort);
+            }else{
+               f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);
+            }
+            if(!f){
+                nCkDiff = true;
+            }
+        }
         let targets = header.targets;
         let senderDid = header.did;
         let diffs = [];
         let ckDiffPs = [];
 
         let targetsNeedTrasfer = new Map();
-        // console.log({
-        //   localIp: this.getIP(),
-        //   localPort: this.getPort()
-        // })
+
 
         targets.forEach((target)=>{
             if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
@@ -529,39 +537,42 @@ let LKServer = {
                 if(!nCkDiff)
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
-                    let flowId = this.generateFlowId();
-                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
-                        let wsS = this.clients.get(target.id);
-                        if (wsS) {
-                            let ws = wsS.get(device.id);
-                            if(ws){
-                                let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,target:{
-                                    id:target.id,
-                                    did:device.id,
-                                    random:device.random,
-                                }})
-                                //TODO relative msg may not reach as crossing servers, so transfer should sync relative msg and msgs follow it
+                    Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                        if(!f){
+                            let flowId = this.generateFlowId();
+                            Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
+                                let wsS = this.clients.get(target.id);
+                                if (wsS) {
+                                    let ws = wsS.get(device.id);
+                                    if(ws){
+                                        let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,target:{
+                                            id:target.id,
+                                            did:device.id,
+                                            random:device.random,
+                                        }})
+                                        //TODO relative msg may not reach as crossing servers, so transfer should sync relative msg and msgs follow it
 
-                                let relativeMsgId = msg.body.relativeMsgId;
-                                if(relativeMsgId){
-                                    Message.asyGetRelativeFlow(relativeMsgId,target.id,device.id).then((relativeFlow)=>{
-                                        if(!relativeFlow){
-                                            flowMsg.header.RFExist=0;
+                                        let relativeMsgId = msg.body.relativeMsgId;
+                                        if(relativeMsgId){
+                                            Message.asyGetLocalFlow(relativeMsgId,target.id,device.id).then((relativeFlow)=>{
+                                                if(!relativeFlow){
+                                                    flowMsg.header.RFExist=0;
+                                                }
+                                                wsSend(ws, JSON.stringify(flowMsg),()=> {
+                                                    Message.markSent(flowId);
+                                                });
+                                            });
+                                        }else{
+                                            wsSend(ws, JSON.stringify(flowMsg),()=> {
+                                                Message.markSent(flowId);
+                                            });
                                         }
-                                        wsSend(ws, JSON.stringify(flowMsg),()=> {
-                                            Message.markSent(flowId);
-                                        });
-                                    });
-                                }else{
-                                    wsSend(ws, JSON.stringify(flowMsg),()=> {
-                                        Message.markSent(flowId);
-                                    });
+                                    }
                                 }
-
-
-                            }
+                            });
                         }
                     });
+
                 })
             }
         });
@@ -569,20 +580,20 @@ let LKServer = {
             let key = k.split(":");
             let ip = key[0];
             let port = key[1];
-            let flowId = this.generateFlowId();
-            Message.asyAddForeignFlow(flowId,msgId,ip,port,v).then(()=>{
-                let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,targets : v})
-                Transfer.send(flowMsg,ip,port,this);
+            Message.asyGetForeignFlow(msgId,ip,port).then((f)=>{
+                if(!f){
+                    let flowId = this.generateFlowId();
+                    Message.asyAddForeignFlow(flowId,msgId,ip,port,v).then(()=>{
+                        let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,targets : v})
+                        Transfer.send(flowMsg,ip,port);
+                    })
+                }
             })
+
         })
-        let content = null;
-        console.log({
-          nCkDiff,
-          ckDiffPsLength: ckDiffPs.length
-        })
+
         if(!nCkDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
-            console.log({diffs})
             let dffRes = [];
             diffs.forEach(function (res) {
                 if(res){
@@ -590,24 +601,20 @@ let LKServer = {
                 }
             })
 
-            content = JSON.stringify(this.newResponseMsg(msgId,{hasDiff:dffRes.length>0?true:false},header.flowId));
             if(dffRes.length>0){
                 if(header.transfer){
                     Message.asyGetLastForeignFlowId(msg.header.serverIP,msg.header.serverPort,'deviceDiffReport').then((preFlowId)=>{
-                        this._sendForeignNewAction("msgDeviceDiffReport",{diff:dffRes,msgId:msgId,chatId:msg.body.chatId},{id:header.uid,did:header.did},preFlowId,"deviceDiffReport");
+                        this._sendForeignNewAction(msgId,UUID(),"msgDeviceDiffReport",{diff:dffRes,msgId:msgId,chatId:msg.body.chatId},{id:header.uid,did:header.did},preFlowId,"deviceDiffReport");
                     })
                 }else{
                     Message.asyGetLastLocalFlowId(msg.header.uid,msg.header.did,'deviceDiffReport').then((preFlowId)=>{
-                        this._sendLocalNewAction("msgDeviceDiffReport",{diff:dffRes,msgId:msgId,chatId:msg.body.chatId},msg.header.uid,msg.header.did,preFlowId,"deviceDiffReport");
+                        this._sendLocalNewAction(msgId,UUID(),"msgDeviceDiffReport",{diff:dffRes,msgId:msgId,chatId:msg.body.chatId},msg.header.uid,msg.header.did,preFlowId,"deviceDiffReport");
                     })
                 }
             }
 
-
-            console.log({content})
-        }else{
-            content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
         }
+        let content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
         wsSend(ws, content);
     },
     msgDeviceDiffReport:async function (msg,ws) {
@@ -622,29 +629,33 @@ let LKServer = {
         if(header.transfer){
             let content = JSON.stringify(this.newResponseMsg(msgId,null,srcFlowId,header.serverIP,header.serverPort,header.flowType));
             wsSend(ws, content);
-            let flowId = this.generateFlowId();
-            Message.asyAddLocalFlow(flowId,msgId,target.id,target.did).then(()=>{
-                let wsS = this.clients.get(target.id);
-                if (wsS) {
-                    let ws = wsS.get(target.did);
-                    if(ws){
-                        header.flowId = flowId;
-                        wsSend(ws, JSON.stringify(msg),()=> {
-                            Message.markSent(flowId);
-                        });
-                    }
+            Message.asyGetLocalFlow(msgId,target.id,target.did).then((f)=>{
+                if(!f){
+                    let flowId = this.generateFlowId();
+                    Message.asyAddLocalFlow(flowId,msgId,target.id,target.did).then(()=>{
+                        let wsS = this.clients.get(target.id);
+                        if (wsS) {
+                            let ws = wsS.get(target.did);
+                            if(ws){
+                                header.flowId = flowId;
+                                wsSend(ws, JSON.stringify(msg),()=> {
+                                    Message.markSent(flowId);
+                                });
+                            }
+                        }
+                    });
                 }
-            });
+            })
+
         }
 
     },
 
-    _sendLocalNewAction:async function(action,content,targetUid,targetDid,preFlowId,flowType){
+    _sendLocalNewAction:async function(parentMsgId,newMsgId,action,content,targetUid,targetDid,preFlowId,flowType){
         let flowId = this.generateFlowId();
-        let msgId = UUID();
         let msg = {header:{
             version:"1.0",
-            id:msgId,
+            id:newMsgId,
             flowId:flowId,
             preFlowId:preFlowId,
             flowType:flowType,
@@ -652,8 +663,8 @@ let LKServer = {
         },body:{
             content:content
         }};
-        await Message.asyAddMessage(msg);
-        Message.asyAddLocalFlow(flowId,msgId,targetUid,targetDid,null,preFlowId,flowType).then(()=>{
+        await Message.asyAddMessage(msg,parentMsgId);
+        Message.asyAddLocalFlow(flowId,newMsgId,targetUid,targetDid,null,preFlowId,flowType).then(()=>{
             let wsS = this.clients.get(targetUid);
             if (wsS) {
                 let ws = wsS.get(targetDid);
@@ -665,12 +676,11 @@ let LKServer = {
             }
         });
     },
-    _sendForeignNewAction:async function(action,content,targetServerIP,targetServerPort,target,preFlowId,flowType,ws){
+    _sendForeignNewAction:async function(parentMsgId,newMsgId,action,content,targetServerIP,targetServerPort,target,preFlowId,flowType,ws){
         let flowId = this.generateFlowId();
-        let msgId = UUID();
         let msg = {header:{
             version:"1.0",
-            id:msgId,
+            id:newMsgId,
             flowId:flowId,
             preFlowId:preFlowId,
             flowType:flowType,
@@ -678,42 +688,53 @@ let LKServer = {
         },body:{
             content:content
         }};
-        await Message.asyAddMessage(msg);
-        Message.asyAddForeignFlow(flowId,msgId,targetServerIP,targetServerPort,target,preFlowId,flowType).then(()=>{
+        await Message.asyAddMessage(msg,parentMsgId);
+        Message.asyAddForeignFlow(flowId,newMsgId,targetServerIP,targetServerPort,target,preFlowId,flowType).then(()=>{
             Transfer.send(msg,targetServerIP,targetServerPort);
         });
     },
 //TODO 定时清理滞留消息 设备处于激活状态下时，如其未收到元消息，元消息始终保持在库；所以还是要有个激活状态管理，或者还是超时删除元信息，但是当再次激活时需要更新设备的元信息
 
     readReport:async function (msg,ws) {
-        await Message.asyAddMessage(msg);
+
         let header = msg.header;
         let msgId = header.id;
+        let curMsg = await Message.asyGetMsg(msgId);
+        if(!curMsg){
+            await Message.asyAddMessage(msg);
+        }
         let srcFlowId = header.flowId;
         let target = header.target;
         if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())) {//to another server
-            let flowId = this.generateFlowId();
-            Message.asyAddForeignFlow(flowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
-                msg.header.flowId = flowId;
-                Transfer.send(msg,target.serverIP,target.serverPort,this);
-            })
+            let f = await Message.asyGetForeignFlow(msgId,target.serverIP,target.serverPort);
+            if(!f){
+                let flowId = this.generateFlowId();
+                Message.asyAddForeignFlow(flowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
+                    msg.header.flowId = flowId;
+                    Transfer.send(msg,target.serverIP,target.serverPort,this);
+                })
+            }
         }else{
             let devices = await Device.asyGetDevices(target.id);
             if(devices){
                 devices.forEach((device)=>{
-                    let flowId = this.generateFlowId();
-                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
-                        let wsS = this.clients.get(target.id);
-                        if (wsS) {
-                            let ws = wsS.get(device.id);
-                            if(ws){
-                                msg.header.flowId = flowId;
-                                wsSend(ws, JSON.stringify(msg),()=> {
-                                    Message.markSent(flowId);
-                                });
-                            }
+                    Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                        if(!f){
+                            let flowId = this.generateFlowId();
+                            Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
+                                let wsS = this.clients.get(target.id);
+                                if (wsS) {
+                                    let ws = wsS.get(device.id);
+                                    if(ws){
+                                        msg.header.flowId = flowId;
+                                        wsSend(ws, JSON.stringify(msg),()=> {
+                                            Message.markSent(flowId);
+                                        });
+                                    }
+                                }
+                            });
                         }
-                    });
+                    })
                 });
             }
         }
@@ -734,28 +755,35 @@ let LKServer = {
             let devices = await Device.asyGetDevices(target.id);
             if(devices){
                 devices.forEach((device)=>{
-                    let flowId = this.generateFlowId();
-                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
-                        let wsS = this.clients.get(target.id);
-                        if (wsS) {
-                            let ws = wsS.get(device.id);
-                            if(ws){
-                                header.flowId = flowId;
-                                wsSend(ws, JSON.stringify(msg),()=> {
-                                    Message.markSent(flowId);
-                                });
-                            }
+                    Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                        if(!f){
+                            let flowId = this.generateFlowId();
+                            Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
+                                let wsS = this.clients.get(target.id);
+                                if (wsS) {
+                                    let ws = wsS.get(device.id);
+                                    if(ws){
+                                        header.flowId = flowId;
+                                        wsSend(ws, JSON.stringify(msg),()=> {
+                                            Message.markSent(flowId);
+                                        });
+                                    }
+                                }
+                            });
                         }
-                    });
+                    })
                 });
             }
         }else{
-            let newFlowId = this.generateFlowId();
-            Message.asyAddForeignFlow(newFlowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
-                header.flowId = newFlowId;
-                Transfer.send(msg,target.serverIP,target.serverPort);
+            Message.asyGetForeignFlow(msgId,target.serverIP,target.serverPort).then((f)=>{
+                if(!f){
+                    let newFlowId = this.generateFlowId();
+                    Message.asyAddForeignFlow(newFlowId,msgId,target.serverIP,target.serverPort,target).then(()=>{
+                        header.flowId = newFlowId;
+                        Transfer.send(msg,target.serverIP,target.serverPort);
+                    });
+                }
             });
-
         }
         let content = JSON.stringify(this.newResponseMsg(msgId,null,srcFlowId));
         wsSend(ws, content);
@@ -784,19 +812,24 @@ let LKServer = {
                     if(devices){
                         devices.forEach((device)=>{
                             if(device.id!==header.did){
-                                let flowId = this.generateFlowId();
-                                Message.asyAddLocalFlow(flowId,header.msgId,header.uid,device.id).then(()=>{
-                                    let wsS = this.clients.get(header.uid);
-                                    if (wsS) {
-                                        let ws = wsS.get(device.id);
-                                        if(ws){
-                                            header.flowId = flowId;
-                                            wsSend(ws, JSON.stringify(msg),()=> {
-                                                Message.markSent(flowId);
-                                            });
-                                        }
+                                Message.asyGetLocalFlow(header.id,header.uid,device.id).then((f)=> {
+                                    if (!f) {
+                                        let flowId = this.generateFlowId();
+                                        Message.asyAddLocalFlow(flowId,header.id,header.uid,device.id).then(()=>{
+                                            let wsS = this.clients.get(header.uid);
+                                            if (wsS) {
+                                                let ws = wsS.get(device.id);
+                                                if(ws){
+                                                    header.flowId = flowId;
+                                                    wsSend(ws, JSON.stringify(msg),()=> {
+                                                        Message.markSent(flowId);
+                                                    });
+                                                }
+                                            }
+                                        });
                                     }
                                 });
+
                             }
 
                         });
@@ -826,99 +859,114 @@ let LKServer = {
         let members = msg.body.content.members;
 
         let chatId = msg.body.content.chatId;
-        Group.asyGetGroup(chatId).then((group)=>{
-            if(!group){
-                Group.asyAddGroup(chatId,msg.body.content.name);
-                members.forEach((member)=>{
-                    Member.asyGetContact(member.id).then((contact)=>{
-                        if(!contact){
-                            Member.asyAddContact(member.id,member.name,member.pic,member.serverIP,member.serverPort);
+        let group = await Group.asyGetGroup(chatId);
+        if(!group){
+            let ps = [];
+            ps.push(Group.asyAddGroup(chatId,msg.body.content.name));
+            members.forEach((member)=>{
+                ps.push(Member.asyGetContact(member.id).then((contact)=>{
+                    if(!contact){
+                        Member.asyAddContact(member.id,member.name,member.pic,member.serverIP,member.serverPort);
+                    }
+                }))
+                ps.push(Group.asyGetGroupMember(chatId,member.id).then((m)=>{
+                    if(!m){
+                        Group.asyAddGroupMember(chatId,member.id);
+                    }
+                }))
+            });
+            await Promise.all(ps);
+            if(header.transfer){
+                let targets = header.targets;
+                targets.forEach((target)=>{
+                    Device.asyGetDevices(target.id).then((devices)=>{
+                        if(devices){
+                            devices.forEach((device)=>{
+                                Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                                    if(!f){
+                                        Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
+                                            let flowId = this.generateFlowId();
+                                            Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,null,preFlowId,"group").then(()=>{
+                                                let wsS = this.clients.get(target.id);
+                                                if (wsS) {
+                                                    let ws = wsS.get(device.id);
+                                                    if(ws){
+                                                        //msg.header.flowId = flowId;
+                                                        let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group"});
+                                                        wsSend(ws, JSON.stringify(newMsg),()=> {
+                                                            Message.markSent(flowId);
+                                                        });
+                                                    }
+                                                }
+                                            });
+                                        });
+                                    }
+                                })
+                            });
                         }
-                    })
-                    Group.asyAddGroupMember(chatId,member.id);
+                    });
                 });
-                if(header.transfer){
-                    let targets = header.targets;
-                    targets.forEach((target)=>{
+            }else{
+                let targetsNeedTrasfer = new Map();
+                members.forEach((target)=>{
+                    if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
+                        let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
+                        if(!targets2){
+                            targets2 = [];
+                            targetsNeedTrasfer.set(target.serverIP+":"+target.serverPort,targets2);
+                        }
+                        targets2.push(target);
+                    }else{
                         Device.asyGetDevices(target.id).then((devices)=>{
                             if(devices){
                                 devices.forEach((device)=>{
-                                    Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
-                                        let flowId = this.generateFlowId();
-                                        Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,null,preFlowId,"group").then(()=>{
-                                            let wsS = this.clients.get(target.id);
-                                            if (wsS) {
-                                                let ws = wsS.get(device.id);
-                                                if(ws){
-                                                    //msg.header.flowId = flowId;
-                                                    let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group"});
-                                                    wsSend(ws, JSON.stringify(newMsg),()=> {
-                                                        Message.markSent(flowId);
+                                    if(device.id!==header.did){
+                                        Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                                            if(!f){
+                                                Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
+                                                    let flowId = this.generateFlowId();
+                                                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,null,preFlowId,"group").then(()=>{
+                                                        let wsS = this.clients.get(target.id);
+                                                        if (wsS) {
+                                                            let ws = wsS.get(device.id);
+                                                            if(ws){
+                                                                let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group"});
+                                                                wsSend(ws, JSON.stringify(newMsg),()=> {
+                                                                    Message.markSent(flowId);
+                                                                });
+                                                            }
+                                                        }
                                                     });
-                                                }
+                                                });
                                             }
-                                        });
-                                    });
-
+                                        })
+                                    }
                                 });
                             }
                         });
-                    });
-                }else{
-                    let targetsNeedTrasfer = new Map();
-                    members.forEach((target)=>{
-                        if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
-                            let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
-                            if(!targets2){
-                                targets2 = [];
-                                targetsNeedTrasfer.set(target.serverIP+":"+target.serverPort,targets2);
-                            }
-                            targets2.push(target);
-                        }else{
-                            Device.asyGetDevices(target.id).then((devices)=>{
-                                if(devices){
-                                    devices.forEach((device)=>{
-                                        if(device.id!==header.did){
-                                            Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
-                                                let flowId = this.generateFlowId();
-                                                Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,null,preFlowId,"group").then(()=>{
-                                                    let wsS = this.clients.get(target.id);
-                                                    if (wsS) {
-                                                        let ws = wsS.get(device.id);
-                                                        if(ws){
-                                                            let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group"});
-                                                            wsSend(ws, JSON.stringify(newMsg),()=> {
-                                                                Message.markSent(flowId);
-                                                            });
-                                                        }
-                                                    }
-                                                });
-                                            });
 
-                                        }
-                                    });
-                                }
+                    }
+                });
+                targetsNeedTrasfer.forEach((v,k)=>{
+                    let key = k.split(":");
+                    let ip = key[0];
+                    let port = key[1];
+                    Message.asyGetForeignFlow(msgId,ip,port).then((f)=>{
+                        if(!f){
+                            Message.asyGetLastForeignFlowId(ip,port,"group").then((preFlowId)=>{
+                                let flowId = this.generateFlowId();
+                                Message.asyAddForeignFlow(flowId,msgId,ip,port,v,preFlowId,"group").then(()=>{
+                                    let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group",targets:v});
+                                    Transfer.send(newMsg,ip,port,this);
+                                })
                             });
-
                         }
-                    });
-                    targetsNeedTrasfer.forEach((v,k)=>{
-                        let key = k.split(":");
-                        let ip = key[0];
-                        let port = key[1];
-                        Message.asyGetLastForeignFlowId(ip,port,"group").then((preFlowId)=>{
-                            let flowId = this.generateFlowId();
-                            Message.asyAddForeignFlow(flowId,msgId,ip,port,v,preFlowId,"group").then(()=>{
-                                let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group",targets:v});
-                                Transfer.send(newMsg,ip,port,this);
-                            })
-                        });
-
                     })
+                })
 
-                }
             }
-        });
+        }
+
         let content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
         wsSend(ws, content);
     },
@@ -938,16 +986,18 @@ let LKServer = {
         if(header.transfer){
 
         }else{
-            Group.asyGetGroup(chatId).then((group)=> {
-                if (group) {
-                    Group.asyGetGroupMembers(chatId).then((curMembers)=>{
-                        if(curMembers){
-                            //msg
-                            curMembers.forEach((target)=>{
-                                Device.asyGetDevices(target.id).then((devices)=>{
-                                    if(devices){
-                                        devices.forEach((device)=>{
-                                            if(device.id!==header.did){
+            let group = await Group.asyGetGroup(chatId);
+            if (group) {
+                let curMembers = await Group.asyGetGroupMembers(chatId);
+                if(curMembers){
+                    //msg
+                    curMembers.forEach((target)=>{
+                        Device.asyGetDevices(target.id).then((devices)=>{
+                            if(devices){
+                                devices.forEach((device)=>{
+                                    if(device.id!==header.did){
+                                        Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                                            if(!f){
                                                 Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
                                                     let flowId = this.generateFlowId();
                                                     Message.asyAddLocalFlow(flowId, msgId, target.id, device.id,null,preFlowId,"group").then(() => {
@@ -964,22 +1014,32 @@ let LKServer = {
                                                     });
                                                 });
                                             }
-                                        });
+                                        })
+
                                     }
                                 });
-                            });
-                            //msg2
-                            let newMembers = msg.body.content.members;
-                            let msg2 = this._newMsgFromMsg(msg,{msgId:header.msgId+"_2"});
-                            msg2.body.content.oldMembers = curMembers;
-                            Message.asyAddMessage(msg2);
-                            newMembers.forEach((target)=>{
-                                Device.asyGetDevices(target.id).then((devices)=>{
-                                    if(devices){
-                                        devices.forEach((device)=>{
+                            }
+                        });
+                    });
+                    //msg2
+                    let newMembers = msg.body.content.members;
+                    let newMsgId = header.msgId+"_2";
+                    let msg2 = this._newMsgFromMsg(msg,{msgId:newMsgId});
+                    msg2.body.content.oldMembers = curMembers;
+                    let cutMsg2 = await Message.asyGetMsg(newMsgId);
+                    if(!cutMsg2){
+                        Message.asyAddMessage(msg2,msgId);
+                    }
+
+                    newMembers.forEach((target)=>{
+                        Device.asyGetDevices(target.id).then((devices)=>{
+                            if(devices){
+                                devices.forEach((device)=>{
+                                    Message.asyGetLocalFlow(newMsgId,target.id,device.id).then((f)=>{
+                                        if(!f){
                                             Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
                                                 let flowId = this.generateFlowId();
-                                                Message.asyAddLocalFlow(flowId,msg2.header.id,target.id,device.id,preFlowId,"group").then(()=>{
+                                                Message.asyAddLocalFlow(flowId,newMsgId,target.id,device.id,preFlowId,"group").then(()=>{
                                                     let wsS = this.clients.get(target.id);
                                                     if (wsS) {
                                                         let ws = wsS.get(device.id);
@@ -992,22 +1052,21 @@ let LKServer = {
                                                     }
                                                 });
                                             });
+                                        }
+                                    })
 
-                                        });
-                                    }
+
                                 });
-                            });
-
-                        }
-
+                            }
+                        });
                     });
 
-
-                    members.forEach((member) => {
-                        Group.asyAddGroupMember(chatId, member.id);
-                    });
                 }
-            });
+
+                members.forEach((member) => {
+                    Group.asyAddGroupMember(chatId, member.id);
+                });
+            }
 
         }
         let content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
@@ -1029,22 +1088,25 @@ let LKServer = {
                         if (devices) {
                             devices.forEach((device) => {
                                 if (device.id !== header.did) {
-                                    Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
-                                        let flowId = this.generateFlowId();
-                                        Message.asyAddLocalFlow(flowId, msgId, target.id, device.id,null,preFlowId,"group").then(() => {
-                                            let wsS = this.clients.get(target.id);
-                                            if (wsS) {
-                                                let ws = wsS.get(device.id);
-                                                if (ws) {
-                                                    let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group"});
-                                                    wsSend(ws, JSON.stringify(newMsg),()=> {
-                                                        Message.markSent(flowId);
-                                                    });
-                                                }
-                                            }
-                                        });
+                                    Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                                        if(!f){
+                                            Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
+                                                let flowId = this.generateFlowId();
+                                                Message.asyAddLocalFlow(flowId, msgId, target.id, device.id,null,preFlowId,"group").then(() => {
+                                                    let wsS = this.clients.get(target.id);
+                                                    if (wsS) {
+                                                        let ws = wsS.get(device.id);
+                                                        if (ws) {
+                                                            let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group"});
+                                                            wsSend(ws, JSON.stringify(newMsg),()=> {
+                                                                Message.markSent(flowId);
+                                                            });
+                                                        }
+                                                    }
+                                                });
+                                            })
+                                        }
                                     })
-
                                 }
                             });
                         }
@@ -1073,21 +1135,26 @@ let LKServer = {
                             if (devices) {
                                 devices.forEach((device) => {
                                     if (device.id !== header.did) {
-                                        Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
-                                            let flowId = this.generateFlowId();
-                                            Message.asyAddLocalFlow(flowId, msgId, target.id, device.id,null,preFlowId,"group").then(() => {
-                                                let wsS = this.clients.get(target.id);
-                                                if (wsS) {
-                                                    let ws = wsS.get(device.id);
-                                                    if (ws) {
-                                                        let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group"});
-                                                        wsSend(ws, JSON.stringify(newMsg),()=> {
-                                                            Message.markSent(flowId);
-                                                        });
-                                                    }
-                                                }
-                                            });
+                                        Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                                            if(!f){
+                                                Message.asyGetLastLocalFlowId(target.id,device.id,'group').then((preFlowId)=>{
+                                                    let flowId = this.generateFlowId();
+                                                    Message.asyAddLocalFlow(flowId, msgId, target.id, device.id,null,preFlowId,"group").then(() => {
+                                                        let wsS = this.clients.get(target.id);
+                                                        if (wsS) {
+                                                            let ws = wsS.get(device.id);
+                                                            if (ws) {
+                                                                let newMsg = this._newMsgFromMsg(msg,{flowId:flowId,preFlowId:preFlowId,flowType:"group"});
+                                                                wsSend(ws, JSON.stringify(newMsg),()=> {
+                                                                    Message.markSent(flowId);
+                                                                });
+                                                            }
+                                                        }
+                                                    });
+                                                })
+                                            }
                                         })
+
 
                                     }
                                 });
