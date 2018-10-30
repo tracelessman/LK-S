@@ -5,7 +5,7 @@ const router = Router()
 const config = require('../../config')
 const rootPath = path.resolve(__dirname, '../../')
 const updateJsonPath = path.resolve(rootPath, 'public/pkg/updateMeta.json')
-const serverVersion = require('../package').version
+const serverVersion = require('../../package.json').version
 const semver = require('semver')
 
 router.post('/checkUpdateGeneral', (req, res) => {
@@ -130,8 +130,10 @@ router.post('/checkUpdateGeneral', (req, res) => {
 
     // console.log(result)
   }
+})
 
-
+router.post('/test', (req,res) => {
+  res.end('dosth')
 })
 
 module.exports = router
