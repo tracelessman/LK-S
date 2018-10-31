@@ -527,7 +527,7 @@ let LKServer = {
             }else{
                f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);
             }
-            if(!f){
+            if(f){
                 nCkDiff = true;
             }
         }
