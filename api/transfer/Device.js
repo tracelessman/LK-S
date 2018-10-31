@@ -35,6 +35,22 @@ let Device = {
             });
         });
     },
+    asyUpdateVenderDid:function (uid,did,venderDid) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                update device
+                set venderDid=?
+                where id=? and memberId=?
+            `;
+            Pool.query(sql,[venderDid,did,uid], (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    resolve();
+                }
+            });
+        });
+    },
     asyRemoveDevice:function (uid,did) {
         return new Promise((resolve,reject)=>{
             let sql = `
