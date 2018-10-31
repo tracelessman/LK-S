@@ -191,7 +191,7 @@ router.post('/updateRecord', (req, res) => {
 
 router.post('/qrcode', async (req, res) => {
   util.checkLogin(req, res)
-  const {id} = req.body;
+  const {id} = req.body
 
   const ormService = await ormServicePromise
   const record = await ormService.user.getRecordById(id)
@@ -204,7 +204,7 @@ router.post('/qrcode', async (req, res) => {
     action: 'registerForAdmin',
     code: 'LK',
     id,
-    signature: crypto.createHash('md5').update(signatureRaw).digest('hex')
+    signature: signatureRaw
   }
   const encryptedHex = encryptAES(JSON.stringify(qrcodeData))
 
