@@ -189,77 +189,73 @@ router.post('/updateRecord', (req, res) => {
   })()
 })
 
-router.post('/qrcode', function (req, res, next) {
+router.post('/qrcode', async (req, res) => {
   util.checkLogin(req, res)
   const {id} = req.body;
 
-  (async () => {
-    const ormService = await ormServicePromise
-    const record = await ormService.user.getRecordById(id)
-    const key = new NodeRSA()
+  const ormService = await ormServicePromise
+  const record = await ormService.user.getRecordById(id)
+  const key = new NodeRSA()
 
-    key.importKey(record.privateKey, config.encrypt.privateKeyFormat)
+  key.importKey(record.privateKey, config.encrypt.privateKeyFormat)
+  const signatureRaw = key.sign(id, config.encrypt.signatureFormat, config.encrypt.sourceFormat)
+  const qrcodeData = {
+    url: config.url,
+    action: 'registerForAdmin',
+    code: 'LK',
+    id,
+    signature: crypto.createHash('md5').update(signatureRaw).digest('hex')
+  }
+  const encryptedHex = encryptAES(JSON.stringify(qrcodeData))
 
-    const qrcodeData = {
-      url: config.url,
-      action: 'registerForAdmin',
-      code: 'LK',
-      id,
-      signature: key.sign(id, config.encrypt.signatureFormat, config.encrypt.sourceFormat)
+  res.json({
+    content: {
+      qrcodeData: encryptedHex
     }
-    const encryptedHex = encryptAES(JSON.stringify(qrcodeData))
-
-    res.json({
-      content: {
-        qrcodeData: encryptedHex
-      }
-    })
-  })()
+  })
 })
 
-router.post('/registerForAdmin', (req, res) => {
-  (async () => {
-    const {id, signature, checkCode} = req.body
-    let errorMsg = ''
-    const ormService = await ormServicePromise
-    let record = await ormService.user.getRecordById(id)
-    record = record.dataValues
+router.post('/registerForAdmin', async (req, res) => {
+  const {id, signature, checkCode} = req.body
+  let errorMsg = ''
+  const ormService = await ormServicePromise
+  let record = await ormService.user.getRecordById(id)
+  record = record.dataValues
 
-    const key = new NodeRSA()
-    key.importKey(record.privateKey, config.encrypt.privateKeyFormat)
+  const key = new NodeRSA()
+  key.importKey(record.privateKey, config.encrypt.privateKeyFormat)
 
-    const pass = key.verify(id, signature, config.encrypt.sourceFormat, config.encrypt.signatureFormat)
-    if (!pass) {
-      errorMsg = '注册失败,该二维码无效'
+  const pass = key.verify(id, signature, config.encrypt.sourceFormat, config.encrypt.signatureFormat)
+  if (!pass) {
+    errorMsg = '注册失败,该二维码无效'
+  } else {
+    if (!record) {
+      errorMsg = '注册失败,该管理员不存在'
     } else {
-      if (!record) {
-        errorMsg = '注册失败,该管理员不存在'
+      if (record.isRegistered) {
+        errorMsg = '注册失败,该管理员已经被注册过'
       } else {
-        if (record.isRegistered) {
-          errorMsg = '注册失败,该管理员已经被注册过'
+        if ((record.registerStartTime.getTime() + record.timeout) < Date.now()) {
+          errorMsg = '注册失败,该二维码已过期'
         } else {
-          if ((record.registerStartTime.getTime() + record.timeout) < Date.now()) {
-            errorMsg = '注册失败,该二维码已过期'
+          if (record.password !== checkCode) {
+            errorMsg = '注册失败,验证码不正确'
           } else {
-            if (record.password !== checkCode) {
-              errorMsg = '注册失败,验证码不正确'
-            } else {
-              record.isRegistered = true
-              record.password = crypto.createHash('md5').update(record.password).digest('hex')
-              await ormService.user.updateRecord(record)
-            }
+            record.isRegistered = true
+            record.password = crypto.createHash('md5').update(record.password).digest('hex')
+            await ormService.user.updateRecord(record)
           }
         }
       }
     }
+  }
 
-    res.json({
-      content: {
+  res.json({
+    content: {
 
-      },
-      errorMsg
-    })
-  })()
+    },
+    errorMsg
+  })
 })
 
 module.exports = router

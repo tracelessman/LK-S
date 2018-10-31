@@ -25,17 +25,28 @@
                 <div style="margin-top: 30px;color:#2d8cf0">
                     {{this.info}}
                 </div>
-            </div></TabPane>
+            </div>
+            </TabPane>
+            <TabPane label="当前网址">
+                <div style="text-align: center;margin-top: 50px">
+                    <div v-html='qrcode' style="">
+
+                    </div>
+                </div>
+            </TabPane>
         </Tabs>
 
     </div>
 </template>
 
 <script>
+  const qr = require('qr-image')
+
   export default {
     name: "app",
     data() {
       return  {
+        qrcode: qr.imageSync("http://192.144.200.234:3000/app", { type: 'svg',size:10,parse_url:true}),
         info:"请用您的iphone或ipad加载本网页或扫描页面上的二维码",
         url:"itms-services://?action=download-manifest&url=https://raw.githubusercontent.com/tracelessman/LK-M/master/ios/manifest.plist"
       }
