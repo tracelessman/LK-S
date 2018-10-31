@@ -2,7 +2,7 @@
     <div v-show="isInited">
         <div style="margin:20px 30px" v-if="hasRoot" >
             <div style="background-color: rgb(241, 241, 241);padding:5px 10px;margin-bottom:20px;padding-right:30px">
-                <Button @click='openSaveModal("create")' style="margin-right: 5px;width:100px" size="small" type="primary">新增子节点</Button>
+                <Button @click='openSaveModal("create")' style="margin-right: 5px;width:100px" size="small" type="primary">新增子组织</Button>
                 <Button @click='openSaveModal("modify")' style="margin-right: 5px;width:60px" size="small" type="primary">修改</Button>
                 <Button @click='deleteRecord' style="margin-right: 5px;width:60px" size="small" type="primary">删除</Button>
                 <Button @click='expandAll' style="margin-right: 5px;width:80px" size="small" type="primary">全部展开</Button>

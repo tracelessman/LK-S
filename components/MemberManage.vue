@@ -550,7 +550,7 @@
                                 orgId:this.selectedNode.id
                             },
                             successCb:(content)=>{
-                                this.$Message.success("成功添加管理员")
+                                this.$Message.success("成功添加组织成员")
                                 this.showSaveModal = false
                                 this.refreshTable()
                             }
