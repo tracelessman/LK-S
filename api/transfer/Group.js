@@ -23,7 +23,7 @@ let Group = {
     asyGetGroupMemberIds:function (gid) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select memberId from groupMember 
+                select memberId as id from groupMember 
                 where groupMember.gid=?
             `;
             Pool.query(sql,[gid], (error,results,fields) =>{
