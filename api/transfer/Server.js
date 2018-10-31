@@ -19,6 +19,7 @@ const _ = require('lodash')
 const TransferFlowCursor = require('./TransferFlowCursor');
 const {ErrorUtil} = require('@ys/collection')
 const {exitOnUnexpected} = ErrorUtil
+const Push = require('../push')
 
 
   function _f (obj, caller) {
@@ -376,6 +377,7 @@ let LKServer = {
     login: async function (msg,ws) {
         let uid = msg.header.uid;
         let did = msg.header.did;
+        let venderDid = msg.body.content.venderDid;
         let result = await Promise.all([Member.asyGetMember(uid),Device.asyGetDevice(did)]);
         let content = {};
         if(result[0]&&result[1]){
@@ -395,6 +397,7 @@ let LKServer = {
             ws._did = did;
             ws._lastHbTime = Date.now();
             wsS.set(did,ws);
+            Device.asyUpdateVenderDid(uid,did,venderDid);
         }else{
             content.err="invalid user";
         }
@@ -552,6 +555,12 @@ let LKServer = {
                         if(!f){
                             let flowId = this.generateFlowId();
                             Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
+                                if(device.venderDid){
+                                    setTimeout(()=>{
+                                        Push.pushIOS("您有新的消息，请注意查收",device.venderDid);
+                                    },2000);
+                                }
+
                                 let wsS = this.clients.get(target.id);
                                 if (wsS) {
                                     let ws = wsS.get(device.id);
