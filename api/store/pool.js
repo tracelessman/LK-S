@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS message
     senderServerIP varchar(45),
     senderServerPort int,
     sign TEXT,
-    body TEXT,
+    body MEDIUMTEXT,
     senderTime datetime,
     time datetime,
     timeout int,
