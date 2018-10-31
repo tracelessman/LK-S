@@ -33,11 +33,11 @@ const ormUtil = {
         createdAt: false,
         updatedAt: false
       })
-      // modelSequelized.sync().then(() => {
-      //   if (afterSync) {
-      //     afterSync(modelSequelized)
-      //   }
-      // })
+      modelSequelized.sync().then(() => {
+        if (afterSync) {
+          afterSync(modelSequelized)
+        }
+      })
       return {
         modelObj,
         modelSequelized,

@@ -64,7 +64,7 @@ router.post('/checkUpdate', (req, res) => {
   }
   // 如果是处于开发状态,则不需要更新
   if (__DEV__) {
-    // result.needUpdate = false
+    result.isForce = false
   }
   console.log(result)
   res.end(JSON.stringify(result))
