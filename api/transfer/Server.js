@@ -377,6 +377,7 @@ let LKServer = {
     login: async function (msg,ws) {
         let uid = msg.header.uid;
         let did = msg.header.did;
+        console.log({msg})
         let venderDid = msg.body.content.venderDid;
         let result = await Promise.all([Member.asyGetMember(uid),Device.asyGetDevice(did)]);
         let content = {};
