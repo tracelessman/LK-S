@@ -36,7 +36,7 @@ let sqlModel
 function logging (sql) {
   // console.log(sql)
 
-  let type, tableName
+  let tableName, type
   const typeAry = ['INSERT', 'UPDATE', 'DELETE']
   for (let typeEle of typeAry) {
     if (sql.includes(typeEle)) {

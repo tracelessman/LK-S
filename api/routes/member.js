@@ -5,12 +5,12 @@ const router = Router()
 const {ormModelPromise} = require('../store/ormModel')
 const {ormServicePromise} = require('../store/ormService')
 const util = require('../util')
-const codeUtil = require(path.resolve(rootPath, 'api/util/codeUtil'))
 const uuid = require('uuid')
 const config = require('../../config')
 const NodeRSA = require('node-rsa')
 const aesjs = require('aes-js')
 const md5 = require('crypto-js/md5')
+const MCodeManager = require('../transfer/MCodeManager')
 
 router.post('/addMember', (req, res) => {
   util.checkLogin(req, res)
@@ -24,7 +24,7 @@ router.post('/addMember', (req, res) => {
       name,
       orgId
     }
-    member.mCode = await codeUtil.getMemberMCode()
+    const memberId = member.id
     const ticket = {
       memberId: member.id,
       timeout,
@@ -32,6 +32,7 @@ router.post('/addMember', (req, res) => {
       startTime: new Date()
     }
     await ormService.member.addRecord(member)
+    MCodeManager.resetSingleMemberMagicCode(memberId)
     await ormService.ticket.addRecord(ticket)
     res.json()
   })()
@@ -45,6 +46,7 @@ router.post('/updateMember', (req, res) => {
       ...valueRecordSave,
       id: valueRecordSave.memberId
     })
+    MCodeManager.resetSingleMemberMagicCode(valueRecordSave.memberId)
     await ormService.ticket.updateRecord({
       ...valueRecordSave,
       id: valueRecordSave.id
@@ -100,6 +102,9 @@ router.post('/deleteRecordMultiple', (req, res) => {
       promiseAry.push(p1, p2)
     }
     await Promise.all(promiseAry)
+    for (let ticket of idAry) {
+      await MCodeManager.resetSingleMemberMagicCode(ticket.memberId)
+    }
     res.json()
   })()
 })
