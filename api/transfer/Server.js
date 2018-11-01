@@ -559,9 +559,10 @@ let LKServer = {
                             let flowId = this.generateFlowId();
                             Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
                               console.log('here')
-                                if(device.venderDid){
+                              console.log({venderDid: device.venderDid})
+
+                              if(device.venderDid){
                                     setTimeout(()=>{
-                                        console.log({venderDid: device.venderDid})
                                         Push.pushIOS("您有新的消息，请注意查收",[device.venderDid]);
                                     },2000);
                                 }
