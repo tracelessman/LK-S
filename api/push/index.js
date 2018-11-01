@@ -26,7 +26,7 @@ class Push {
         if (response.failed.length !== 0) {
           for (let ele of response.failed) {
             // TODO: 有可能是开发模式
-            console.log(ele.response)
+            console.log(ele)
           }
           reject(new Error('send failed'))
         } else {
