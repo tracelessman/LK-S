@@ -377,7 +377,6 @@ let LKServer = {
     login: async function (msg,ws) {
         let uid = msg.header.uid;
         let did = msg.header.did;
-        console.log({msg})
         let venderDid = msg.body.content.venderDid;
         let result = await Promise.all([Member.asyGetMember(uid),Device.asyGetDevice(did)]);
         let content = {};
@@ -404,9 +403,8 @@ let LKServer = {
             content.err="invalid user";
         }
 
-        const responseMsg = LKServer.newResponseMsg(msg.header.id,content)
-        console.log({responseMsg})
-        let rep = JSON.stringify(responseMsg);
+
+        let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,content));
         wsSend(ws, rep);
 
         this.getAllDetainedMsg(msg, ws)
@@ -417,8 +415,6 @@ let LKServer = {
         Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
             this._sendLocalRetainMsgs(ws,rows);
         });
-        let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{}));
-       wsSend(ws, rep);
     },
     register:async function (msg,ws) {
 
@@ -554,18 +550,18 @@ let LKServer = {
                 if(!nCkDiff)
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
-                  // console.log({device})
                     Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
                         if(!f){
                             let flowId = this.generateFlowId();
                             Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
-                              // console.log({venderDid: device.venderDid})
+                                Device.asyGetDevice(device.id).then((d)=>{
+                                    if(d&&d.venderDid){
+                                        setTimeout(()=>{
+                                            Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
+                                        },2000);
+                                    }
+                                })
 
-                              if(device.venderDid){
-                                    setTimeout(()=>{
-                                        Push.pushIOS("您有新的消息，请注意查收",[device.venderDid]);
-                                    },2000);
-                                }
 
                                 let wsS = this.clients.get(target.id);
                                 if (wsS) {
