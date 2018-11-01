@@ -8,7 +8,7 @@
     "test": "jest",
     "dev": "cross-env NODE_ENV=development nuxt",
     "build": "nuxt build",
-    "start": "cross-env NODE_ENV=production nuxt build && NODE_ENV=production nuxt start",
+    "start": "NODE_ENV=production nuxt start",
     "lint": "eslint --ext .js,.vue .",
     "startWs": "pm2 start api/transfer/Server.js --name=lk --node-args='--inspect'",
     "postinstall": "node bin/postinstall",
@@ -42,6 +42,7 @@
     "ws": "^6.0.0"
   },
   "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.1.0",
     "@ys/eslint-config-strict": "git+https://github.com/spirit1453/codebase.git#strict_eslint",
     "clipboardy": "^1.2.3",
     "eslint-loader": "^1.9.0",
