@@ -378,7 +378,7 @@ let LKServer = {
         let uid = msg.header.uid;
         let did = msg.header.did;
         let venderDid = msg.body.content.venderDid;
-        let result = await Promise.all(Member.asyGetMember(uid),Device.asyGetDevice(did));
+        let result = await Promise.all([Member.asyGetMember(uid),Device.asyGetDevice(did)]);
         let content = {};
         if(result[0]&&result[1]){
             let wsS = this.clients.get(uid);
