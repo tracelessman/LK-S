@@ -397,7 +397,8 @@ let LKServer = {
             ws._did = did;
             ws._lastHbTime = Date.now();
             wsS.set(did,ws);
-            Device.asyUpdateVenderDid(uid,did,venderDid);
+            if(venderDid)
+                Device.asyUpdateVenderDid(uid,did,venderDid);
         }else{
             content.err="invalid user";
         }
