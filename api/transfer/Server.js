@@ -554,6 +554,7 @@ let LKServer = {
                 if(!nCkDiff)
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
+                  console.log({device})
                     Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
                         if(!f){
                             let flowId = this.generateFlowId();
