@@ -555,10 +555,10 @@ let LKServer = {
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
                     Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
-                      console.log({f})
                         if(!f){
                             let flowId = this.generateFlowId();
                             Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
+                              console.log('here')
                                 if(device.venderDid){
                                     setTimeout(()=>{
                                         console.log({venderDid: device.venderDid})
