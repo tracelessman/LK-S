@@ -554,13 +554,12 @@ let LKServer = {
                 if(!nCkDiff)
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
-                  console.log({device})
+                  // console.log({device})
                     Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
                         if(!f){
                             let flowId = this.generateFlowId();
                             Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
-                              console.log('here')
-                              console.log({venderDid: device.venderDid})
+                              // console.log({venderDid: device.venderDid})
 
                               if(device.venderDid){
                                     setTimeout(()=>{
