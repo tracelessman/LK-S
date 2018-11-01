@@ -60,6 +60,7 @@ router.post('/checkUpdate', (req, res) => {
 
   // 如果updateAnyWay,那就需要更新
   if (updateAnyWay) {
+    prepareUpdate(false)
     result.needUpdate = true
   }
   // 如果是处于开发状态,则不需要更新
