@@ -13,7 +13,7 @@ const Org = require('./Org');
 const UUID = require('uuid/v4');
 const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
-const {isDebugging} = config
+const {isDebugging, pushTimeInterval} = config
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 const _ = require('lodash')
 const TransferFlowCursor = require('./TransferFlowCursor');
@@ -560,7 +560,7 @@ let LKServer = {
                                     if(d&&d.venderDid){
                                         setTimeout(()=>{
                                             Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
-                                        },2000);
+                                        },pushTimeInterval);
                                     }
                                 })
 

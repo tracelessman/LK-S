@@ -37,7 +37,8 @@ const config = {
   appId: 'LK_M',
   appName: 'LK',
   serverRoot: '/opt/testing/LK-S',
-  updateJsonPath: 'static/public/updateMeta.json'
+  updateJsonPath: 'static/public/updateMeta.json',
+  pushTimeInterval: 1000
 }
 config.manifestUrl = 'itms-services://?action=download-manifest&url=https://raw.githubusercontent.com/tracelessman/LK-M/master/ios/manifest.plist'
 
