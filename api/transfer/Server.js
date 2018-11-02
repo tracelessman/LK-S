@@ -514,7 +514,7 @@ let LKServer = {
     },
 
     sendMsg: async function (msg,ws,nCkDiff) {
-        let header = msg.header;
+      const {header, body} = msg
         let msgId = header.id;
         let curMsg = await Message.asyGetMsg(msgId);
         if(!curMsg){
@@ -559,7 +559,7 @@ let LKServer = {
                                 Device.asyGetDevice(device.id).then((d)=>{
                                     if(d&&d.venderDid){
                                         setTimeout(()=>{
-                                            Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
+                                            Push.pushIOS("您有新的消息，请注意查收",d.venderDid, {senderId: header.uid, chatId: body.chatId});
                                         },pushTimeInterval);
                                     }
                                 })
