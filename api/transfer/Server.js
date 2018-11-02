@@ -559,7 +559,7 @@ let LKServer = {
                                 Device.asyGetDevice(device.id).then((d)=>{
                                     if(d&&d.venderDid){
                                         setTimeout(()=>{
-                                            Push.pushIOS("您有新的消息，请注意查收",d.venderDid, {senderId: header.uid, chatId: body.chatId});
+                                            Push.pushIOS("您有新的消息，请注意查收",d.venderDid, {senderId: header.uid, chatId: body.chatId, isGroup: body.isGroup});
                                         },pushTimeInterval);
                                     }
                                 })
