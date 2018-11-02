@@ -32,7 +32,7 @@ const config = {
     username: 'root'
   },
   msgTimeout: 10 * 1000,
-  isDebugging: true,
+  isDebugging: false,
   bundleId: 'com.hfs.LK-M',
   appId: 'LK_M',
   appName: 'LK',
