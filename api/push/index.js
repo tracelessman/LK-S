@@ -5,7 +5,7 @@ const config = require(path.resolve(rootPath, 'config'))
 const {bundleId} = config
 
 class Push {
-  static _pushIOS ({alert, badge, deviceTokenAry, isProduction}) {
+  static _pushIOS ({alert, badge, deviceTokenAry, isProduction, payload}) {
     return new Promise((resolve, reject) => {
       const options = {
         token: {
@@ -22,6 +22,7 @@ class Push {
       notification.sound = 'ping.aiff'
       notification.badge = badge
       notification.topic = bundleId
+      notification.payload = payload
       apnProvider.send(notification, deviceTokenAry).then((response) => {
         if (response.failed.length !== 0) {
           for (let ele of response.failed) {
@@ -39,14 +40,14 @@ class Push {
    * IOS推送通知
    * @param {string} content 发送内容
    * @param {array} deviceTokenAry 需要发送的设备id数组
+   * @param {object} payload 发送的补充信息
    * @return {undefined}
    */
-  static async pushIOS (content, deviceTokenAry) {
-
+  static async pushIOS (content, deviceTokenAry, payload = {}) {
     try {
-      await Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: true})
+      await Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: true, payload})
     } catch (error) {
-      Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: false})
+      Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: false, payload})
     }
   }
 }
