@@ -42,6 +42,7 @@ class Push {
    * @return {undefined}
    */
   static async pushIOS (content, deviceTokenAry) {
+
     try {
       await Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: true})
     } catch (error) {
