@@ -29,7 +29,7 @@ class Push {
             // TODO: 有可能是开发模式
             // console.log(ele)
           }
-          reject(new Error('send failed'))
+          // reject(new Error('send failed'))
         } else {
           resolve(response)
         }
