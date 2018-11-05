@@ -3,11 +3,19 @@ const Log = require('./Log');
 let Message = {
 
     _checkRemoveMsg:function (msgId) {
-        let sql = `delete from message where id=? and 1>(select count(*) from flow where msgId=?)`;
-        Pool.query(sql,[msgId,msgId],function (error,results,fields) {
-            console.info("_checkRemoveMsg")
+        //let sql = `delete from message where id=? and 1>(select count(*) from flow where msgId=?)`;
+        let sql1 = `select * from flow where msgId=?`;
+        Pool.query(sql1,[msgId],function (error,results,fields) {
             if(error){
                 console.error(error.toString())
+            }
+            else if(results.length==0){
+                let sql2 = `delete from message where msgId=?`;
+                Pool.query(sql2,[msgId],function (error,results,fields) {
+                    if(error){
+                        console.error(error.toString())
+                    }
+                });
             }
         });
     },
@@ -15,7 +23,6 @@ let Message = {
     receiveReport:function (flowId) {
         let sql = "delete from flow where id=?";
         Pool.query(sql,[flowId], (error,results,fields) =>{
-            console.info("receiveReport")
             if(error){
                 console.error(error.toString())
             }else{
