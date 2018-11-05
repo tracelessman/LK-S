@@ -10,9 +10,10 @@ let Message = {
                 console.error({select:error.toString()})
             }
             else if(results.length==0){
-                let sql2 = "delete from message where id='?'";
+                let sql2 = "delete from message where id=?";
                 Pool.query(sql2,[msgId],function (error,results,fields) {
                     if(error){
+                      console.log({sql: sql2}, msgId)
                         console.error({delete:error.toString()})
                     }
                 });
