@@ -13,7 +13,7 @@ let Message = {
                 let sql2 = "delete from message where id=?";
                 Pool.query(sql2,[msgId],function (error,results,fields) {
                     if(error){
-                      console.log({sql: sql2}, msgId)
+                      console.log({sql: sql2}, msgId, typeof msgId)
                         console.error({delete:error.toString()})
                     }
                 });
