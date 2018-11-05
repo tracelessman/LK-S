@@ -5,8 +5,9 @@ let Message = {
     _checkRemoveMsg:function (msgId) {
         let sql = `delete from message where id=? and 1>(select count(*) from flow where msgId=?)`;
         Pool.query(sql,[msgId,msgId],function (error,results,fields) {
+            console.info("_checkRemoveMsg")
             if(error){
-
+                console.error(error.toString())
             }
         });
     },
@@ -14,8 +15,9 @@ let Message = {
     receiveReport:function (flowId) {
         let sql = "delete from flow where id=?";
         Pool.query(sql,[flowId], (error,results,fields) =>{
+            console.info("receiveReport")
             if(error){
-
+                console.error(error.toString())
             }else{
                 this._checkRemoveMsg(flowId);
             }
