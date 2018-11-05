@@ -59,14 +59,14 @@ class WSChannel{
     }
     _handleMsg(msg){
         let header = msg.header;
-        console.log({recieve: msg})
+        // console.log({recieve: msg})
         let isResponse = header.response;
         if(isResponse){
             let {flowId} = header;
-            console.log({cbKeys:Object.keys(this._callbacks)})
+            // console.log({cbKeys:Object.keys(this._callbacks)})
             let callback = this._callbacks[flowId];
             if(callback){
-                console.log({callback: msg,src: callback.toString()})
+                // console.log({callback: msg,src: callback.toString()})
                 callback(msg);
             }
         }
@@ -98,8 +98,8 @@ class WSChannel{
     send(message){
         const obj = JSON.parse(message)
         const {targets} = obj.header
-        console.log({targets})
-        console.log({send:obj, url: this._ws.url})
+        // console.log({targets})
+        // console.log({send:obj, url: this._ws.url})
         this._ws.send(message);
         //TODO WebSocket is already in closing or closed state
 
@@ -155,12 +155,6 @@ Transfer = {
 
     },
     _getChannel:function (targetServerIP,targetServerPort) {
-        if (!targetServerIP || !targetServerPort) {
-          console.log({
-            targetServerIP,targetServerPort
-          })
-          throw new Error(' targetServerIP || targetServerPort undefined')
-        }
         let url = 'ws://'+targetServerIP+':'+targetServerPort;
         let ws = this._wss.get(url);
         if(!ws){
