@@ -23,6 +23,7 @@ const member = require('./routes/member')
 const org = require('./routes/org')
 const db = require('./routes/db')
 const update = require('./routes/update')
+const notification = require('./routes/notification')
 // Import API Routes
 app.use('/user', user)
 app.use('/orm', orm)
@@ -32,6 +33,7 @@ app.use('/member', member)
 app.use('/org', org)
 app.use('/db', db)
 app.use('/update', update)
+app.use('/notification', notification)
 
 // Export the server middleware
 module.exports = {
