@@ -436,6 +436,15 @@ let LKServer = {
                 let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"device id already exist"}));
                 wsSend(ws, content);
             }else{
+                let introducerDid = content.introducerDid;
+                if(introducerDid){
+                    let device = await Device.asyGetDevice(introducerDid);
+                    if(!device||device.memberId!==uid){
+                        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"illegal introducer"}));
+                        wsSend(ws, content);
+                        return;
+                    }
+                }
                 try{
                     await Device.asyAddDevice(uid,did,venderDid,pk,description);
                     DeviceManager.deviceChanged(uid);
