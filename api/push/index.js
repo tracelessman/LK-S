@@ -24,12 +24,12 @@ class Push {
       notification.topic = bundleId
       notification.payload = payload
       apnProvider.send(notification, deviceTokenAry).then((response) => {
+        // console.log({response})
         if (response.failed.length !== 0) {
           for (let ele of response.failed) {
             // TODO: 有可能是开发模式
-            // console.log(ele)
+            reject(new Error(ele))
           }
-          // reject(new Error('send failed'))
         } else {
           resolve(response)
         }
