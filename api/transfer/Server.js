@@ -539,6 +539,7 @@ let LKServer = {
             }
         }
         let targets = header.targets;
+        let senderUid = header.uid;
         let senderDid = header.did;
         let diffs = [];
         let ckDiffPs = [];
@@ -563,14 +564,15 @@ let LKServer = {
                         if(!f){
                             let flowId = this.generateFlowId();
                             Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
-                                Device.asyGetDevice(device.id).then((d)=>{
-                                    if(d&&d.venderDid){
-                                        setTimeout(()=>{
-                                            Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
-                                        },2000);
-                                    }
-                                })
-
+                                if(senderUid!==target.id){
+                                    Device.asyGetDevice(device.id).then((d)=>{
+                                        if(d&&d.venderDid){
+                                            setTimeout(()=>{
+                                                Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
+                                            },2000);
+                                        }
+                                    })
+                                }
 
                                 let wsS = this.clients.get(target.id);
                                 if (wsS) {
