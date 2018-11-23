@@ -13,7 +13,7 @@ const Org = require('./Org');
 const UUID = require('uuid/v4');
 const rootPath = path.resolve(__dirname,'../../')
 const config = require(path.resolve(rootPath,'config'))
-const {isDebugging, pushTimeInterval} = config
+const {isDebugging} = config
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 const _ = require('lodash')
 const TransferFlowCursor = require('./TransferFlowCursor');
@@ -27,13 +27,13 @@ const Push = require('../push')
   const {response, target} = obj.header
   const {content} = body
   if (!response) {
-    // console.log({wsSend:obj,caller})
+    console.log({wsSend:obj,caller})
   }
   if (target) {
-    // console.log({target})
+    console.log({target})
   }
   if (content) {
-    // console.log({content})
+    console.log({content})
   }
 }
 function  wsSend (ws, content, callback) {
@@ -137,9 +137,9 @@ let LKServer = {
                     const {targets} = msgClone.header
 
                     if (targets) {
-                      // console.log({targets})
+                      console.log({targets})
                     }
-                    // console.log({serverMsg:msgClone})
+                    console.log({serverMsg:msgClone})
                   }
 
                     let isResponse = header.response;
@@ -326,7 +326,7 @@ let LKServer = {
         //foreign contact's retain msg
         let foreignMsgs = results[0];
         if (foreignMsgs && foreignMsgs.length) {
-          // console.log({foreignMsgs})
+          console.log({foreignMsgs})
         }
         if(foreignMsgs){
             foreignMsgs.forEach( (row) =>{
@@ -415,8 +415,6 @@ let LKServer = {
         Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
             this._sendLocalRetainMsgs(ws,rows);
         });
-      let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{}));
-      wsSend(ws, rep);
     },
     register:async function (msg,ws) {
 
@@ -523,7 +521,7 @@ let LKServer = {
     },
 
     sendMsg: async function (msg,ws,nCkDiff) {
-      const {header, body} = msg
+        let header = msg.header;
         let msgId = header.id;
         let curMsg = await Message.asyGetMsg(msgId);
         if(!curMsg){
@@ -541,6 +539,7 @@ let LKServer = {
             }
         }
         let targets = header.targets;
+        let senderUid = header.uid;
         let senderDid = header.did;
         let diffs = [];
         let ckDiffPs = [];
@@ -565,14 +564,15 @@ let LKServer = {
                         if(!f){
                             let flowId = this.generateFlowId();
                             Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
-                                Device.asyGetDevice(device.id).then((d)=>{
-                                    if(d&&d.venderDid){
-                                        setTimeout(()=>{
-                                            Push.pushIOS("您有新的消息，请注意查收",d.venderDid, {senderId: header.uid, chatId: body.chatId, isGroup: body.isGroup});
-                                        },pushTimeInterval);
-                                    }
-                                })
-
+                                if(senderUid!==target.id){
+                                    Device.asyGetDevice(device.id).then((d)=>{
+                                        if(d&&d.venderDid){
+                                            setTimeout(()=>{
+                                                Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
+                                            },2000);
+                                        }
+                                    })
+                                }
 
                                 let wsS = this.clients.get(target.id);
                                 if (wsS) {
