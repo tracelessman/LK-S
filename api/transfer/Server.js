@@ -409,12 +409,17 @@ let LKServer = {
 
         this.getAllDetainedMsg(msg, ws)
     },
-    getAllDetainedMsg (msg, ws) {
-        let uid = msg.header.uid;
-        let did = msg.header.did;
-        Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
-            this._sendLocalRetainMsgs(ws,rows);
-        });
+    async getAllDetainedMsg (msg, ws) {
+      await this.sendAllDetainedMsg(msg, ws)
+      let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{}))
+      wsSend(ws, rep)
+    },
+    sendAllDetainedMsg (msg, ws) {
+      let uid = msg.header.uid;
+      let did = msg.header.did;
+      return Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
+        this._sendLocalRetainMsgs(ws,rows);
+      });
     },
     register:async function (msg,ws) {
 
