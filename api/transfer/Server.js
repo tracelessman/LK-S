@@ -407,7 +407,7 @@ let LKServer = {
         let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,content));
         wsSend(ws, rep);
 
-        this.getAllDetainedMsg(msg, ws)
+        this.sendAllDetainedMsg(msg, ws)
     },
     async getAllDetainedMsg (msg, ws) {
       await this.sendAllDetainedMsg(msg, ws)
