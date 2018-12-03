@@ -26,15 +26,7 @@ const Push = require('../push')
   const {body, header} = obj
   const {response, target} = obj.header
   const {content} = body
-  if (!response) {
-    console.log({wsSend:obj,caller})
-  }
-  if (target) {
-    console.log({target})
-  }
-  if (content) {
-    console.log({content})
-  }
+
 }
 function  wsSend (ws, content, callback) {
   const caller = wsSend.caller.name
@@ -135,11 +127,6 @@ let LKServer = {
                   if (!excludeAry.includes(action)) {
                     const msgClone = _.cloneDeep(msg)
                     const {targets} = msgClone.header
-
-                    if (targets) {
-                      console.log({targets})
-                    }
-                    console.log({serverMsg:msgClone})
                   }
 
                     let isResponse = header.response;
@@ -325,9 +312,6 @@ let LKServer = {
         let results = await Promise.all(ps);
         //foreign contact's retain msg
         let foreignMsgs = results[0];
-        if (foreignMsgs && foreignMsgs.length) {
-          console.log({foreignMsgs})
-        }
         if(foreignMsgs){
             foreignMsgs.forEach( (row) =>{
                 let msg = this._newMsgFromRow(row,false);
