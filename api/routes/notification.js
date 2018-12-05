@@ -6,8 +6,12 @@ const push = require('../push')
 const os = require('os-utils')
 let count = 0
 const childProcess = require('child_process')
-const admin = 'zcy'
+const path = require('path')
+const rootDir = path.resolve(__dirname, '../../')
+const config = require(path.resolve(rootDir, 'config'))
+const {admin} = config
 const Pool = require('../store/pool')
+const debug = require('debug')('debug')
 
 setCpuMonitor()
 
@@ -59,8 +63,9 @@ router.get('/setup', function (req, res) {
 
 async function sendMsgByName (option) {
   const {nameStr, msg, badge, isProduction, payload} = option
-  const did = await getDeviceIdByName(nameStr)
-  const param = {alert: msg, badge, deviceTokenAry: [did], isProduction, payload}
+  const didAry = await getDeviceIdByName(nameStr)
+  const param = {alert: msg, badge, deviceTokenAry: didAry, isProduction, payload}
+  debug(param)
   await push._pushIOS(param)
 }
 function getDeviceIdByName (name) {
@@ -77,15 +82,18 @@ function getDeviceIdByName (name) {
         const {id} = member
         sql = `
        select * from device
-                where memberId=?
+                where memberId=? and venderDid <> ""
        `
         Pool.query(sql, [id], (errorInner, resultsInner) => {
-          const device = resultsInner[0]
           if (errorInner) {
             reject(errorInner)
-          } else if (device) {
-            const {venderDid} = device
-            resolve(venderDid)
+          } else if (resultsInner.length) {
+            const result = resultsInner.reduce((c, v) => {
+              c.push(v.venderDid)
+              return c
+            }, [])
+
+            resolve(result)
           } else {
             reject(new Error(`${name}没有iphone设备`))
           }
@@ -96,17 +104,17 @@ function getDeviceIdByName (name) {
     })
   })
 }
-sendMsgByName(admin, `LK2 server重启了`)
+// sendMsgByName({nameStr: admin, msg: `LK2 server重启了`})
 function setCpuMonitor () {
   const f = () => {
     os.cpuUsage(function (v) {
       if (v > 0.8) {
         if (count > 10) {
-          sendMsgByName(admin, `cpu超标了${v}`).then(() => {
+          sendMsgByName({nameStr: admin, msg: `cpu超标了${v}`}).then(() => {
             try {
               kill()
             } catch (error) {
-              sendMsgByName(admin, `kill失败${error}`)
+              sendMsgByName({nameStr: admin, msg: `kill失败${error}`})
             }
           })
           setTimeout(f, 1000 * 30)
