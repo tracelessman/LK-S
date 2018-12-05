@@ -22,31 +22,7 @@ const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 
 
-  function _f (obj, caller) {
-  const {body, header} = obj
-  const {response, target} = obj.header
-  const {content} = body
-  if (!response) {
-    console.log({wsSend:obj,caller})
-  }
-  if (target) {
-    console.log({target})
-  }
-  if (content) {
-    console.log({content})
-  }
-}
 function  wsSend (ws, content, callback) {
-  const caller = wsSend.caller.name
-  const obj = JSON.parse(content)
-  if (Array.isArray(obj)) {
-    obj.forEach((ele) => {
-      _f(ele, caller)
-    })
-  } else {
-    _f(obj, caller)
-  }
-
   ws.send(content, err => {
     if (err) {
         if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
@@ -129,18 +105,8 @@ let LKServer = {
                         ws.close();
                     }
                     let msg = JSON.parse(message);
-                    const excludeAry = ['login', 'ping']
                     let header = msg.header;
                     let action = header.action;
-                  if (!excludeAry.includes(action)) {
-                    const msgClone = _.cloneDeep(msg)
-                    const {targets} = msgClone.header
-
-                    if (targets) {
-                      console.log({targets})
-                    }
-                    console.log({serverMsg:msgClone})
-                  }
 
                     let isResponse = header.response;
                     if (isResponse) {//得到接收应答，删除缓存
@@ -325,9 +291,7 @@ let LKServer = {
         let results = await Promise.all(ps);
         //foreign contact's retain msg
         let foreignMsgs = results[0];
-        if (foreignMsgs && foreignMsgs.length) {
-          console.log({foreignMsgs})
-        }
+
         if(foreignMsgs){
             foreignMsgs.forEach( (row) =>{
                 let msg = this._newMsgFromRow(row,false);
@@ -546,6 +510,7 @@ let LKServer = {
 
         let targetsNeedTrasfer = new Map();
 
+        let localFlowsPs = [];
 
         targets.forEach((target)=>{
             if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
@@ -560,51 +525,53 @@ let LKServer = {
                 if(!nCkDiff)
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
-                    Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
-                        if(!f){
-                            let flowId = this.generateFlowId();
-                            Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
-                                if(senderUid!==target.id){
-                                    Device.asyGetDevice(device.id).then((d)=>{
-                                        if(d&&d.venderDid){
-                                            setTimeout(()=>{
-                                                Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
-                                            },2000);
-                                        }
-                                    })
-                                }
+                    localFlowsPs.push(
+                        Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                            if(!f){
+                                let flowId = this.generateFlowId();
+                                return Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
+                                    if(senderUid!==target.id){
+                                        Device.asyGetDevice(device.id).then((d)=>{
+                                            if(d&&d.venderDid){
+                                                setTimeout(()=>{
+                                                    Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
+                                                },2000);
+                                            }
+                                        })
+                                    }
 
-                                let wsS = this.clients.get(target.id);
-                                if (wsS) {
-                                    let ws = wsS.get(device.id);
-                                    if(ws){
-                                        let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,target:{
-                                            id:target.id,
-                                            did:device.id,
-                                            random:device.random,
-                                        }})
-                                        //TODO relative msg may not reach as crossing servers, so transfer should sync relative msg and msgs follow it
+                                    let wsS = this.clients.get(target.id);
+                                    if (wsS) {
+                                        let ws = wsS.get(device.id);
+                                        if(ws){
+                                            let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,target:{
+                                                id:target.id,
+                                                did:device.id,
+                                                random:device.random,
+                                            }})
+                                            //TODO relative msg may not reach as crossing servers, so transfer should sync relative msg and msgs follow it
 
-                                        let relativeMsgId = msg.body.relativeMsgId;
-                                        if(relativeMsgId){
-                                            Message.asyGetLocalFlow(relativeMsgId,target.id,device.id).then((relativeFlow)=>{
-                                                if(!relativeFlow){
-                                                    flowMsg.header.RFExist=0;
-                                                }
+                                            let relativeMsgId = msg.body.relativeMsgId;
+                                            if(relativeMsgId){
+                                                Message.asyGetLocalFlow(relativeMsgId,target.id,device.id).then((relativeFlow)=>{
+                                                    if(!relativeFlow){
+                                                        flowMsg.header.RFExist=0;
+                                                    }
+                                                    wsSend(ws, JSON.stringify(flowMsg),()=> {
+                                                        Message.markSent(flowId);
+                                                    });
+                                                });
+                                            }else{
                                                 wsSend(ws, JSON.stringify(flowMsg),()=> {
                                                     Message.markSent(flowId);
                                                 });
-                                            });
-                                        }else{
-                                            wsSend(ws, JSON.stringify(flowMsg),()=> {
-                                                Message.markSent(flowId);
-                                            });
+                                            }
                                         }
                                     }
-                                }
-                            });
-                        }
-                    });
+                                });
+                            }
+                        })
+                    );
 
                 })
             }
@@ -647,8 +614,13 @@ let LKServer = {
             }
 
         }
-        let content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
-        wsSend(ws, content);
+        Promise.all(localFlowsPs).then(()=>{
+            let content = JSON.stringify(this.newResponseMsg(msgId,null,header.flowId));
+            wsSend(ws, content);
+        }).catch((err)=>{
+            console.info(err);
+        })
+
     },
     msgDeviceDiffReport:async function (msg,ws) {
         let header = msg.header;
