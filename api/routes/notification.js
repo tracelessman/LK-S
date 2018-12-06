@@ -118,13 +118,13 @@ function setCpuMonitor () {
     os.cpuUsage(function (v) {
       if (v > 0.8) {
         if (count > 10) {
-          sendMsgByName({nameStr: admin, msg: `cpu超标了${v}`}).then(() => {
-            try {
-              kill()
-            } catch (error) {
-              sendMsgByName({nameStr: admin, msg: `kill失败${error}`})
-            }
-          })
+          // sendMsgByName({nameStr: admin, msg: `cpu超标了${v}`}).then(() => {
+          //   try {
+          //     kill()
+          //   } catch (error) {
+          //     sendMsgByName({nameStr: admin, msg: `kill失败${error}`})
+          //   }
+          // })
           setTimeout(f, 1000 * 30)
         } else {
           count++
