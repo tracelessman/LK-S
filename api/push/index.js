@@ -48,11 +48,9 @@ class Push {
    * @return {undefined}
    */
   static async pushIOS (content, deviceTokenAry, payload = {}) {
-    try {
-      await Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: true, payload})
-    } catch (error) {
-      Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: false, payload})
-    }
+    // fixme: push conditionally
+    await Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: true, payload})
+    await Push._pushIOS({alert: content, deviceTokenAry, badge: 1, isProduction: false, payload})
   }
 }
 module.exports = Push
