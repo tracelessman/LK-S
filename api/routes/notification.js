@@ -17,6 +17,7 @@ setCpuMonitor()
 
 router.get('/send', async (req, res) => {
   let {name, code, msg, badge = 1, isProduction = true, payload} = req.query
+ isProduction = isProduction !== '0'
   if (payload) {
     payload = JSON.parse(payload)
   }
@@ -70,8 +71,7 @@ router.get('/setup', function (req, res) {
 async function sendMsgByName (option) {
   let {nameStr, msg, badge, isProduction, payload} = option
   const didAry = await getDeviceIdByName(nameStr)
-  const param = {alert: msg, badge, deviceTokenAry: didAry, payload}
-  param.isProduction = isProduction === '0'
+  const param = {alert: msg, badge, deviceTokenAry: didAry, payload, isProduction}
   debug({param})
 
   await push._pushIOS(param)
