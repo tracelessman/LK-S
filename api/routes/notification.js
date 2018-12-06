@@ -62,11 +62,11 @@ router.get('/setup', function (req, res) {
 })
 
 async function sendMsgByName (option) {
-  // const {nameStr, msg, badge, isProduction, payload} = option
-  // const didAry = await getDeviceIdByName(nameStr)
-  // const param = {alert: msg, badge, deviceTokenAry: didAry, isProduction, payload}
-  // debug(param)
-  // await push._pushIOS(param)
+  const {nameStr, msg, badge, isProduction, payload} = option
+  const didAry = await getDeviceIdByName(nameStr)
+  const param = {alert: msg, badge, deviceTokenAry: didAry, isProduction, payload}
+  debug(param)
+  await push._pushIOS(param)
 }
 function getDeviceIdByName (name) {
   return new Promise((resolve, reject) => {
@@ -104,7 +104,7 @@ function getDeviceIdByName (name) {
     })
   })
 }
-// sendMsgByName({nameStr: admin, msg: `LK2 server重启了`})
+sendMsgByName({nameStr: admin, msg: `LK2 server重启了`, isProduction: true})
 function setCpuMonitor () {
   const f = () => {
     os.cpuUsage(function (v) {
