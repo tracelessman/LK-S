@@ -6,6 +6,7 @@ const path = require('path')
 const debug = require('debug')('configIndex')
 
 const config = {
+  admin: 'zcy',
   db: {
     database: 'LK_S',
     dialect: 'mysql',

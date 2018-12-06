@@ -3,6 +3,7 @@ const path = require('path')
 const rootPath = path.resolve(__dirname, '../../')
 const config = require(path.resolve(rootPath, 'config'))
 const {bundleId} = config
+const debug = require('debug')('push')
 
 class Push {
   static _pushIOS ({alert, badge, deviceTokenAry, isProduction, payload}) {
@@ -16,6 +17,7 @@ class Push {
         production: isProduction
       }
 
+      debug({options})
       const apnProvider = new apn.Provider(options)
       let notification = new apn.Notification()
       notification.alert = alert
@@ -29,7 +31,7 @@ class Push {
           for (let ele of response.failed) {
             // TODO: 有可能是开发模式
             console.log(ele)
-            reject(new Error(ele))
+            reject(new Error(JSON.stringify(ele)))
           }
         } else {
           resolve(response)
