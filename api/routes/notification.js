@@ -16,7 +16,11 @@ const debug = require('debug')('debug')
 setCpuMonitor()
 
 router.get('/send', async (req, res) => {
-  const {name, code, msg, badge = 1, isProduction = true, payload = {}} = req.query
+  let {name, code, msg, badge = 1, isProduction = true, payload} = req.query
+  if (payload) {
+    payload = JSON.parse(payload)
+  }
+  debug({payload})
   let result
   if (code === password || shutdown) {
     const nameStr = name.trim()
@@ -64,10 +68,12 @@ router.get('/setup', function (req, res) {
 })
 
 async function sendMsgByName (option) {
-  const {nameStr, msg, badge, isProduction, payload} = option
+  let {nameStr, msg, badge, isProduction, payload} = option
   const didAry = await getDeviceIdByName(nameStr)
-  const param = {alert: msg, badge, deviceTokenAry: didAry, isProduction, payload}
+  const param = {alert: msg, badge, deviceTokenAry: didAry, payload}
+  param.isProduction = isProduction === '0'
   debug({param})
+
   await push._pushIOS(param)
 }
 function getDeviceIdByName (name) {
@@ -106,7 +112,7 @@ function getDeviceIdByName (name) {
     })
   })
 }
-sendMsgByName({nameStr: admin, msg: `LK2 server重启了`, isProduction: true})
+sendMsgByName({nameStr: admin, msg: `LK2 server web重启了`, isProduction: true})
 function setCpuMonitor () {
   const f = () => {
     os.cpuUsage(function (v) {
@@ -134,13 +140,20 @@ function setCpuMonitor () {
 }
 
 function kill () {
-  const result = childProcess.execSync('lsof -i :3001').toString().trim()
-  const ary = result.split('node')[1].split(' ')
-  const pid = ary.find(ele => {
-    return Boolean(ele)
-  })
+  let output
+  try {
+    output = childProcess.execSync('lsof -i :3001').toString().trim()
+  } catch (err) {
 
-  childProcess.execSync(`kill ${pid}`)
+  }
+  if (output) {
+    const ary = output.split('node')[1].split(' ')
+    const pid = ary.find(ele => {
+      return Boolean(ele)
+    })
+
+    childProcess.execSync(`kill ${pid}`)
+  }
 }
 
 module.exports = router
