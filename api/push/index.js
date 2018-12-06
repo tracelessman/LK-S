@@ -27,6 +27,8 @@ class Push {
       notification.payload = payload
       apnProvider.send(notification, deviceTokenAry).then((response) => {
         // console.log({response})
+        resolve(response)
+
         if (response.failed.length !== 0) {
           for (let ele of response.failed) {
             // TODO: 有可能是开发模式
@@ -34,7 +36,6 @@ class Push {
             // reject(new Error(JSON.stringify(ele)))
           }
         } else {
-          resolve(response)
         }
       })
     })

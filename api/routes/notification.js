@@ -22,7 +22,9 @@ router.get('/send', async (req, res) => {
     const nameStr = name.trim()
     if (nameStr) {
       try {
-        await sendMsgByName({nameStr, msg, badge, isProduction, payload})
+        const option = {nameStr, msg, badge, isProduction, payload}
+        debug({option})
+        await sendMsgByName(option)
         result = '消息已发送'
       } catch (err) {
         result = err.toString()
@@ -65,7 +67,7 @@ async function sendMsgByName (option) {
   const {nameStr, msg, badge, isProduction, payload} = option
   const didAry = await getDeviceIdByName(nameStr)
   const param = {alert: msg, badge, deviceTokenAry: didAry, isProduction, payload}
-  debug(param)
+  debug({param})
   await push._pushIOS(param)
 }
 function getDeviceIdByName (name) {
