@@ -119,9 +119,7 @@ let LKServer = {
                     let msg = JSON.parse(message);
                     
                     // debug start
-                    const {header} = msg
-                    const {action} = header
-                    if (action === 'sendMsg') {
+                    if (msg.header.action === 'sendMsg') {
                         debugLogger.debug(message)
                     }
 
