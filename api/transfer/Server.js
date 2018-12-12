@@ -121,8 +121,9 @@ let LKServer = {
                     let action = header.action;
 
                     // debug start
+                    debugLogger.debug(action + '\n')
+
                     if (action === 'sendMsg') {
-                        debugLogger.debug(action + '\n')
                         debugLogger.debug(JSON.stringify(msg, null, 2))
                     }
                     // debug end
