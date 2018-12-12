@@ -80,7 +80,7 @@ let MCodeManager = {
      * @param orgId
      */
     resetSingleOrgMagicCode:function (orgId) {
-        Org.asyGetOrg(orgId).then(function (org) {
+        Org.asyGetOrg(orgId).then((org) => {
             if(org){
                 let params = [org.name];
                 let code = this._magicCode(params);
