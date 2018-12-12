@@ -22,6 +22,30 @@ const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 
 
+<<<<<<< HEAD
+  function _f (obj, caller) {
+  const {body, header} = obj
+  const {response, target} = obj.header
+  const {content} = body
+
+}
+||||||| merged common ancestors
+  function _f (obj, caller) {
+  const {body, header} = obj
+  const {response, target} = obj.header
+  const {content} = body
+  if (!response) {
+    console.log({wsSend:obj,caller})
+  }
+  if (target) {
+    console.log({target})
+  }
+  if (content) {
+    console.log({content})
+  }
+}
+=======
+>>>>>>> master
 function  wsSend (ws, content, callback) {
   ws.send(content, err => {
     if (err) {
@@ -107,6 +131,23 @@ let LKServer = {
                     let msg = JSON.parse(message);
                     let header = msg.header;
                     let action = header.action;
+<<<<<<< HEAD
+                  if (!excludeAry.includes(action)) {
+                    const msgClone = _.cloneDeep(msg)
+                    const {targets} = msgClone.header
+                  }
+||||||| merged common ancestors
+                  if (!excludeAry.includes(action)) {
+                    const msgClone = _.cloneDeep(msg)
+                    const {targets} = msgClone.header
+
+                    if (targets) {
+                      console.log({targets})
+                    }
+                    console.log({serverMsg:msgClone})
+                  }
+=======
+>>>>>>> master
 
                     let isResponse = header.response;
                     if (isResponse) {//得到接收应答，删除缓存
@@ -291,7 +332,14 @@ let LKServer = {
         let results = await Promise.all(ps);
         //foreign contact's retain msg
         let foreignMsgs = results[0];
+<<<<<<< HEAD
+||||||| merged common ancestors
+        if (foreignMsgs && foreignMsgs.length) {
+          console.log({foreignMsgs})
+        }
+=======
 
+>>>>>>> master
         if(foreignMsgs){
             foreignMsgs.forEach( (row) =>{
                 let msg = this._newMsgFromRow(row,false);
