@@ -25,7 +25,7 @@ const rootDir = path.resolve(__dirname, '../..')
 const logFolder = path.resolve(rootDir, 'log')
 const debugLogger = winston.createLogger({
     level: 'debug',
-    format: winston.format.json(),
+    format: winston.format.prettyPrint(),
     transports: [
         new winston.transports.File({
             filename: path.resolve(logFolder, 'debug.log'),
