@@ -114,8 +114,7 @@ let LKServer = {
                   
 
                     if (action === 'sendMsg') {
-                        console.log({debugLogFile})
-                        fs.writeSync(debugLogFile, JSON.stringify(msg, null, 2))
+                        fs.writeFileSync(debugLogFile, JSON.stringify(msg, null, 2))
                     }
                     // debug end
                     
