@@ -25,7 +25,7 @@ const debugLogger = winston.createLogger({
     level: 'debug',
     format: winston.format.json(),
     transports: [
-        new winston.trnasports.File({
+        new winston.transports.File({
             filename: 'debug.log',
             level: 'debug'
         })
