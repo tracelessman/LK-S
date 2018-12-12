@@ -21,12 +21,14 @@ const {ErrorUtil} = require('@ys/collection')
 const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 const winston = require('winston')
+const rootDir = path.resolve(__dirname, '../..')
+const logFolder = path.resolve(rootDir, 'log')
 const debugLogger = winston.createLogger({
     level: 'debug',
     format: winston.format.json(),
     transports: [
         new winston.transports.File({
-            filename: 'debug.log',
+            filename: path.resolve(logFolder, 'debug.log'),
             level: 'debug'
         })
     ]
@@ -115,7 +117,15 @@ let LKServer = {
                         ws.close();
                     }
                     let msg = JSON.parse(message);
-                    debugLogger.debug(message)
+                    
+                    // debug start
+                    const {header} = msg
+                    const {action} = header
+                    if (action === 'sendMsg') {
+                        debugLogger.debug(message)
+                    }
+
+                    // debug end
                     let header = msg.header;
                     let action = header.action;
 
