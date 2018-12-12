@@ -22,17 +22,8 @@ const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 const winston = require('winston')
 const rootDir = path.resolve(__dirname, '../..')
-const logFolder = path.resolve(rootDir, 'log')
-const debugLogger = winston.createLogger({
-    level: 'debug',
-    format: winston.format.prettyPrint(),
-    transports: [
-        new winston.transports.File({
-            filename: path.resolve(logFolder, 'debug.log'),
-            level: 'debug'
-        })
-    ]
-})
+const debugLogFile = path.resolve(rootDir, 'log/debug.log')
+const fs = require('fs')
 
 function  wsSend (ws, content, callback) {
   ws.send(content, err => {
@@ -121,11 +112,10 @@ let LKServer = {
                     let action = header.action;
 
                     // debug start
-                    debugLogger.debug('1\r\n2\\n3')
-                    debugLogger.debug(action + '\n')
+                  
 
                     if (action === 'sendMsg') {
-                        debugLogger.debug(JSON.stringify(msg, null, 2))
+                        fs.writeSync(debugLogFile, JSON.stringify(msg, null, 2))
                     }
                     // debug end
                     
