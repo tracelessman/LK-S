@@ -20,7 +20,6 @@ const TransferFlowCursor = require('./TransferFlowCursor');
 const {ErrorUtil} = require('@ys/collection')
 const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
-const winston = require('winston')
 const rootDir = path.resolve(__dirname, '../..')
 const debugLogFile = path.resolve(rootDir, 'log/debug.log')
 const fs = require('fs')
@@ -115,6 +114,7 @@ let LKServer = {
                   
 
                     if (action === 'sendMsg') {
+                        console.log({debugLogFile})
                         fs.writeSync(debugLogFile, JSON.stringify(msg, null, 2))
                     }
                     // debug end
