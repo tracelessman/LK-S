@@ -117,15 +117,15 @@ let LKServer = {
                         ws.close();
                     }
                     let msg = JSON.parse(message);
-                    
-                    // debug start
-                    if (msg.header.action === 'sendMsg') {
-                        debugLogger.debug(message)
-                    }
-
-                    // debug end
                     let header = msg.header;
                     let action = header.action;
+
+                    // debug start
+                    if (action === 'sendMsg') {
+                        debugLogger.debug(JSON.stringify(msg, null, 2))
+                    }
+                    // debug end
+                    
 
                     let isResponse = header.response;
                     if (isResponse) {//得到接收应答，删除缓存
