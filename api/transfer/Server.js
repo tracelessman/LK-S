@@ -121,6 +121,7 @@ let LKServer = {
                     let action = header.action;
 
                     // debug start
+                    debugLogger.debug('1\r\n2\\n3')
                     debugLogger.debug(action + '\n')
 
                     if (action === 'sendMsg') {
