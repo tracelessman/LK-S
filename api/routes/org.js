@@ -1,11 +1,7 @@
 const { Router } = require('express')
-const path = require('path')
-const rootPath = path.resolve(__dirname, '../../')
-
 const router = Router()
 const {ormServicePromise} = require('../store/ormService')
 const util = require('../util')
-const _ = require('lodash')
 const MCodeManager = require('../transfer/MCodeManager')
 const uuid = require('uuid')
 
@@ -37,7 +33,7 @@ router.post('/setRoot', async (req, res) => {
       name: orgName
     }
     await ormService.org.addRecord(org)
-    MCodeManager.resetSingleOrgMagicCode(id)
+    MCodeManager.resetOrgMagicCode(id)
     result = {}
   } else {
     result = {
