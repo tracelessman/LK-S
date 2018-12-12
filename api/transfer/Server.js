@@ -20,7 +20,17 @@ const TransferFlowCursor = require('./TransferFlowCursor');
 const {ErrorUtil} = require('@ys/collection')
 const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
-
+const winston = require('winston')
+const debugLogger = winston.createLogger({
+    level: 'debug',
+    format: winston.format.json(),
+    transports: [
+        new winston.trnasports.File({
+            filename: 'debug.log',
+            level: 'debug'
+        })
+    ]
+})
 
 function  wsSend (ws, content, callback) {
   ws.send(content, err => {
@@ -105,6 +115,7 @@ let LKServer = {
                         ws.close();
                     }
                     let msg = JSON.parse(message);
+                    debugLogger.debug(message)
                     let header = msg.header;
                     let action = header.action;
 

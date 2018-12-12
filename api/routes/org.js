@@ -77,10 +77,12 @@ router.post('/deleteRecordMultiple', (req, res) => {
     const ormService = await ormServicePromise
 
     await ormService.org.deleteRecordMultipleByIdAry(idAry)
+    const promiseAry = []
     for (let ele of idAry) {
-      await MCodeManager.resetSingleOrgMagicCode(ele)
+      const p = MCodeManager.resetSingleOrgMagicCode(ele)
+      promiseAry.push(p)
     }
-
+    await Promise.all(promiseAry)
     res.json()
   })()
 })
