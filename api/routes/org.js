@@ -33,7 +33,7 @@ router.post('/setRoot', async (req, res) => {
       name: orgName
     }
     await ormService.org.addRecord(org)
-    MCodeManager.resetOrgMagicCode(id)
+    MCodeManager.resetSingleOrgMagicCode(id)
     result = {}
   } else {
     result = {
