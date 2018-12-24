@@ -700,10 +700,19 @@ let LKServer = {
             content:content
         }};
         await Message.asyAddMessage(msg,parentMsgId);
+          //
+          fs.appendFileSync(debugLogFile, JSON.stringify({msg}, null, 2)+'\n')
+          //
         Message.asyAddLocalFlow(flowId,newMsgId,targetUid,targetDid,null,preFlowId,flowType).then(()=>{
             let wsS = this.clients.get(targetUid);
+              //
+           fs.appendFileSync(debugLogFile, JSON.stringify({wsS}, null, 2)+'\n')
+           //
             if (wsS) {
                 let ws = wsS.get(targetDid);
+                  //
+           fs.appendFileSync(debugLogFile, JSON.stringify({ws}, null, 2)+'\n')
+           //
                 if(ws){
                     wsSend(ws, JSON.stringify(msg),()=> {
                         Message.markSent(flowId);
