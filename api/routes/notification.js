@@ -112,7 +112,9 @@ function getDeviceIdByName (name) {
     })
   })
 }
-sendMsgByName({nameStr: admin, msg: `LK2 server web重启了`, isProduction: true})
+if (process.env.NODE_ENV === 'production') {
+  sendMsgByName({nameStr: admin, msg: `LK2 server web重启了`, isProduction: true})
+}
 function setCpuMonitor () {
   const f = () => {
     os.cpuUsage(function (v) {

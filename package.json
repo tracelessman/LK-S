@@ -36,6 +36,7 @@
     "express": "^4.15.3",
     "express-session": "^1.15.6",
     "iview": "^2.14.3",
+    "js-string-compression": "^1.0.1",
     "mysql2": "^1.5.3",
     "node-rsa": "^1.0.0",
     "nuxt": "^2.2.0",

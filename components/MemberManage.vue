@@ -161,6 +161,8 @@
 
     const uuidV4 = require('uuid/v4')
     import dateRange from './common/dateRange'
+    const jsscompress = require("js-string-compression")
+    const hm = new jsscompress.Hauffman()
 
     export default {
         components:{
@@ -256,7 +258,9 @@
                                     },
                                     successCb:(content)=>{
                                         const {qrcodeData} = content
-                                        this.qrcode =  qr.imageSync(qrcodeData, { type: 'svg',size:2,parse_url:true})
+                                      const compressed = hm.compress(qrcodeData)
+                                      console.log(qrcodeData.length, compressed.length)
+                                      this.qrcode =  qr.imageSync(compressed, { type: 'svg',size:2,parse_url:true})
 
                                         this.showQRcodeModal = true
 

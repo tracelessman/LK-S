@@ -514,6 +514,7 @@ let LKServer = {
             }else{
                f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);
             }
+            fs.writeFileSync(debugLogFile, JSON.stringify(f, null, 2))
             if(f){
                 nCkDiff = true;
             }
