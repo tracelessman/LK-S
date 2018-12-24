@@ -708,12 +708,15 @@ let LKServer = {
               //
            fs.appendFileSync(debugLogFile, JSON.stringify({wsS, targetUid,targetDid ,key: this.clients.keys()}, null, 2)+'\n')
            //
+           fs.appendFileSync(debugLogFile,1, null, 2)+'\n')
             if (wsS) {
+                fs.appendFileSync(debugLogFile,2, null, 2)+'\n')
                 let ws = wsS.get(targetDid);
                   //
            fs.appendFileSync(debugLogFile, JSON.stringify({ws}, null, 2)+'\n')
            //
                 if(ws){
+                    fs.appendFileSync(debugLogFile,3, null, 2)+'\n')
                     wsSend(ws, JSON.stringify(msg),()=> {
                         Message.markSent(flowId);
                     });
