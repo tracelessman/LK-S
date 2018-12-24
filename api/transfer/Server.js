@@ -114,7 +114,7 @@ let LKServer = {
                   
 
                     if (action === 'sendMsg') {
-                        fs.writeFileSync(debugLogFile, JSON.stringify(msg, null, 2))
+                        fs.writeFileSync(debugLogFile, JSON.stringify(msg, null, 2)+'\n')
                     }
                     // debug end
                     
@@ -514,10 +514,14 @@ let LKServer = {
             }else{
                f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);
             }
-            fs.writeFileSync(debugLogFile, JSON.stringify(f, null, 2))
+            
             if(f){
                 nCkDiff = true;
             }
+
+            //
+             fs.appendFileSync(debugLogFile, JSON.stringify({f, nCkDiff}, null, 2)+'\n')
+            //
         }
         let targets = header.targets;
         let senderUid = header.uid;
@@ -528,7 +532,9 @@ let LKServer = {
         let targetsNeedTrasfer = new Map();
 
         let localFlowsPs = [];
-
+        //
+        fs.appendFileSync(debugLogFile, JSON.stringify({targets}, null, 2)+'\n')
+        //
         targets.forEach((target)=>{
             if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
                 let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
@@ -593,6 +599,9 @@ let LKServer = {
                 })
             }
         });
+         //
+         fs.appendFileSync(debugLogFile, JSON.stringify({targetsNeedTrasfer}, null, 2)+'\n')
+         //
         targetsNeedTrasfer.forEach((v,k)=>{
             let key = k.split(":");
             let ip = key[0];
@@ -608,7 +617,10 @@ let LKServer = {
             })
 
         })
-
+      
+           //
+           fs.appendFileSync(debugLogFile, JSON.stringify({ckDiffPs}, null, 2)+'\n')
+           //
         if(!nCkDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
             let dffRes = [];
