@@ -706,7 +706,7 @@ let LKServer = {
         Message.asyAddLocalFlow(flowId,newMsgId,targetUid,targetDid,null,preFlowId,flowType).then(()=>{
             let wsS = this.clients.get(targetUid);
               //
-           fs.appendFileSync(debugLogFile, JSON.stringify({wsS, targetUid,targetDid ,key: this.clients.keys()}, null, 2)+'\n')
+           fs.appendFileSync(debugLogFile, JSON.stringify({wsS: wsS.keys(), targetUid,targetDid ,key: this.clients.keys()}, null, 2)+'\n')
            //
            fs.appendFileSync(debugLogFile,1 +'\n')
             if (wsS) {
@@ -717,7 +717,11 @@ let LKServer = {
            //
                 if(ws){
                     fs.appendFileSync(debugLogFile,3+'\n')
+           fs.appendFileSync(debugLogFile, JSON.stringify({msg}, null, 2)+'\n')
+
                     wsSend(ws, JSON.stringify(msg),()=> {
+           fs.appendFileSync(debugLogFile,'sent'+'\n')
+
                         Message.markSent(flowId);
                     });
                 }
