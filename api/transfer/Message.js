@@ -233,12 +233,13 @@ let Message = {
     },
     _getLastLocalFlowId:function (targetUid,targetDid,flowType) {
         return new Promise((resolve,reject)=>{
-            let sql = 'select MAX(cast(id as SIGNED INTEGER)) from flow where targetUid=? and targetDid=? and flowType=?';
+            const field = 'MAX(cast(id as SIGNED INTEGER))'
+            let sql = `select ${field} from flow where targetUid=? and targetDid=? and flowType=?`;
             Pool.query(sql,[targetUid,targetDid,flowType], (error,results,fields) =>{
                 if(error){
                     resolve(null);
                 }else{
-                    resolve(results[0]);
+                    resolve(results[0][field]);
                 }
             });
         });
