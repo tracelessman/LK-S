@@ -713,7 +713,7 @@ let LKServer = {
                 fs.appendFileSync(debugLogFile,2+'\n')
                 let ws = wsS.get(targetDid);
                   //
-           fs.appendFileSync(debugLogFile, JSON.stringify({ws}, null, 2)+'\n')
+           fs.appendFileSync(debugLogFile, JSON.stringify({ws: Boolean(ws)}, null, 2)+'\n')
            //
                 if(ws){
                     fs.appendFileSync(debugLogFile,3+'\n')
