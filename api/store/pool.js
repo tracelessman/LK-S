@@ -2,7 +2,7 @@ const mysql = require('mysql2')
 const config = require('../../config')
 
 const option = {
-    connectionLimit : 10,
+    connectionLimit : 5,
     host            : 'localhost',
     user            : config.db.username,
     password        : config.db.password,

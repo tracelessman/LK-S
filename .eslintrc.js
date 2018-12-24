@@ -3,3 +3,4 @@ module.exports = {
     '@ys/eslint-config-strict'
   ]
 }
+t
