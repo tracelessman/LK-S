@@ -629,7 +629,9 @@ let LKServer = {
                     dffRes.push(res);
                 }
             })
-
+              //
+           fs.appendFileSync(debugLogFile, JSON.stringify({diffs,dffRes}, null, 2)+'\n')
+           //
             if(dffRes.length>0){
                 if(header.transfer){
                     Message.asyGetLastForeignFlowId(msg.header.serverIP,msg.header.serverPort,'deviceDiffReport').then((preFlowId)=>{
