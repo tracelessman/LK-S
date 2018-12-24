@@ -20,9 +20,6 @@ const TransferFlowCursor = require('./TransferFlowCursor');
 const {ErrorUtil} = require('@ys/collection')
 const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
-const rootDir = path.resolve(__dirname, '../..')
-const debugLogFile = path.resolve(rootDir, 'log/debug.log')
-const fs = require('fs')
 
 function  wsSend (ws, content, callback) {
   ws.send(content, err => {
@@ -109,14 +106,6 @@ let LKServer = {
                     let msg = JSON.parse(message);
                     let header = msg.header;
                     let action = header.action;
-
-                    // debug start
-                  
-
-                    if (action === 'sendMsg') {
-                        fs.writeFileSync(debugLogFile, JSON.stringify(msg, null, 2)+'\n')
-                    }
-                    // debug end
                     
 
                     let isResponse = header.response;
@@ -519,9 +508,6 @@ let LKServer = {
                 nCkDiff = true;
             }
 
-            //
-             fs.appendFileSync(debugLogFile, JSON.stringify({f, nCkDiff}, null, 2)+'\n')
-            //
         }
         let targets = header.targets;
         let senderUid = header.uid;
@@ -532,9 +518,7 @@ let LKServer = {
         let targetsNeedTrasfer = new Map();
 
         let localFlowsPs = [];
-        //
-        fs.appendFileSync(debugLogFile, JSON.stringify({targets}, null, 2)+'\n')
-        //
+
         targets.forEach((target)=>{
             if(target.serverIP&&(target.serverIP!==this.getIP()||target.serverPort!==this.getPort())){//to another server
                 let targets2 = targetsNeedTrasfer.get(target.serverIP+":"+target.serverPort);
@@ -599,9 +583,7 @@ let LKServer = {
                 })
             }
         });
-         //
-         fs.appendFileSync(debugLogFile, JSON.stringify({targetsNeedTrasfer}, null, 2)+'\n')
-         //
+
         targetsNeedTrasfer.forEach((v,k)=>{
             let key = k.split(":");
             let ip = key[0];
@@ -618,9 +600,6 @@ let LKServer = {
 
         })
       
-           //
-           fs.appendFileSync(debugLogFile, JSON.stringify({ckDiffPs}, null, 2)+'\n')
-           //
         if(!nCkDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
             let dffRes = [];
@@ -629,9 +608,7 @@ let LKServer = {
                     dffRes.push(res);
                 }
             })
-              //
-           fs.appendFileSync(debugLogFile, JSON.stringify({diffs,dffRes}, null, 2)+'\n')
-           //
+
             if(dffRes.length>0){
                 if(header.transfer){
                     Message.asyGetLastForeignFlowId(msg.header.serverIP,msg.header.serverPort,'deviceDiffReport').then((preFlowId)=>{
@@ -700,28 +677,14 @@ let LKServer = {
             content:content
         }};
         await Message.asyAddMessage(msg,parentMsgId);
-          //
-          fs.appendFileSync(debugLogFile, JSON.stringify({msg}, null, 2)+'\n')
-          //
+       
         Message.asyAddLocalFlow(flowId,newMsgId,targetUid,targetDid,null,preFlowId,flowType).then(()=>{
             let wsS = this.clients.get(targetUid);
-              //
-           fs.appendFileSync(debugLogFile, JSON.stringify({wsS: wsS.keys(), targetUid,targetDid ,key: this.clients.keys()}, null, 2)+'\n')
-           //
-           fs.appendFileSync(debugLogFile,1 +'\n')
+   
             if (wsS) {
-                fs.appendFileSync(debugLogFile,2+'\n')
                 let ws = wsS.get(targetDid);
-                  //
-           fs.appendFileSync(debugLogFile, JSON.stringify({ws: Boolean(ws)}, null, 2)+'\n')
-           //
                 if(ws){
-                    fs.appendFileSync(debugLogFile,3+'\n')
-           fs.appendFileSync(debugLogFile, JSON.stringify({msg}, null, 2)+'\n')
-
                     wsSend(ws, JSON.stringify(msg),()=> {
-           fs.appendFileSync(debugLogFile,'sent'+'\n')
-
                         Message.markSent(flowId);
                     });
                 }
