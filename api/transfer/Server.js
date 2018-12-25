@@ -26,8 +26,12 @@ const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 
 function  wsSend (ws, content, callback) {
-  log(JSON.stringify(JSON.parse(content), null, 2), debugLevel.info)
-
+  //log
+  const obj = JSON.parse(content)
+  if (!obj.header.response) {
+    log(JSON.stringify(obj, null, 2), debugLevel.info)
+  }
+  //
   ws.send(content, err => {
     if (err) {
         if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
