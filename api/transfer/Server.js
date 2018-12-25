@@ -1,5 +1,9 @@
 const WebSocket = require('ws');
-const path = require('path');
+const path = require('path')
+const fse = require('fs-extra')
+
+const debugLevel = require('../../constant/debugLevel')
+const config = require('../../config')
 const Message = require('./Message');
 const Log = require('./Log');
 const Transfer = require('./Transfer');
@@ -34,6 +38,17 @@ function  wsSend (ws, content, callback) {
   })
 }
 
+function log (msg, level) {
+  if (level <= config.debugLevel) {
+    const folderName = _.findKey(debugLevel, val => {
+      return val === level
+    })
+    const d = new Date()
+    const absolutePath = path.resolve(rootDir, 'log', folderName, `${d.toLocaleDateString()}.log`)
+    fse.ensureFileSync(absolutePath)
+    fse.appendFileSync(absolutePath, `${d.toLocaleTimeString()}:\n    ${msg}\n\n`)
+  }
+}
 let LKServer = {
     _hbTimeout: 3 * 60 * 1000,
     _flowSeqSeed:Date.now(),
@@ -99,6 +114,7 @@ let LKServer = {
         LKServer.wss = new WebSocket.Server({port: port});
         LKServer.wss.on('connection', function connection(ws) {
             ws.on('message', function incoming(message) {
+              log(msg, debugLevel.verbose)
                 try{
                     if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
                         ws.close();
@@ -106,7 +122,7 @@ let LKServer = {
                     let msg = JSON.parse(message);
                     let header = msg.header;
                     let action = header.action;
-                    
+
 
                     let isResponse = header.response;
                     if (isResponse) {//得到接收应答，删除缓存
@@ -503,7 +519,7 @@ let LKServer = {
             }else{
                f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);
             }
-            
+
             if(f){
                 nCkDiff = true;
             }
@@ -599,7 +615,7 @@ let LKServer = {
             })
 
         })
-      
+
         if(!nCkDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
             let dffRes = [];
@@ -677,10 +693,10 @@ let LKServer = {
             content:content
         }};
         await Message.asyAddMessage(msg,parentMsgId);
-       
+
         Message.asyAddLocalFlow(flowId,newMsgId,targetUid,targetDid,null,preFlowId,flowType).then(()=>{
             let wsS = this.clients.get(targetUid);
-   
+
             if (wsS) {
                 let ws = wsS.get(targetDid);
                 if(ws){

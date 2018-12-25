@@ -4,6 +4,7 @@ const txServerIp = '192.144.200.234'
 const fs = require('fs')
 const path = require('path')
 const debug = require('debug')('configIndex')
+const debugLevel = require('../constant/debugLevel')
 
 const config = {
   admin: 'zcy',
@@ -39,7 +40,8 @@ const config = {
   appName: 'LK',
   serverRoot: '/opt/testing/LK-S',
   updateJsonPath: 'static/public/updateMeta.json',
-  pushTimeInterval: 1000
+  pushTimeInterval: 1000,
+  debugLevel: debugLevel.verbose,
 }
 config.manifestUrl = 'itms-services://?action=download-manifest&url=https://raw.githubusercontent.com/tracelessman/LK-M/master/ios/manifest.plist'
 
