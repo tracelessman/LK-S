@@ -26,6 +26,8 @@ const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 
 function  wsSend (ws, content, callback) {
+  log(JSON.stringify(JSON.parse(content), null, 2), debugLevel.info)
+
   ws.send(content, err => {
     if (err) {
         if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
@@ -114,15 +116,22 @@ let LKServer = {
         LKServer.wss = new WebSocket.Server({port: port});
         LKServer.wss.on('connection', function connection(ws) {
             ws.on('message', function incoming(message) {
-              log(message, debugLevel.verbose)
                 try{
                     if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
                         ws.close();
                     }
                     let msg = JSON.parse(message);
-                    let header = msg.header;
+
+                  let header = msg.header;
                     let action = header.action;
 
+                  //log
+                  log(JSON.stringify(msg, null, 2), debugLevel.verbose)
+                  if (action === 'sendMsg') {
+                    log(JSON.stringify(msg, null, 2), debugLevel.debug)
+                  }
+
+                  //log
 
                     let isResponse = header.response;
                     if (isResponse) {//得到接收应答，删除缓存

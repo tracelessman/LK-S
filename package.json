@@ -23,7 +23,8 @@
     "pmStart": " pm2 start bin/start.js --name=web && pm2 start api/transfer/Server.js --name=transfer",
     "updateVersion": "node bin/updateVersion",
     "restartTransfer": "git pull && pm2 restart transfer",
-    "deploy": "node bin/nuxtDeploy"
+    "deploy": "node bin/nuxtDeploy",
+    "flush": "rm -rf log"
   },
   "dependencies": {
     "@ys/collection": "git+https://github.com/spirit1453/node_collection.git#publish",
