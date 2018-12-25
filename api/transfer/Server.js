@@ -16,6 +16,7 @@ const Group = require('./Group');
 const Org = require('./Org');
 const UUID = require('uuid/v4');
 const rootPath = path.resolve(__dirname,'../../')
+const rootDir = rootPath
 const {isDebugging} = config
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
 const _ = require('lodash')
