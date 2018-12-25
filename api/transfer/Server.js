@@ -113,7 +113,7 @@ let LKServer = {
         LKServer.wss = new WebSocket.Server({port: port});
         LKServer.wss.on('connection', function connection(ws) {
             ws.on('message', function incoming(message) {
-              log(msg, debugLevel.verbose)
+              log(message, debugLevel.verbose)
                 try{
                     if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
                         ws.close();
