@@ -31,8 +31,8 @@ function  wsSend (ws, content, callback) {
   if (obj && obj.header) {
     if (!obj.header.response) {
       if(obj.body) {
-        if (obj.body.type ===1 ){
-          obj.body.data = Boolean(obj.body.data)
+        if (obj.body.content.type ===1 ){
+          obj.body.content.data = Boolean(obj.body.data)
         }
       }
         log(JSON.stringify(obj, null, 2), debugLevel.info)
@@ -140,8 +140,8 @@ let LKServer = {
                   if (action === 'sendMsg') {
                     const obj = _.cloneDeep(msg)
                     if(obj.body) {
-                      if (obj.body.type ===1 ){
-                        obj.body.data = Boolean(obj.body.data)
+                      if (obj.body.content.type ===1 ){
+                        obj.body.content.data = Boolean(obj.body.data)
                       }
                     }
                     log(JSON.stringify(obj, null, 2), debugLevel.debug)
