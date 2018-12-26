@@ -144,6 +144,9 @@ let LKServer = {
                         obj.body.content.data = Boolean(obj.body.content.data)
                       }
                     }
+                    log(`${obj.body.content.type}, ${obj.body.content.type === 1}`, debugLevel.verbose)
+                    log(`${obj.body.content}`, debugLevel.verbose)
+
                     log(JSON.stringify(obj, null, 2), debugLevel.debug)
                   }
 
