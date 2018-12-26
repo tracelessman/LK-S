@@ -140,15 +140,17 @@ let LKServer = {
                   if (action === 'sendMsg') {
                     const obj = _.cloneDeep(msg)
                     if(obj.body) {
-                      if (obj.body.content.type === 1 ){
-                        obj.body.content.data = Boolean(obj.body.content.data)
+                      if (obj.body.content ){
+                        const contentObj = JSON.parse(obj.body.content)
+                        log(`${contentObj.type}, ${contentObj.type === 1}`, debugLevel.verbose)
+
+                        if (contentObj.type === 1) {
+                          contentObj.data = Boolean(contentObj.data)
+                        }
+                        obj.body.content = contentObj
                       }
                     }
-                    log(`${Object.keys(obj)}`, debugLevel.verbose)
-                    log(`${Object.keys(obj.body)}`, debugLevel.verbose)
-                    log(`${Object.keys(obj.body.content)}`, debugLevel.verbose)
-                    log(`${obj.body.content.type}, ${obj.body.content.type === 1}`, debugLevel.verbose)
-                    log(`${obj.body.content}`, debugLevel.verbose)
+
 
                     log(JSON.stringify(obj, null, 2), debugLevel.debug)
                   }
