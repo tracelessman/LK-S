@@ -144,6 +144,9 @@ let LKServer = {
                         obj.body.content.data = Boolean(obj.body.content.data)
                       }
                     }
+                    log(`${Object.keys(obj)}`, debugLevel.verbose)
+                    log(`${Object.keys(obj.body)}`, debugLevel.verbose)
+                    log(`${Object.keys(obj.body.content)}`, debugLevel.verbose)
                     log(`${obj.body.content.type}, ${obj.body.content.type === 1}`, debugLevel.verbose)
                     log(`${obj.body.content}`, debugLevel.verbose)
 
