@@ -27,9 +27,14 @@ const Push = require('../push')
 
 function  wsSend (ws, content, callback) {
   //log
-  const obj = JSON.parse(content)
+  const obj = _.cloneDeep(JSON.parse(content))
   if (obj && obj.header) {
     if (!obj.header.response) {
+      if(obj.body) {
+        if (obj.body.type ===1 ){
+          obj.body.data = Boolean(obj.body.data)
+        }
+      }
         log(JSON.stringify(obj, null, 2), debugLevel.info)
       }
   }
@@ -132,9 +137,14 @@ let LKServer = {
                     let action = header.action;
 
                   //log
-                  log(JSON.stringify(msg, null, 2), debugLevel.verbose)
                   if (action === 'sendMsg') {
-                    log(JSON.stringify(msg, null, 2), debugLevel.debug)
+                    const obj = _.cloneDeep(msg)
+                    if(obj.body) {
+                      if (obj.body.type ===1 ){
+                        obj.body.data = Boolean(obj.body.data)
+                      }
+                    }
+                    log(JSON.stringify(obj, null, 2), debugLevel.debug)
                   }
 
                   //log
