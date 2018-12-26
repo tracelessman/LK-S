@@ -119,7 +119,7 @@ let Message = {
     asyGetAllLocalRetainMsg:function (uid,did) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.senderTime,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,unix_timestamp(message.senderTime),
                 flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
