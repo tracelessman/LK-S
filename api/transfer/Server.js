@@ -31,8 +31,13 @@ function  wsSend (ws, content, callback) {
   if (obj && obj.header) {
     if (!obj.header.response) {
       if(obj.body) {
-        if (obj.body.content.type ===1 ){
-          obj.body.content.data = Boolean(obj.body.content.data)
+        if (obj.body.content ){
+          const contentObj = JSON.parse(obj.body.content)
+
+          if (contentObj.type === 1) {
+            contentObj.data = Boolean(contentObj.data)
+          }
+          obj.body.content = contentObj
         }
       }
         log(JSON.stringify(obj, null, 2), debugLevel.info)
@@ -142,7 +147,6 @@ let LKServer = {
                     if(obj.body) {
                       if (obj.body.content ){
                         const contentObj = JSON.parse(obj.body.content)
-                        log(`${contentObj.type}, ${contentObj.type === 1}`, debugLevel.verbose)
 
                         if (contentObj.type === 1) {
                           contentObj.data = Boolean(contentObj.data)
