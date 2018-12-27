@@ -1,6 +1,10 @@
 const WebSocket = require('ws');
 const path = require('path')
 const fse = require('fs-extra')
+const UUID = require('uuid/v4')
+const _ = require('lodash')
+const {ErrorUtil} = require('@ys/collection')
+
 
 const debugLevel = require('../../constant/debugLevel')
 const config = require('../../config')
@@ -14,14 +18,12 @@ const Device = require('./Device');
 const Friend = require('./Friend');
 const Group = require('./Group');
 const Org = require('./Org');
-const UUID = require('uuid/v4');
 const rootPath = path.resolve(__dirname,'../../')
+const TransferFlowCursor = require('./TransferFlowCursor');
+
 const rootDir = rootPath
 const {isDebugging} = config
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
-const _ = require('lodash')
-const TransferFlowCursor = require('./TransferFlowCursor');
-const {ErrorUtil} = require('@ys/collection')
 const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 
@@ -34,14 +36,16 @@ function  wsSend (ws, content, callback) {
         if (obj.body.content ){
           let contentObj
           try {
+            log(typeof obj.body.content, debugLevel.verbose)
+            log(JSON.stringify(obj, null, 2), debugLevel.verbose)
             contentObj = JSON.parse(obj.body.content)
             if (contentObj.type === 1) {
               contentObj.data = Boolean(contentObj.data)
             }
             obj.body.content = contentObj
           }catch(err) {
-            log(typeof obj.body.content, debugLevel.verbose)
-            log(JSON.stringify(obj.body.content, null, 2), debugLevel.verbose)
+            // log(typeof obj.body.content, debugLevel.verbose)
+            // log(JSON.stringify(obj.body.content, null, 2), debugLevel.verbose)
           }
         }
       }
