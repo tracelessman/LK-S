@@ -32,12 +32,17 @@ function  wsSend (ws, content, callback) {
     if (!obj.header.response) {
       if(obj.body) {
         if (obj.body.content ){
-          const contentObj = JSON.parse(obj.body.content)
 
-          if (contentObj.type === 1) {
-            contentObj.data = Boolean(contentObj.data)
+          let contentObj
+          try {
+            contentObj = JSON.parse(obj.body.content)
+            if (contentObj.type === 1) {
+              contentObj.data = Boolean(contentObj.data)
+            }
+            obj.body.content = contentObj
+          }catch(err) {
+            log(JSON.stringify(obj.body.content, null, 2), debugLevel.verbose)
           }
-          obj.body.content = contentObj
         }
       }
         log(JSON.stringify(obj, null, 2), debugLevel.info)
