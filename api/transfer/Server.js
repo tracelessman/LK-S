@@ -543,7 +543,8 @@ let LKServer = {
     },
 
     sendMsg: async function (msg,ws,nCkDiff) {
-        let header = msg.header;
+        const {header, body} = msg
+        const {isGroup, chatId} = body
         let msgId = header.id;
         let curMsg = await Message.asyGetMsg(msgId);
         if(!curMsg){
@@ -591,10 +592,17 @@ let LKServer = {
                                 let flowId = this.generateFlowId();
                                 return Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
                                     if(senderUid!==target.id){
-                                        Device.asyGetDevice(device.id).then((d)=>{
+                                        Device.asyGetDevice(device.id).then(async (d)=>{
                                             if(d&&d.venderDid){
+                                              const member = await Member.asyGetMember(senderUid)
+                                              const {name} = member
+                                              let groupStr = ''
+                                              if (isGroup) {
+                                                const group = await Group.asyGetGroup(chatId)
+                                                groupStr = `${group.name} `
+                                              }
                                                 setTimeout(()=>{
-                                                    Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
+                                                    Push.pushIOS(`${groupStr}${name}发来新的${isGroup?'群':''}消息，请注意查收`,d.venderDid);
                                                 },2000);
                                             }
                                         })
