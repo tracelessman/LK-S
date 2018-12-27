@@ -32,7 +32,6 @@ function  wsSend (ws, content, callback) {
     if (!obj.header.response) {
       if(obj.body) {
         if (obj.body.content ){
-
           let contentObj
           try {
             contentObj = JSON.parse(obj.body.content)
@@ -41,6 +40,7 @@ function  wsSend (ws, content, callback) {
             }
             obj.body.content = contentObj
           }catch(err) {
+            log(typeof obj.body.content, debugLevel.verbose)
             log(JSON.stringify(obj.body.content, null, 2), debugLevel.verbose)
           }
         }
@@ -607,7 +607,7 @@ let LKServer = {
                                                 groupStr = `${group.name} `
                                               }
                                                 setTimeout(()=>{
-                                                    Push.pushIOS(`${groupStr}${name}发来新的${isGroup?'群':''}消息，请注意查收`,d.venderDid);
+                                                    Push.pushIOS(`${groupStr}${name}发来新的${isGroup?'群':''}消息`,d.venderDid);
                                                 },2000);
                                             }
                                         })
