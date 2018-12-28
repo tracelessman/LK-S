@@ -36,8 +36,8 @@ function  wsSend (ws, content, callback) {
         if (obj.body.content ){
           let contentObj
           try {
-            log(typeof obj.body.content, debugLevel.verbose)
-            log(JSON.stringify(obj, null, 2), debugLevel.verbose)
+            // log(typeof obj.body.content, debugLevel.verbose)
+            // log(JSON.stringify(obj, null, 2), debugLevel.verbose)
             contentObj = JSON.parse(obj.body.content)
             if (contentObj.type === 1) {
               contentObj.data = Boolean(contentObj.data)

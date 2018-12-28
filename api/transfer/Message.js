@@ -1,5 +1,24 @@
+const _ = require('lodash')
+const fse = require('fs-extra')
+
 const Pool = require('../store/pool');
 const Log = require('./Log');
+const debugLevel = require('../../constant/debugLevel')
+const config = require('../../config')
+const rootDir = path.resolve(__dirname,'../../')
+
+function log (msg, level) {
+  if (level <= config.debugLevel) {
+    const folderName = _.findKey(debugLevel, val => {
+      return val === level
+    })
+    const d = new Date()
+    const absolutePath = path.resolve(rootDir, 'log', folderName, `${d.toLocaleDateString()}.log`)
+    fse.ensureFileSync(absolutePath)
+    fse.appendFileSync(absolutePath, `${d.toLocaleTimeString()}:\n    ${msg}\n\n`)
+  }
+}
+
 let Message = {
 
     _checkRemoveMsg:function (msgId) {
@@ -81,7 +100,9 @@ let Message = {
                 if(error){
                     resolve(null);
                 }else{
-                    resolve(results);
+                  log(JSON.stringify(results, null, 2), debugLevel.verbose)
+
+                  resolve(results);
                 }
             });
         });
@@ -130,6 +151,7 @@ let Message = {
                 if(error){
                     resolve(null);
                 }else{
+                  log(JSON.stringify(results, null, 2), debugLevel.verbose)
                     resolve(results);
                 }
             });
