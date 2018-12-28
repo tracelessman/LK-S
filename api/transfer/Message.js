@@ -87,7 +87,7 @@ let Message = {
     asyPeriodGetLocalMsgByTarget:function (targetUid,targetDid,time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,unix_timestamp(message.senderTime),message.timeout,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,unix_timestamp(message.senderTime) as senderTime,message.timeout,
                 flow.id as flowId,flow.targetUid,flow.targetDid,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
@@ -121,7 +121,7 @@ let Message = {
     asyPeriodGetForeignMsg:function (time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,message.senderTime,message.timeout,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,unix_timestamp(message.senderTime) as senderTime,message.timeout,
                 flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.targetText 
                 from message,flow 
                 where message.id = flow.msgId 
@@ -141,7 +141,7 @@ let Message = {
     asyGetAllLocalRetainMsg:function (uid,did) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,unix_timestamp(message.senderTime),
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,unix_timestamp(message.senderTime) as senderTime,
                 flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
