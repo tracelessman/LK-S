@@ -101,8 +101,6 @@ let Message = {
                 if(error){
                     resolve(null);
                 }else{
-                  log(JSON.stringify(results, null, 2), debugLevel.verbose)
-
                   resolve(results);
                 }
             });
@@ -152,7 +150,6 @@ let Message = {
                 if(error){
                     resolve(null);
                 }else{
-                  log(JSON.stringify(results, null, 2), debugLevel.verbose)
                     resolve(results);
                 }
             });
