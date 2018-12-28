@@ -1,5 +1,6 @@
 const _ = require('lodash')
 const fse = require('fs-extra')
+const path = require('path')
 
 const Pool = require('../store/pool');
 const Log = require('./Log');
