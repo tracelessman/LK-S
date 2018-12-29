@@ -256,7 +256,6 @@ let LKServer = {
                     msg.header.RFExist=0;
                 }
             })
-
             wsSend(ws, JSON.stringify(msgs),function () {
               msgs.forEach(function (msg) {
                 Message.markSent(msg.header.flowId);
@@ -367,7 +366,10 @@ let LKServer = {
             content.err="invalid user";
         }
 
-
+        let ps =  [Message.asyGetMinPreFlowId(uid,did,'deviceDiffReport'),Message.asyGetMinPreFlowId(uid,did,'group')];
+        let rs = await Promise.all(ps);
+        content["deviceDiffReport"]=rs[0];
+        content["group"]=rs[1];
         let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,content));
         wsSend(ws, rep);
 
