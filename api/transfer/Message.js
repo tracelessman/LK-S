@@ -1,25 +1,5 @@
-const _ = require('lodash')
-const fse = require('fs-extra')
-const path = require('path')
-
 const Pool = require('../store/pool');
 const Log = require('./Log');
-const debugLevel = require('../../constant/debugLevel')
-const config = require('../../config')
-const rootDir = path.resolve(__dirname,'../../')
-
-function log (msg, level) {
-  if (level <= config.debugLevel) {
-    const folderName = _.findKey(debugLevel, val => {
-      return val === level
-    })
-    const d = new Date()
-    const absolutePath = path.resolve(rootDir, 'log', folderName, `${d.toLocaleDateString()}.log`)
-    fse.ensureFileSync(absolutePath)
-    fse.appendFileSync(absolutePath, `${d.toLocaleTimeString()}:\n    ${msg}\n\n`)
-  }
-}
-
 let Message = {
 
     _checkRemoveMsg:function (msgId) {
@@ -87,7 +67,7 @@ let Message = {
     asyPeriodGetLocalMsgByTarget:function (targetUid,targetDid,time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,1000*unix_timestamp(message.senderTime) as senderTime,message.timeout,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,unix_timestamp(message.senderTime) as senderTime,message.timeout,
                 flow.id as flowId,flow.targetUid,flow.targetDid,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
@@ -101,7 +81,7 @@ let Message = {
                 if(error){
                     resolve(null);
                 }else{
-                  resolve(results);
+                    resolve(results);
                 }
             });
         });
@@ -119,7 +99,7 @@ let Message = {
     asyPeriodGetForeignMsg:function (time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,1000*unix_timestamp(message.senderTime) as senderTime,message.timeout,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,message.senderTime,message.timeout,
                 flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.targetText 
                 from message,flow 
                 where message.id = flow.msgId 
@@ -139,7 +119,7 @@ let Message = {
     asyGetAllLocalRetainMsg:function (uid,did) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,1000*unix_timestamp(message.senderTime) as senderTime,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,unix_timestamp(message.senderTime) as senderTime,
                 flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
@@ -235,6 +215,18 @@ let Message = {
                     resolve(null);
                 }else{
                     resolve(results[0]);
+                }
+            });
+        });
+    },
+    asyGetMinPreFlowId : async function(targetUid,targetDid,flowType){
+        return new Promise((resolve,reject)=>{
+            let sql = `select MIN(preFlowId) as preFlowId from flow where targetUid=? and targetDid=? and flowType=?`;
+            Pool.query(sql,[targetUid,targetDid,flowType], (error,results,fields) =>{
+                if(error){
+                    resolve(null);
+                }else{
+                    resolve(results[0]["preFlowId"]);
                 }
             });
         });
