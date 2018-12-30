@@ -67,7 +67,7 @@ let Message = {
     asyPeriodGetLocalMsgByTarget:function (targetUid,targetDid,time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,unix_timestamp(message.senderTime) as senderTime,message.timeout,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,(unix_timestamp(message.senderTime)*1000) as senderTime,message.timeout,
                 flow.id as flowId,flow.targetUid,flow.targetDid,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
@@ -75,7 +75,7 @@ let Message = {
                 and (flow.targetDid=? or flow.targetDid is null)
                 and flow.targetServerIP is null
                 and flow.lastSendTime is not null 
-                and ?-unix_timestamp(flow.lastSendTime)>180000
+                and ?-(unix_timestamp(flow.lastSendTime)*1000)>180000
             `;
             Pool.query(sql,[targetUid,targetDid,time], (error,results,fields) =>{
                 if(error){
@@ -105,7 +105,7 @@ let Message = {
                 where message.id = flow.msgId 
                 and flow.targetServerIP is not null
                 and flow.lastSendTime is not null 
-                and ?-unix_timestamp(flow.lastSendTime)>180000
+                and ?-(unix_timestamp(flow.lastSendTime)*1000)>180000
             `;
             Pool.query(sql,[time], (error,results,fields) =>{
                 if(error){
@@ -119,7 +119,7 @@ let Message = {
     asyGetAllLocalRetainMsg:function (uid,did) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,unix_timestamp(message.senderTime) as senderTime,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,(unix_timestamp(message.senderTime)*1000) as senderTime,
                 flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
