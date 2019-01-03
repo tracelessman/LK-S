@@ -368,10 +368,10 @@ let LKServer = {
             let orgMCode = result[0];
             let memberMCode = result[1];
             let ps = [];
-            if(msg.header.orgMCode!==orgMCode){
+            if(msg.body.content.orgMCode!==orgMCode){
                 ps.push(Org.asyGetBaseList());
             }
-            if(msg.header.memberMCode!==memberMCode){
+            if(msg.body.content.memberMCode!==memberMCode){
                 ps.push(Member.asyGetAllMCodes())
             }
             result = await Promise.all(ps)
@@ -380,8 +380,8 @@ let LKServer = {
                     {
                         orgMCode:orgMCode,
                         memberMCode:memberMCode,
-                        orgs:msg.header.orgMCode!==orgMCode?result[0]:null,
-                        members:msg.header.memberMCode!==memberMCode?result[1]:null
+                        orgs:msg.body.content.orgMCode!==orgMCode?result[0]:null,
+                        members:msg.body.content.memberMCode!==memberMCode?result[1]:null
                     }
 
                 ));
