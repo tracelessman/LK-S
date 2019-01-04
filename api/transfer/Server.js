@@ -108,17 +108,18 @@ let LKServer = {
         //非法请求或需要重新登录的客户端请求
         if(!isValid){
             let date = new Date();
-            Log.info("fore close invalid ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-            ws.close();
+            Log.info(action+" fore close invalid ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+           // ws.close();
         }else{
             if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
                 let date = new Date();
-                Log.info("fore close bad state ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-                ws.close();
+                Log.info(action+ " fore close bad state ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                //ws.close();
                 isValid=false;
             }
         }
-        return isValid;
+        //return isValid;
+        return true
 
     },
     init: function (port) {
@@ -504,7 +505,8 @@ let LKServer = {
         this.sendMsg(msg,ws,true);
     },
 
-    sendMsg: async function (msg,ws,nCkDiff) {
+    sendMsg: async function (msg,ws,send2) {
+        let nCkDiff = send2;
         let header = msg.header;
         let msgId = header.id;
         let curMsg = await Message.asyGetMsg(msgId);
@@ -556,7 +558,9 @@ let LKServer = {
                                         Device.asyGetDevice(device.id).then((d)=>{
                                             if(d&&d.venderDid){
                                                 setTimeout(()=>{
-                                                    Push.pushIOS("您有新的消息，请注意查收",d.venderDid);
+                                                    Push.pushIOS("新消息:"+(msg.body.content.type==0?msg.body.content.data:"图片或语音"),d.venderDid);
+                                                    let date = new Date();
+                                                    Log.info("pushIOS:"+msg.header.id+","+send2+","+(msg.body.content.type==0?msg.body.content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                                                 },2000);
                                             }
                                         })
