@@ -499,7 +499,6 @@ let LKServer = {
         return result;
     },
 
-    //TODO第二次补发应该走另一个函数，此时不在返回diff
 
     sendMsg2:function (msg,ws) {
         this.sendMsg(msg,ws,true);
@@ -518,7 +517,7 @@ let LKServer = {
             if(header.transfer) {
                f = await Message.asyGetForeignFlowbyParentMsgId(msgId, msg.header.serverIP, msg.header.serverPort);
             }else{
-               f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);
+               f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);//check if  there is a deviceDiff msg to the specified msg
             }
             
             if(f){
@@ -550,53 +549,59 @@ let LKServer = {
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
                     localFlowsPs.push(
-                        Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
-                            if(!f){
-                                let flowId = this.generateFlowId();
-                                return Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
-                                    if(senderUid!==target.id){
-                                        Device.asyGetDevice(device.id).then((d)=>{
-                                            if(d&&d.venderDid){
-                                                setTimeout(()=>{
-                                                    Push.pushIOS("新消息:"+(msg.body.content.type==0?msg.body.content.data:"图片或语音"),d.venderDid);
-                                                    let date = new Date();
-                                                    Log.info("pushIOS:"+msg.header.id+","+send2+","+(msg.body.content.type==0?msg.body.content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-                                                },2000);
-                                            }
-                                        })
-                                    }
+                        new Promise((resolve,reject)=>{
+                            Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                                if(!f){
+                                    let flowId = this.generateFlowId();
+                                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
+                                        resolve();
+                                        if(senderUid!==target.id){
+                                            Device.asyGetDevice(device.id).then((d)=>{
+                                                if(d&&d.venderDid){
+                                                    setTimeout(()=>{
+                                                        Push.pushIOS("新消息:"+(msg.body.content.type==0?msg.body.content.data:"图片或语音"),d.venderDid);
+                                                        let date = new Date();
+                                                        Log.info("pushIOS:"+msg.header.id+","+send2+","+(msg.body.content.type==0?msg.body.content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                                                    },2000);
+                                                }
+                                            })
+                                        }
 
-                                    let wsS = this.clients.get(target.id);
-                                    if (wsS) {
-                                        let ws = wsS.get(device.id);
-                                        if(ws){
-                                            let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,target:{
-                                                id:target.id,
-                                                did:device.id,
-                                                random:device.random,
-                                            }})
-                                            //TODO relative msg may not reach as crossing servers, so transfer should sync relative msg and msgs follow it
+                                        let wsS = this.clients.get(target.id);
+                                        if (wsS) {
+                                            let ws = wsS.get(device.id);
+                                            if(ws){
+                                                let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,target:{
+                                                    id:target.id,
+                                                    did:device.id,
+                                                    random:device.random,
+                                                }})
+                                                //TODO relative msg may not reach as crossing servers, so transfer should sync relative msg and msgs follow it
 
-                                            let relativeMsgId = msg.body.relativeMsgId;
-                                            if(relativeMsgId){
-                                                Message.asyGetLocalFlow(relativeMsgId,target.id,device.id).then((relativeFlow)=>{
-                                                    if(!relativeFlow){
-                                                        flowMsg.header.RFExist=0;
-                                                    }
+                                                let relativeMsgId = msg.body.relativeMsgId;
+                                                if(relativeMsgId){
+                                                    Message.asyGetLocalFlow(relativeMsgId,target.id,device.id).then((relativeFlow)=>{
+                                                        if(!relativeFlow){
+                                                            flowMsg.header.RFExist=0;
+                                                        }
+                                                        wsSend(ws, JSON.stringify(flowMsg),()=> {
+                                                            Message.markSent(flowId);
+                                                        });
+                                                    });
+                                                }else{
                                                     wsSend(ws, JSON.stringify(flowMsg),()=> {
                                                         Message.markSent(flowId);
                                                     });
-                                                });
-                                            }else{
-                                                wsSend(ws, JSON.stringify(flowMsg),()=> {
-                                                    Message.markSent(flowId);
-                                                });
+                                                }
                                             }
                                         }
-                                    }
-                                });
-                            }
+                                    });
+                                }else{
+                                    resolve();
+                                }
+                            })
                         })
+
                     );
 
                 })
