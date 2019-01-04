@@ -559,9 +559,10 @@ let LKServer = {
                                             Device.asyGetDevice(device.id).then((d)=>{
                                                 if(d&&d.venderDid){
                                                     setTimeout(()=>{
-                                                        Push.pushIOS("新消息:"+(msg.body.content.type==0?msg.body.content.data:"图片或语音"),d.venderDid);
+                                                        let content = JSON.parse(msg.body.content);
+                                                        Push.pushIOS("新消息:"+(content.type==0?content.data:"图片或语音"),d.venderDid);
                                                         let date = new Date();
-                                                        Log.info("pushIOS:"+msg.header.id+","+send2+","+(msg.body.content.type==0?msg.body.content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                                                        Log.info("pushIOS:msgId "+msg.header.id+",target "+target.id+","+send2+","+(content.type==0?content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                                                     },2000);
                                                 }
                                             })
