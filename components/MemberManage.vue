@@ -258,7 +258,8 @@
                                     },
                                     successCb:(content)=>{
                                         const {qrcodeData} = content
-                                      const compressed = hm.compress(qrcodeData)
+                                      // const compressed = hm.compress()
+                                      const compressed = qrcodeData
                                       console.log(qrcodeData.length, compressed.length)
                                       this.qrcode =  qr.imageSync(compressed, { type: 'svg',size:2,parse_url:true})
 
