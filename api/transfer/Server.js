@@ -1,13 +1,5 @@
 const WebSocket = require('ws');
-const path = require('path')
-const fse = require('fs-extra')
-const UUID = require('uuid/v4')
-const _ = require('lodash')
-const {ErrorUtil} = require('@ys/collection')
-
-
-const debugLevel = require('../../constant/debugLevel')
-const config = require('../../config')
+const path = require('path');
 const Message = require('./Message');
 const Log = require('./Log');
 const Transfer = require('./Transfer');
@@ -18,41 +10,18 @@ const Device = require('./Device');
 const Friend = require('./Friend');
 const Group = require('./Group');
 const Org = require('./Org');
+const UUID = require('uuid/v4');
 const rootPath = path.resolve(__dirname,'../../')
-const TransferFlowCursor = require('./TransferFlowCursor');
-
-const rootDir = rootPath
+const config = require(path.resolve(rootPath,'config'))
 const {isDebugging} = config
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
+const _ = require('lodash')
+const TransferFlowCursor = require('./TransferFlowCursor');
+const {ErrorUtil} = require('@ys/collection')
 const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 
 function  wsSend (ws, content, callback) {
-  //log
-  const obj = _.cloneDeep(JSON.parse(content))
-  if (obj && obj.header) {
-    if (!obj.header.response) {
-      if(obj.body) {
-        if (obj.body.content ){
-          let contentObj
-          try {
-            // log(typeof obj.body.content, debugLevel.verbose)
-            // log(JSON.stringify(obj, null, 2), debugLevel.verbose)
-            contentObj = JSON.parse(obj.body.content)
-            if (contentObj.type === 1) {
-              contentObj.data = Boolean(contentObj.data)
-            }
-            obj.body.content = contentObj
-          }catch(err) {
-            // log(typeof obj.body.content, debugLevel.verbose)
-            // log(JSON.stringify(obj.body.content, null, 2), debugLevel.verbose)
-          }
-        }
-      }
-        log(JSON.stringify(obj, null, 2), debugLevel.info)
-      }
-  }
-  //
   ws.send(content, err => {
     if (err) {
         if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
@@ -65,17 +34,6 @@ function  wsSend (ws, content, callback) {
   })
 }
 
-function log (msg, level) {
-  if (level <= config.debugLevel) {
-    const folderName = _.findKey(debugLevel, val => {
-      return val === level
-    })
-    const d = new Date()
-    const absolutePath = path.resolve(rootDir, 'log', folderName, `${d.toLocaleDateString()}.log`)
-    fse.ensureFileSync(absolutePath)
-    fse.appendFileSync(absolutePath, `${d.toLocaleTimeString()}:\n    ${msg}\n\n`)
-  }
-}
 let LKServer = {
     _hbTimeout: 3 * 60 * 1000,
     _flowSeqSeed:Date.now(),
@@ -137,93 +95,80 @@ let LKServer = {
         }
         return res;
     },
+    _checkValid:function (ws,action) {
+        let isValid = false;
+        if (ws._uid) {
+            var wsS = LKServer.clients.get(ws._uid);
+            if (wsS&&wsS.has(ws._did)) {
+                isValid = true;
+            }
+        }else if (action == "ping" || action == "login" || action == "register" ) {
+            isValid = true;
+        }
+        //非法请求或需要重新登录的客户端请求
+        if(!isValid){
+            let date = new Date();
+            Log.info(action+" fore close invalid ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+           // ws.close();
+        }else{
+            if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
+                let date = new Date();
+                Log.info(action+ " fore close bad state ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                //ws.close();
+                isValid=false;
+            }
+        }
+        //return isValid;
+        return true
+
+    },
     init: function (port) {
         LKServer.wss = new WebSocket.Server({port: port});
         LKServer.wss.on('connection', function connection(ws) {
             ws.on('message', function incoming(message) {
                 try{
-                    if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
-                        ws.close();
-                    }
                     let msg = JSON.parse(message);
-
-                  let header = msg.header;
+                    let header = msg.header;
                     let action = header.action;
-
-                  //log
-                  if (action === 'sendMsg') {
-                    const obj = _.cloneDeep(msg)
-                    if(obj.body) {
-                      if (obj.body.content ){
-                        const contentObj = JSON.parse(obj.body.content)
-
-                        if (contentObj.type === 1) {
-                          contentObj.data = Boolean(contentObj.data)
+                    let isValid = LKServer._checkValid(ws,action);
+                    if(isValid){
+                        let isResponse = header.response;
+                        if (isResponse) {
+                            Message.receiveReport(header.flowId);
                         }
-                        obj.body.content = contentObj
-                      }
-                    }
-
-
-                    log(JSON.stringify(obj, null, 2), debugLevel.debug)
-                  }
-
-                  //log
-
-                    let isResponse = header.response;
-                    if (isResponse) {//得到接收应答，删除缓存
-                        Message.receiveReport(header.flowId);
-                    }
-                    else if (LKServer[action]) {
-                        if(header.preFlowId){
-                            TransferFlowCursor.getLastFlowId(header.serverIP,header.serverPort,header.flowType).then((lastFlowId)=>{
-                                if(lastFlowId){
-                                    if(header.preFlowId===lastFlowId){
-                                        LKServer[action](msg, ws);
+                        else if (LKServer[action]) {
+                            if(header.preFlowId){//from another server
+                                TransferFlowCursor.getLastFlowId(header.serverIP,header.serverPort,header.flowType).then((lastFlowId)=>{
+                                    if(lastFlowId){
+                                        if(header.preFlowId===lastFlowId){
+                                            LKServer[action](msg, ws);
+                                        }else{
+                                            this._putTransferFlowPool(header.serverIP,header.serverPort,header.preFlowId,msg,ws);
+                                        }
                                     }else{
-                                        this._putTransferFlowPool(header.serverIP,header.serverPort,header.preFlowId,msg,ws);
+                                        LKServer[action](msg, ws);
                                     }
-                                }else{
-                                    LKServer[action](msg, ws);
-                                }
-                            });
-                        }else{
-                            LKServer[action](msg, ws);
+                                });
+                            }else{
+                                LKServer[action](msg, ws);
+                            }
+
+                        } else {
+                            let content = JSON.stringify(LKServer.newResponseMsg(header.msgId, {err: "invalid request"}));
+                            wsSend(ws, content)
                         }
-
-                        // if (action == "ping" || action == "login" || action == "register" || action == "authorize" || action == "errReport") {
-                        //     LKServer[action](msg, ws);
-                        //     return;
-                        // } else if (ws._uid) {
-                        //     var wsS = LKServer.clients.get(ws._uid);
-                        //     if (wsS&&wsS.has(ws._did)) {
-                        //         LKServer[action](msg, ws);
-                        //         return;
-                        //     }
-                        // }
-                        // //非法请求或需要重新登录的客户端请求
-                        // let date = new Date();
-                        // Log.info(action + " fore close,非法请求或需要重新登录的客户端请求:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-                        // ws.close();
-                    } else {
-                        let content = JSON.stringify(LKServer.newResponseMsg(header.msgId, {err: "无法识别的请求"}));
-                        wsSend(ws, content)
                     }
-
-                }catch (e){
-                    console.info(e);
+                }catch(e){
+                    console.info("handle message err:"+e);
                 }
-
             });
 
             ws.on('close', function () {
-                // console.info("auto close:" + ws._uid + "," + ws._did );
                 if (ws._uid) {
                     let wsS = LKServer.clients.get(ws._uid);
                     if (wsS&&wsS.has(ws._did)) {
                         wsS.delete(ws._did);
                         let date = new Date();
-                        // Log.info("logout:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                         if (wsS.size===0) {
                             LKServer.clients.delete(ws._uid);
                         }
@@ -306,13 +251,16 @@ let LKServer = {
             relativeMsgIds.forEach((v,k)=>{
                 ps.push(Message.asyGetLocalFlow(k,ws._uid,ws._did));
             })
-            let rs = await Promise.all(ps);
-            for(let i=0;i<rs.length;i++){
-                let relativeFlow = rs[i];
-                if(relativeFlow){
-                    relativeMsgIds.set(relativeFlow.msgId,true)
+            if(ps.length>0){
+                let rs = await Promise.all(ps);
+                for(let i=0;i<rs.length;i++){
+                    let relativeFlow = rs[i];
+                    if(relativeFlow){
+                        relativeMsgIds.set(relativeFlow.msgId,true)
+                    }
                 }
             }
+
             msgs.forEach(function (msg) {
                 if(msg.body.relativeMsgId&&relativeMsgIds.get(msg.body.relativeMsgId)===false){
                     msg.header.RFExist=0;
@@ -405,6 +353,7 @@ let LKServer = {
         let venderDid = msg.body.content.venderDid;
         let result = await Promise.all([Member.asyGetMember(uid),Device.asyGetDevice(did)]);
         let content = {};
+        let isValid = false;
         if(result[0]&&result[1]){
             let wsS = this.clients.get(uid);
             if (!wsS) {
@@ -424,18 +373,21 @@ let LKServer = {
             wsS.set(did,ws);
             if(venderDid)
                 Device.asyUpdateVenderDid(uid,did,venderDid);
+            let ps =  [Message.asyGetMinPreFlowId(uid,did,'deviceDiffReport'),Message.asyGetMinPreFlowId(uid,did,'group')];
+            let rs = await Promise.all(ps);
+            content["deviceDiffReport"]=rs[0];
+            content["group"]=rs[1];
+            isValid = true;
         }else{
             content.err="invalid user";
         }
 
-        let ps =  [Message.asyGetMinPreFlowId(uid,did,'deviceDiffReport'),Message.asyGetMinPreFlowId(uid,did,'group')];
-        let rs = await Promise.all(ps);
-        content["deviceDiffReport"]=rs[0];
-        content["group"]=rs[1];
         let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,content));
-        wsSend(ws, rep);
+        wsSend(ws, rep, ()=> {
+            if(isValid)
+                this.sendAllDetainedMsg(msg, ws)
+        });
 
-        this.sendAllDetainedMsg(msg, ws)
     },
     async getAllDetainedMsg (msg, ws) {
       await this.sendAllDetainedMsg(msg, ws)
@@ -547,15 +499,14 @@ let LKServer = {
         return result;
     },
 
-    //TODO第二次补发应该走另一个函数，此时不在返回diff
 
     sendMsg2:function (msg,ws) {
         this.sendMsg(msg,ws,true);
     },
 
-    sendMsg: async function (msg,ws,nCkDiff) {
-        const {header, body} = msg
-        const {isGroup, chatId} = body
+    sendMsg: async function (msg,ws,send2) {
+        let nCkDiff = send2;
+        let header = msg.header;
         let msgId = header.id;
         let curMsg = await Message.asyGetMsg(msgId);
         if(!curMsg){
@@ -566,9 +517,9 @@ let LKServer = {
             if(header.transfer) {
                f = await Message.asyGetForeignFlowbyParentMsgId(msgId, msg.header.serverIP, msg.header.serverPort);
             }else{
-               f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);
+               f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);//check if  there is a deviceDiff msg to the specified msg
             }
-
+            
             if(f){
                 nCkDiff = true;
             }
@@ -598,58 +549,60 @@ let LKServer = {
                     ckDiffPs.push(this._checkDeviceDiff(target.id,devices,senderDid));
                 devices.forEach((device)=>{
                     localFlowsPs.push(
-                        Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
-                            if(!f){
-                                let flowId = this.generateFlowId();
-                                return Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
-                                    if(senderUid!==target.id){
-                                        Device.asyGetDevice(device.id).then(async (d)=>{
-                                            if(d&&d.venderDid){
-                                              const member = await Member.asyGetMember(senderUid)
-                                              const {name} = member
-                                              let groupStr = ''
-                                              if (isGroup) {
-                                                const group = await Group.asyGetGroup(chatId)
-                                                groupStr = `${group.name} `
-                                              }
-                                                setTimeout(()=>{
-                                                    Push.pushIOS(`${groupStr}${name}发来新的${isGroup?'群':''}消息`,d.venderDid);
-                                                },2000);
-                                            }
-                                        })
-                                    }
+                        new Promise((resolve,reject)=>{
+                            Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                                if(!f){
+                                    let flowId = this.generateFlowId();
+                                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id,device.random).then(()=>{
+                                        resolve();
+                                        if(senderUid!==target.id){
+                                            Device.asyGetDevice(device.id).then((d)=>{
+                                                if(d&&d.venderDid){
+                                                    setTimeout(()=>{
+                                                        let content = JSON.parse(msg.body.content);
+                                                        Push.pushIOS("新消息:"+(content.type==0?content.data:"图片或语音"),d.venderDid);
+                                                        let date = new Date();
+                                                        Log.info("pushIOS:msgId "+msg.header.id+",target "+target.id+","+send2+","+(content.type==0?content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                                                    },2000);
+                                                }
+                                            })
+                                        }
 
-                                    let wsS = this.clients.get(target.id);
-                                    if (wsS) {
-                                        let ws = wsS.get(device.id);
-                                        if(ws){
-                                            let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,target:{
-                                                id:target.id,
-                                                did:device.id,
-                                                random:device.random,
-                                            }})
-                                            //TODO relative msg may not reach as crossing servers, so transfer should sync relative msg and msgs follow it
+                                        let wsS = this.clients.get(target.id);
+                                        if (wsS) {
+                                            let ws = wsS.get(device.id);
+                                            if(ws){
+                                                let flowMsg = this._newMsgFromMsg(msg,{flowId:flowId,target:{
+                                                    id:target.id,
+                                                    did:device.id,
+                                                    random:device.random,
+                                                }})
+                                                //TODO relative msg may not reach as crossing servers, so transfer should sync relative msg and msgs follow it
 
-                                            let relativeMsgId = msg.body.relativeMsgId;
-                                            if(relativeMsgId){
-                                                Message.asyGetLocalFlow(relativeMsgId,target.id,device.id).then((relativeFlow)=>{
-                                                    if(!relativeFlow){
-                                                        flowMsg.header.RFExist=0;
-                                                    }
+                                                let relativeMsgId = msg.body.relativeMsgId;
+                                                if(relativeMsgId){
+                                                    Message.asyGetLocalFlow(relativeMsgId,target.id,device.id).then((relativeFlow)=>{
+                                                        if(!relativeFlow){
+                                                            flowMsg.header.RFExist=0;
+                                                        }
+                                                        wsSend(ws, JSON.stringify(flowMsg),()=> {
+                                                            Message.markSent(flowId);
+                                                        });
+                                                    });
+                                                }else{
                                                     wsSend(ws, JSON.stringify(flowMsg),()=> {
                                                         Message.markSent(flowId);
                                                     });
-                                                });
-                                            }else{
-                                                wsSend(ws, JSON.stringify(flowMsg),()=> {
-                                                    Message.markSent(flowId);
-                                                });
+                                                }
                                             }
                                         }
-                                    }
-                                });
-                            }
+                                    });
+                                }else{
+                                    resolve();
+                                }
+                            })
                         })
+
                     );
 
                 })
@@ -671,7 +624,7 @@ let LKServer = {
             })
 
         })
-
+      
         if(!nCkDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
             let dffRes = [];
@@ -749,10 +702,10 @@ let LKServer = {
             content:content
         }};
         await Message.asyAddMessage(msg,parentMsgId);
-
+       
         Message.asyAddLocalFlow(flowId,newMsgId,targetUid,targetDid,null,preFlowId,flowType).then(()=>{
             let wsS = this.clients.get(targetUid);
-
+   
             if (wsS) {
                 let ws = wsS.get(targetDid);
                 if(ws){
@@ -783,7 +736,6 @@ let LKServer = {
 //TODO 定时清理滞留消息 设备处于激活状态下时，如其未收到元消息，元消息始终保持在库；所以还是要有个激活状态管理，或者还是超时删除元信息，但是当再次激活时需要更新设备的元信息
 
     readReport:async function (msg,ws) {
-
         let header = msg.header;
         let msgId = header.id;
         let curMsg = await Message.asyGetMsg(msgId);
@@ -803,31 +755,44 @@ let LKServer = {
             }
         }else{
             let devices = await Device.asyGetDevices(target.id);
+            let ps = [];
             if(devices){
                 devices.forEach((device)=>{
-                    Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
-                        if(!f){
-                            let flowId = this.generateFlowId();
-                            Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
-                                let wsS = this.clients.get(target.id);
-                                if (wsS) {
-                                    let ws = wsS.get(device.id);
-                                    if(ws){
-                                        msg.header.flowId = flowId;
-                                        wsSend(ws, JSON.stringify(msg),()=> {
-                                            Message.markSent(flowId);
-                                        });
-                                    }
+                    ps.push(
+                        new Promise((resolve,reject)=>{
+                            Message.asyGetLocalFlow(msgId,target.id,device.id).then((f)=>{
+                                if(!f){
+                                    let flowId = this.generateFlowId();
+                                    Message.asyAddLocalFlow(flowId,msgId,target.id,device.id).then(()=>{
+                                        resolve();
+                                        let wsS = this.clients.get(target.id);
+                                        if (wsS) {
+                                            let ws = wsS.get(device.id);
+                                            if(ws){
+                                                msg.header.flowId = flowId;
+                                                wsSend(ws, JSON.stringify(msg),()=> {
+                                                    Message.markSent(flowId);
+                                                });
+                                            }
+                                        }
+                                    });
+                                }else{
+                                    resolve();
                                 }
-                            });
-                        }
-                    })
+                            })
+                        })
+
+                    );
                 });
             }
-        }
+            if(ps.length>0){
+                await Promise.all(ps);
+            }
 
+        }
         let content = JSON.stringify(this.newResponseMsg(msgId,null,srcFlowId));
         wsSend(ws, content);
+
     },
     _transRemote:async function(msg,ws){
         let header = msg.header;

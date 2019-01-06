@@ -76,6 +76,7 @@ let Message = {
                 and flow.targetServerIP is null
                 and flow.lastSendTime is not null 
                 and ?-(unix_timestamp(flow.lastSendTime)*1000)>180000
+                order dy message.senderTime
             `;
             Pool.query(sql,[targetUid,targetDid,time], (error,results,fields) =>{
                 if(error){
@@ -99,13 +100,14 @@ let Message = {
     asyPeriodGetForeignMsg:function (time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,message.senderTime,message.timeout,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,(unix_timestamp(message.senderTime)*1000) as senderTime,message.timeout,
                 flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.targetText 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetServerIP is not null
                 and flow.lastSendTime is not null 
                 and ?-(unix_timestamp(flow.lastSendTime)*1000)>180000
+                order dy message.senderTime
             `;
             Pool.query(sql,[time], (error,results,fields) =>{
                 if(error){
@@ -125,6 +127,7 @@ let Message = {
                 where message.id = flow.msgId 
                 and flow.targetUid=?
                 and flow.targetDid=?
+                order dy message.senderTime
             `;
             Pool.query(sql,[uid,did], (error,results,fields) =>{
                 if(error){
@@ -245,13 +248,12 @@ let Message = {
     },
     _getLastLocalFlowId:function (targetUid,targetDid,flowType) {
         return new Promise((resolve,reject)=>{
-            const field = 'MAX(cast(id as SIGNED INTEGER))'
-            let sql = `select ${field} from flow where targetUid=? and targetDid=? and flowType=?`;
+            let sql = `select MAX(preFlowId) as preFlowId from flow where targetUid=? and targetDid=? and flowType=?`;
             Pool.query(sql,[targetUid,targetDid,flowType], (error,results,fields) =>{
                 if(error){
                     resolve(null);
                 }else{
-                    resolve(results[0][field]);
+                    resolve(results[0]["preFlowId"]);
                 }
             });
         });
@@ -269,12 +271,12 @@ let Message = {
     },
     _getLastForeignFlowId:function (targetServerIP,targetServerPort,flowType) {
         return new Promise((resolve,reject)=>{
-            let sql = 'select MAX(cast(id as SIGNED INTEGER)) from flow where targetServerIP=? and targetServerPort=? and flowType=?';
+            let sql = 'select MAX(preFlowId) as preFlowId from flow where targetServerIP=? and targetServerPort=? and flowType=?';
             Pool.query(sql,[targetServerIP,targetServerPort,flowType], (error,results,fields) =>{
                 if(error){
                     resolve(null);
                 }else{
-                    resolve(results[0]);
+                    resolve(results[0]["preFlowId"]);
                 }
             });
         });
