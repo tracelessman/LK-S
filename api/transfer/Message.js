@@ -76,7 +76,7 @@ let Message = {
                 and flow.targetServerIP is null
                 and flow.lastSendTime is not null 
                 and ?-(unix_timestamp(flow.lastSendTime)*1000)>180000
-                order dy message.senderTime
+                order by message.senderTime
             `;
             Pool.query(sql,[targetUid,targetDid,time], (error,results,fields) =>{
                 if(error){
@@ -107,7 +107,7 @@ let Message = {
                 and flow.targetServerIP is not null
                 and flow.lastSendTime is not null 
                 and ?-(unix_timestamp(flow.lastSendTime)*1000)>180000
-                order dy message.senderTime
+                order by message.senderTime
             `;
             Pool.query(sql,[time], (error,results,fields) =>{
                 if(error){
@@ -127,7 +127,7 @@ let Message = {
                 where message.id = flow.msgId 
                 and flow.targetUid=?
                 and flow.targetDid=?
-                order dy message.senderTime
+                order by message.senderTime
             `;
             Pool.query(sql,[uid,did], (error,results,fields) =>{
                 if(error){
