@@ -1,5 +1,13 @@
 const WebSocket = require('ws');
 const path = require('path');
+const fse = require('fs-extra')
+const UUID = require('uuid/v4')
+const _ = require('lodash')
+const {ErrorUtil} = require('@ys/collection')
+
+
+const debugLevel = require('../../constant/debugLevel')
+const config = require('../../config')
 const Message = require('./Message');
 const Log = require('./Log');
 const Transfer = require('./Transfer');
@@ -10,18 +18,40 @@ const Device = require('./Device');
 const Friend = require('./Friend');
 const Group = require('./Group');
 const Org = require('./Org');
-const UUID = require('uuid/v4');
 const rootPath = path.resolve(__dirname,'../../')
-const config = require(path.resolve(rootPath,'config'))
+const rootDir = rootPath
 const {isDebugging} = config
 const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'))
-const _ = require('lodash')
 const TransferFlowCursor = require('./TransferFlowCursor');
-const {ErrorUtil} = require('@ys/collection')
 const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 
 function  wsSend (ws, content, callback) {
+  //log
+  const obj = _.cloneDeep(JSON.parse(content))
+  if (obj && obj.header) {
+    if (!obj.header.response) {
+      if(obj.body) {
+        if (obj.body.content ){
+          let contentObj
+          try {
+            // log(typeof obj.body.content, debugLevel.verbose)
+            // log(JSON.stringify(obj, null, 2), debugLevel.verbose)
+            contentObj = JSON.parse(obj.body.content)
+            if (contentObj.type === 1) {
+              contentObj.data = Boolean(contentObj.data)
+            }
+            obj.body.content = contentObj
+          }catch(err) {
+            // log(typeof obj.body.content, debugLevel.verbose)
+            // log(JSON.stringify(obj.body.content, null, 2), debugLevel.verbose)
+          }
+        }
+      }
+      log(JSON.stringify(obj, null, 2), debugLevel.info)
+    }
+  }
+  //
   ws.send(content, err => {
     if (err) {
         if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
@@ -32,6 +62,18 @@ function  wsSend (ws, content, callback) {
       callback(err)
     }
   })
+}
+
+function log (msg, level) {
+  if (level <= config.debugLevel) {
+    const folderName = _.findKey(debugLevel, val => {
+      return val === level
+    })
+    const d = new Date()
+    const absolutePath = path.resolve(rootDir, 'log', folderName, `${d.toLocaleDateString()}.log`)
+    fse.ensureFileSync(absolutePath)
+    fse.appendFileSync(absolutePath, `${d.toLocaleTimeString()}:\n    ${msg}\n\n`)
+  }
 }
 
 let LKServer = {
@@ -130,6 +172,27 @@ let LKServer = {
                     let msg = JSON.parse(message);
                     let header = msg.header;
                     let action = header.action;
+
+                  //log
+                  if (action === 'sendMsg') {
+                    const obj = _.cloneDeep(msg)
+                    if(obj.body) {
+                      if (obj.body.content ){
+                        const contentObj = JSON.parse(obj.body.content)
+
+                        if (contentObj.type === 1) {
+                          contentObj.data = Boolean(contentObj.data)
+                        }
+                        obj.body.content = contentObj
+                      }
+                    }
+
+
+                    log(JSON.stringify(obj, null, 2), debugLevel.debug)
+                  }
+
+                  //log
+
                     let isValid = LKServer._checkValid(ws,action);
                     if(isValid){
                         let isResponse = header.response;
@@ -519,7 +582,7 @@ let LKServer = {
             }else{
                f = await Message.asyGetLocalFlowbyParentMsgId(msgId,msg.header.uid,msg.header.did);//check if  there is a deviceDiff msg to the specified msg
             }
-            
+
             if(f){
                 nCkDiff = true;
             }
@@ -624,7 +687,7 @@ let LKServer = {
             })
 
         })
-      
+
         if(!nCkDiff&&ckDiffPs.length>0){
             diffs = await Promise.all(ckDiffPs);
             let dffRes = [];
@@ -702,10 +765,10 @@ let LKServer = {
             content:content
         }};
         await Message.asyAddMessage(msg,parentMsgId);
-       
+
         Message.asyAddLocalFlow(flowId,newMsgId,targetUid,targetDid,null,preFlowId,flowType).then(()=>{
             let wsS = this.clients.get(targetUid);
-   
+
             if (wsS) {
                 let ws = wsS.get(targetDid);
                 if(ws){
