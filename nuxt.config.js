@@ -1,4 +1,6 @@
 const fs = require('fs')
+const debugInfo = require('debug')('info')
+
 module.exports = {
   /*
   ** Headers of the page
@@ -27,11 +29,17 @@ module.exports = {
     ** Run ESLINT on save
     */
     extend (config, ctx) {
+      // debugInfo(ctx)
       // if (ctx.isDev && ctx.isClient) {
       //   config.module.rules.push({
       //     enforce: 'pre',
       //     test: /\.(js|vue)$/,
-      //     loader: 'eslint-loader',
+      //     use: {
+      //       loader: 'eslint-loader',
+      //       options: {
+      //         fix: true
+      //       }
+      //     },
       //     exclude: /(node_modules)/
       //   })
       // }
