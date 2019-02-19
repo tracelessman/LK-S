@@ -25,5 +25,8 @@ unversioned*
 static/public
 !updateMeta.json
 
+# mac
+._*
+
 
 
