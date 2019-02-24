@@ -359,5 +359,45 @@ let Message = {
             });
         });
     },
+    clearTimeoutMsgs:function () {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                select id from message where (?-(unix_timestamp(time)*1000))>3*24*60*60*1000
+            `;
+            Pool.query(sql,[Date.now()], (error,results,fields) =>{
+                if(error){
+                    resolve();
+                }else{
+                    if(results.length>0){
+                        let scope = "(";
+                        for(let i=0;i<results.length;i++){
+                            scope+=results[i];
+                            if(i<results.length-1){
+                                scope+=",";
+                            }
+                        }
+                        scope+=")";
+                        let sql1 = "delete from message where id in "+scope;
+                        Pool.query(sql1,[],function (error,results,fields) {
+                            if(error){
+                                console.error("clearTimeoutMsgs delete messages:"+error.toString())
+                            }
+
+                        });
+                        let sql2 = "delete from flow where msgId in "+scope;
+                        Pool.query(sql2,[],function (error,results,fields) {
+                            if(error){
+                                console.error("clearTimeoutMsgs delete flows:"+error.toString())
+                            }
+
+                        });
+                    }else{
+                        resolve();
+                    }
+
+                }
+            });
+        });
+    },
 }
 module.exports = Message;
