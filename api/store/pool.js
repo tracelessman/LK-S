@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS message
     senderServerPort int,
     sign TEXT,
     body MEDIUMTEXT COLLATE utf8mb4_general_ci,
-    senderTime datetime,
+    sendTime varchar(15),
     time datetime,
     timeout int,
     reserve1 TEXT,

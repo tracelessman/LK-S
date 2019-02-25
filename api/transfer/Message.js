@@ -67,7 +67,7 @@ let Message = {
     asyPeriodGetLocalMsgByTarget:function (targetUid,targetDid,time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,(unix_timestamp(message.senderTime)*1000) as senderTime,message.timeout,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.sendTime,message.timeout,
                 flow.id as flowId,flow.targetUid,flow.targetDid,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
@@ -76,7 +76,7 @@ let Message = {
                 and flow.targetServerIP is null
                 and flow.lastSendTime is not null 
                 and ?-(unix_timestamp(flow.lastSendTime)*1000)>180000
-                order by message.time
+                order by message.sendTime
             `;
             Pool.query(sql,[targetUid,targetDid,time], (error,results,fields) =>{
                 if(error){
@@ -100,14 +100,14 @@ let Message = {
     asyPeriodGetForeignMsg:function (time) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,(unix_timestamp(message.senderTime)*1000) as senderTime,message.timeout,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.body,message.sendTime,message.timeout,
                 flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetServerIP,flow.targetServerPort,flow.targetText 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetServerIP is not null
                 and flow.lastSendTime is not null 
                 and ?-(unix_timestamp(flow.lastSendTime)*1000)>180000
-                order by message.time
+                order by message.sendTime
             `;
             Pool.query(sql,[time], (error,results,fields) =>{
                 if(error){
@@ -121,13 +121,13 @@ let Message = {
     asyGetAllLocalRetainMsg:function (uid,did) {
         return new Promise((resolve,reject)=>{
             let sql = `
-                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,(unix_timestamp(message.senderTime)*1000) as senderTime,
+                select message.id as msgId,message.action,message.senderUid,message.senderDid,message.senderServerIP,message.senderServerPort,message.body,message.sendTime,
                 flow.id as flowId,flow.preFlowId,flow.flowType,flow.targetUid,flow.targetDid,flow.targetServerIP,flow.targetServerPort,flow.random 
                 from message,flow 
                 where message.id = flow.msgId 
                 and flow.targetUid=?
                 and flow.targetDid=?
-                order by message.time
+                order by message.sendTime
             `;
             Pool.query(sql,[uid,did], (error,results,fields) =>{
                 if(error){
@@ -150,8 +150,9 @@ let Message = {
     asyAddMessage:function (msg,parentMsgId) {
       // console.log({asyAddMessage: JSON.stringify(msg.body)})
         let header = msg.header;
-        let sendTime = new Date();
-        sendTime.setTime(header.time);
+        // let sendTime = new Date();
+        // sendTime.setTime(header.time);
+        let sendTime = ""+header.time;
         return new Promise((resolve,reject)=>{
             let sql = `
                 insert into message
@@ -159,7 +160,7 @@ let Message = {
             `;
             Pool.query(sql,{
                 parentId:parentMsgId,
-                id:header.id,action:header.action,senderUid:header.uid,senderDid:header.did,body:JSON.stringify(msg.body),senderTime:sendTime,time:new Date(),timeout:header.timeout,
+                id:header.id,action:header.action,senderUid:header.uid,senderDid:header.did,body:JSON.stringify(msg.body),sendTime:sendTime,time:new Date(),timeout:header.timeout,
                 senderServerIP:header.serverIP,senderServerPort:header.serverPort
             }, (error,results,fields) =>{
                 if(error){
