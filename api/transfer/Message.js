@@ -371,7 +371,7 @@ let Message = {
                     if(results.length>0){
                         let scope = "(";
                         for(let i=0;i<results.length;i++){
-                            scope+=results[i];
+                            scope+="'"+results[i].id+"'";
                             if(i<results.length-1){
                                 scope+=",";
                             }
