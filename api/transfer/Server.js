@@ -246,7 +246,8 @@ let LKServer = {
         LKServer.wss.on('error', function (err) {
             console.info("ws server error:" + err);
         });
-       this._asyCheckTimeoutRetainMsgs()
+       this._asyCheckTimeoutRetainMsgs();
+       this._clearTimeoutMsgs();
     },
     getIP:function () {
         return config.ip
@@ -371,6 +372,10 @@ let LKServer = {
             })
         }
         setTimeout(()=>{this._asyCheckTimeoutRetainMsgs()}, 3 * 60 * 1000);
+    },
+    _clearTimeoutMsgs:function () {
+        Message.clearTimeoutMsgs();
+        setTimeout(()=>{this._clearTimeoutMsgs()}, 60 * 60 * 1000);
     },
     ping: async function(msg,ws){
         try{
