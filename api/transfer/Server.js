@@ -28,29 +28,41 @@ const Push = require('../push')
 
 function  wsSend (ws, content, callback) {
   //log
-  const obj = _.cloneDeep(JSON.parse(content))
-  if (obj && obj.header) {
-    if (!obj.header.response) {
-      if(obj.body) {
-        if (obj.body.content ){
-          let contentObj
-          try {
-            // log(typeof obj.body.content, debugLevel.verbose)
-            // log(JSON.stringify(obj, null, 2), debugLevel.verbose)
-            contentObj = JSON.parse(obj.body.content)
-            if (contentObj.type === 1) {
-              contentObj.data = Boolean(contentObj.data)
+  const objs = _.cloneDeep(JSON.parse(content))
+    function print(obj) {
+        if (obj && obj.header) {
+            if (!obj.header.response) {
+                if(obj.body) {
+                    if (obj.body.content ){
+                        let contentObj
+                        try {
+                            // log(typeof obj.body.content, debugLevel.verbose)
+                            // log(JSON.stringify(obj, null, 2), debugLevel.verbose)
+                            contentObj = JSON.parse(obj.body.content)
+                            if (contentObj.type != 0) {
+                                contentObj.data = Boolean(contentObj.data)
+                            }
+                            obj.body.content = contentObj
+                        }catch(err) {
+                            // log(typeof obj.body.content, debugLevel.verbose)
+                            // log(JSON.stringify(obj.body.content, null, 2), debugLevel.verbose)
+                        }
+                    }
+                }
+                log(JSON.stringify(obj, null, 2), debugLevel.info)
             }
-            obj.body.content = contentObj
-          }catch(err) {
-            // log(typeof obj.body.content, debugLevel.verbose)
-            // log(JSON.stringify(obj.body.content, null, 2), debugLevel.verbose)
-          }
         }
-      }
-      log(JSON.stringify(obj, null, 2), debugLevel.info)
     }
-  }
+    if(objs&&objs.forEach){
+        log("start send multi", debugLevel.info)
+      objs.forEach(function (obj) {
+          print(obj)
+      })
+        log("end send multi", debugLevel.info)
+    }else{
+        print(objs)
+    }
+
   //
   ws.send(content, err => {
     if (err) {
