@@ -24,7 +24,8 @@
     "updateVersion": "node bin/updateVersion",
     "restartTransfer": "git pull && pm2 restart transfer",
     "deploy": "node bin/nuxtDeploy",
-    "flush": "rm -rf log"
+    "flush": "rm -rf log",
+    "dev:transfer": "node --inspect api/transfer/Server.js"
   },
   "dependencies": {
     "@ys/collection": "git+https://github.com/spirit1453/node_collection.git#publish",
