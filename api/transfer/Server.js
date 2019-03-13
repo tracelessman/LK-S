@@ -25,6 +25,7 @@ const {ormServicePromise} = require(path.resolve(rootPath,'api/store/ormService'
 const TransferFlowCursor = require('./TransferFlowCursor');
 const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
+const UploadSchedular = require("./upload/Schedular")
 
 function  wsSend (ws, content, callback) {
   //log
@@ -1326,6 +1327,15 @@ let LKServer = {
         msg.body = srcMsg.body;
         return msg;
     },
+    applyUploadChannel:function (msg,ws) {
+        let postfix = msg.body.content.postfix;
+        let newName = UUID()+"."+postfix;
+        let msgId = msg.header.id;
+        UploadSchedular.applyChannel(newName).then(function (port) {
+            let content = JSON.stringify(this.newResponseMsg(msgId,{port:port,newName:newName}));
+            wsSend(ws, content);
+        });
+    }
 }
 
 LKServer.init(config.wsPort)
