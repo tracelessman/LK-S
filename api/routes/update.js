@@ -14,7 +14,6 @@ router.post('/checkUpdate', (req, res) => {
     os, __DEV__, customInfo, bundleId, uniqueId, buildNumberClient,
     updateAnyWay, wantPreview, versionLocal, isPreviewVersionClient, previewVersion
   } = req.body
-  console.log(req.body)
   const {id, name, isDevMode} = customInfo
   let content = fs.readFileSync(updateJsonPath, 'utf8')
   let updateMeta = JSON.parse(content)
@@ -67,7 +66,6 @@ router.post('/checkUpdate', (req, res) => {
   if (__DEV__) {
     result.isForce = false
   }
-  console.log(result)
   res.end(JSON.stringify(result))
 
   function prepareUpdate (isPreview) {

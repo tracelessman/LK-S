@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "test": "jest",
-    "dev": "cross-env DEBUG=info NODE_ENV=development nuxt",
+    "dev:web": "cross-env DEBUG=info NODE_ENV=development nuxt",
     "build": "nuxt build",
     "start": "NODE_ENV=production nuxt start",
     "lint": "eslint --ext .js,.vue .",
@@ -25,7 +25,8 @@
     "restartTransfer": "git pull && pm2 restart transfer",
     "deploy": "node bin/nuxtDeploy",
     "flush": "rm -rf log",
-    "dev:transfer": "node --inspect api/transfer/Server.js"
+    "dev:transfer": "node --inspect api/transfer/Server.js",
+    "dev:all": "concurrently 'npm run dev:transfer' 'npm run dev:web'"
   },
   "dependencies": {
     "@ys/collection": "git+https://github.com/spirit1453/node_collection.git#publish",
@@ -33,7 +34,6 @@
     "apn": "^2.2.0",
     "axios": "^0.16.2",
     "body-parser": "^1.18.3",
-    "concurrently": "^4.0.1",
     "crypto-js": "^3.1.9-1",
     "debug": "^4.1.1",
     "express": "^4.15.3",
@@ -56,6 +56,7 @@
     "@babel/plugin-transform-runtime": "^7.1.0",
     "@ys/eslint-config-strict": "github:spirit1453/codebase#strict_eslint",
     "clipboardy": "^1.2.3",
+    "concurrently": "^4.0.1",
     "eslint": "^5.12.0",
     "eslint-loader": "^1.9.0",
     "eslint-plugin-flowtype": "^3.2.0",
