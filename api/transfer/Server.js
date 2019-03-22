@@ -454,10 +454,13 @@ let LKServer = {
             wsS.set(did,ws);
             if(venderDid)
                 Device.asyUpdateVenderDid(uid,did,venderDid);
-            let ps =  [Message.asyGetMinPreFlowId(uid,did,'deviceDiffReport'),Message.asyGetMinPreFlowId(uid,did,'group')];
+            let ps =  [Message.asyGetMinPreFlowId(uid,did,'deviceDiffReport'),Message.asyGetMinPreFlowId(uid,did,'group'),Group.asyGetAllGroupDetail(uid)];
             let rs = await Promise.all(ps);
-            content["deviceDiffReport"]=rs[0];
-            content["group"]=rs[1];
+            let minPreFlows = {};
+            minPreFlows["deviceDiffReport"]=rs[0];
+            minPreFlows["group"]=rs[1];
+            content["minPreFlows"] = minPreFlows;
+            content["groups"] = rs[2];
             isValid = true;
         }else{
             content.err="invalid user";
