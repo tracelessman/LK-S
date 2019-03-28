@@ -150,17 +150,7 @@ let LKServer = {
         }
         return res;
     },
-    _checkValid2:function (ws,uid,did) {
-        let isValid = true;
-        if(uid&&did&&(!ws._uid)){//a long time deactived app session removed by server then actived
-            isValid = false;
-            let date = new Date();
-            Log.info(action+" fore close invalid ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-            ws.close();
-        }
-        return isValid;
 
-    },
     _checkValid:function (ws,action) {
         let isValid = false;
         if (ws._uid) {
@@ -175,17 +165,17 @@ let LKServer = {
         if(!isValid){
             let date = new Date();
             Log.info(action+" fore close invalid ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-           // ws.close();
+            ws.close();
         }else{
             if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
                 let date = new Date();
                 Log.info(action+ " fore close bad state ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-                //ws.close();
+                ws.close();
                 isValid=false;
             }
         }
-        //return isValid;
-        return true
+        return isValid;
+        //return true
 
     },
     init: function (port) {
@@ -217,7 +207,7 @@ let LKServer = {
 
                   //log
 
-                    let isValid = LKServer._checkValid2(ws,header.uid,header.did);
+                    let isValid = LKServer._checkValid(ws,action);
                     if(isValid){
                         let isResponse = header.response;
                         if (isResponse) {
