@@ -150,6 +150,7 @@ let LKServer = {
         }
         return res;
     },
+
     _checkValid:function (ws,action) {
         let isValid = false;
         if (ws._uid) {
@@ -164,17 +165,17 @@ let LKServer = {
         if(!isValid){
             let date = new Date();
             Log.info(action+" fore close invalid ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-           // ws.close();
+            ws.close();
         }else{
             if(ws.readyState!==WebSocket.OPEN&&ws.readyState!==WebSocket.CONNECTING){
                 let date = new Date();
                 Log.info(action+ " fore close bad state ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
-                //ws.close();
+                ws.close();
                 isValid=false;
             }
         }
-        //return isValid;
-        return true
+        return isValid;
+        //return true
 
     },
     init: function (port) {
@@ -454,10 +455,13 @@ let LKServer = {
             wsS.set(did,ws);
             if(venderDid)
                 Device.asyUpdateVenderDid(uid,did,venderDid);
-            let ps =  [Message.asyGetMinPreFlowId(uid,did,'deviceDiffReport'),Message.asyGetMinPreFlowId(uid,did,'group')];
+            let ps =  [Message.asyGetMinPreFlowId(uid,did,'deviceDiffReport'),Message.asyGetMinPreFlowId(uid,did,'group'),Group.asyGetAllGroupDetail(uid)];
             let rs = await Promise.all(ps);
-            content["deviceDiffReport"]=rs[0];
-            content["group"]=rs[1];
+            let minPreFlows = {};
+            minPreFlows["deviceDiffReport"]=rs[0];
+            minPreFlows["group"]=rs[1];
+            content["minPreFlows"] = minPreFlows;
+            content["groups"] = rs[2];
             isValid = true;
         }else{
             content.err="invalid user";
