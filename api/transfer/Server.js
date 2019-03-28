@@ -150,6 +150,17 @@ let LKServer = {
         }
         return res;
     },
+    _checkValid2:function (ws,uid,did) {
+        let isValid = true;
+        if(uid&&did&&(!ws._uid)){//a long time deactived app session removed by server then actived
+            isValid = false;
+            let date = new Date();
+            Log.info(action+" fore close invalid ws:" + ws._uid + "," + ws._did + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+            ws.close();
+        }
+        return isValid;
+
+    },
     _checkValid:function (ws,action) {
         let isValid = false;
         if (ws._uid) {
@@ -206,7 +217,7 @@ let LKServer = {
 
                   //log
 
-                    let isValid = LKServer._checkValid(ws,action);
+                    let isValid = LKServer._checkValid2(ws,header.uid,header.did);
                     if(isValid){
                         let isResponse = header.response;
                         if (isResponse) {
