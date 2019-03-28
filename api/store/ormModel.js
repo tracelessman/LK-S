@@ -16,7 +16,16 @@ const ormModelPromise = mainDbPromise.then(mainDb => {
       require(path.resolve(rootPath, 'api/store/model/meta')),
       require(path.resolve(rootPath, 'api/store/model/org')),
       require(path.resolve(rootPath, 'api/store/model/ticket')),
-      require(path.resolve(rootPath, 'api/store/model/user'))
+      require(path.resolve(rootPath, 'api/store/model/user')),
+      require(path.resolve(rootPath, 'api/store/model/device')),
+      require(path.resolve(rootPath, 'api/store/model/flow')),
+      require(path.resolve(rootPath, 'api/store/model/friend')),
+      require(path.resolve(rootPath, 'api/store/model/groupChat')),
+      require(path.resolve(rootPath, 'api/store/model/groupMember')),
+      require(path.resolve(rootPath, 'api/store/model/log')),
+      require(path.resolve(rootPath, 'api/store/model/magicCode')),
+      require(path.resolve(rootPath, 'api/store/model/message')),
+      require(path.resolve(rootPath, 'api/store/model/transferFlowCursor'))
     ],
     dict,
     database: mainDb
