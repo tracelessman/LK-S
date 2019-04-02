@@ -11,4 +11,4 @@ module.exports = {
     bail: true,
     collectCoverage:true,
     coverageDirectory:coverageFolder
-};
+}

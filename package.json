@@ -1,8 +1,8 @@
 {
   "name": "myapp",
   "version": "1.0.0",
-  "description": "Nuxt.js project",
-  "author": "spirit <catchspirit37@gmail.com>",
+  "description": "LK messaging server",
+  "author": "spirit",
   "private": true,
   "scripts": {
     "test": "jest",
@@ -72,5 +72,6 @@
       "host": "0.0.0.0",
       "port": "3000"
     }
-  }
+  },
+  "repository": "https://github.com/tracelessman/LK-S.git"
 }
