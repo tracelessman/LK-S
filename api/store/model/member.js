@@ -22,9 +22,13 @@ module.exports = {
       allowNull: true,
       title: '组织ID'
     },
-    mCode: { // name,pic => hash
+    mCode: {
       allowNull: true,
       title: '节点hash值'
+    },
+    serverIP: {
+    },
+    serverPort: {
     },
     reserve1: {
       allowNull: true,

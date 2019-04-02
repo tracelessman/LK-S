@@ -10,10 +10,13 @@ module.exports = {
     key,
     modelContent: {
         memberId: {
-            title: '成员ID'
+            title: '成员ID',
+            type: Sequelize.STRING,
+            primaryKey: true
         },
         contactId: {
-            allowNull: true
+            type: Sequelize.STRING,
+            primaryKey: true
         }
 
     },
