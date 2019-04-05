@@ -158,7 +158,7 @@ let LKServer = {
             if (wsS&&wsS.has(ws._did)) {
                 isValid = true;
             }
-        }else if (action=="getAllDetainedMsg" || action == "ping" || action == "login" || action == "register" ) {
+        }else if (action == "ping" || action == "login" || action == "register" ) {
             isValid = true;
         }
         //非法请求或需要重新登录的客户端请求
@@ -466,16 +466,15 @@ let LKServer = {
         }else{
             content.err="invalid user";
         }
-
         let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,content));
         wsSend(ws, rep, ()=> {
-            if(isValid)
-                this.sendAllDetainedMsg(msg, ws)
+            // if(isValid)
+            //     this.sendAllDetainedMsg(msg, ws)
         });
 
     },
     async getAllDetainedMsg (msg, ws) {
-      await this.sendAllDetainedMsg(msg, ws)
+       await this.sendAllDetainedMsg(msg, ws)
       let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{}))
       wsSend(ws, rep)
     },
@@ -483,6 +482,7 @@ let LKServer = {
       let uid = msg.header.uid;
       let did = msg.header.did;
       return Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
+          console.info("sendAllDetainedMsg:"+uid+","+rows.length+":"+JSON.stringify(rows));
         this._sendLocalRetainMsgs(ws,rows);
       });
     },
