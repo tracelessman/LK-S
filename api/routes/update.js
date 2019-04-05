@@ -84,7 +84,7 @@ router.post('/checkUpdate', (req, res) => {
 
     if (result.isHotUpdate) {
       fileName = `${config.appName}.ppk`
-      filePath = path.resolve(rootPath, `static/public/ppk/${fileName}`)
+      filePath = path.resolve(rootPath, `static/public/ppk/${os}/${fileName}`)
     } else {
       if (os === 'ios') {
         fileName = `${config.appName}.ipa`
