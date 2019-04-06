@@ -436,6 +436,9 @@ let LKServer = {
         let result = await Promise.all([Member.asyGetMember(uid),Device.asyGetDevice(did)]);
         let content = {};
         let isValid = false;
+        // console.info(uid+","+did+" login,"+JSON.stringify(result[0]))
+        // console.info(uid+","+did+" login,"+JSON.stringify(result[1]))
+
         if(result[0]&&result[1]){
             let wsS = this.clients.get(uid);
             if (!wsS) {
@@ -466,6 +469,7 @@ let LKServer = {
         }else{
             content.err="invalid user";
         }
+        // console.info(uid+","+did+" login,"+isValid)
         let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,content));
         wsSend(ws, rep, ()=> {
             // if(isValid)
@@ -482,7 +486,7 @@ let LKServer = {
       let uid = msg.header.uid;
       let did = msg.header.did;
       return Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
-          console.info("sendAllDetainedMsg:"+uid+","+rows.length+":"+JSON.stringify(rows));
+          // console.info("sendAllDetainedMsg:"+uid+","+rows.length+":"+JSON.stringify(rows));
         this._sendLocalRetainMsgs(ws,rows);
       });
     },
@@ -1218,6 +1222,7 @@ let LKServer = {
             await Message.asyAddMessage(msg);
         }
         let chatId = msg.body.content.chatId;
+        await Group.asyRemoveGroupMember(chatId,header.uid);
         Group.asyGetGroupMembers(chatId).then((curMembers)=> {
             if (curMembers) {
                 curMembers.forEach((target) => {
