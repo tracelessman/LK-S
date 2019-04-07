@@ -15,7 +15,7 @@ module.exports = {
     pic: {
       allowNull: true,
       displayPage: [],
-      type: Sequelize.TEXT,
+      type: Sequelize.TEXT('medium'),
       title: '头像'
     },
     orgId: {
