@@ -403,6 +403,8 @@ let LKServer = {
             }
             if(msg.body.content.memberMCode!==memberMCode){
                 ps.push(Member.asyGetAllMCodes())
+            }else{
+                ps.push(null)
             }
             result = await Promise.all(ps)
             let content = JSON.stringify(
