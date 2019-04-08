@@ -400,6 +400,8 @@ let LKServer = {
             let ps = [];
             if(msg.body.content.orgMCode!==orgMCode){
                 ps.push(Org.asyGetBaseList());
+            }else{
+                ps.push(null)
             }
             if(msg.body.content.memberMCode!==memberMCode){
                 ps.push(Member.asyGetAllMCodes())
