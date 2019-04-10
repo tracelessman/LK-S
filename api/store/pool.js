@@ -6,7 +6,8 @@ const option = {
     connectionLimit : 5,
     host            : 'localhost',
     user            : config.db.username,
-    password        : config.db.password
+    password        : config.db.password,
+    database: config.db.database
 }
 const pool  = mysql.createPool(option);
 
