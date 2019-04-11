@@ -279,7 +279,6 @@ let LKServer = {
         const record = await ormService.user.getFirstRecord()
         return record.publicKey.toString(encoding)
     },
-
     _newMsgFromRow:function (row,local) {
         let msg = {
             header:{target:{}}
