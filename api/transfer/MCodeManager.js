@@ -95,6 +95,7 @@ let MCodeManager = {
     resetOrgMagicCode:function () {
         Org.asyGetAll().then( (orgs) =>{
             let params = [];
+            console.log("==="+orgs);
             orgs.forEach(function (org) {
                 params.push(org.mCode);
             });

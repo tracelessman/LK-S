@@ -13,12 +13,23 @@ const ormUtil = {
       const tableName = key
 
       const modelObj = {
-        id: {
+        ...modelContent
+      }
+      // 判断主键是否定义,若无定义,加默认主键
+      let primaryKeyDefined = false
+
+      for (let field in modelContent) {
+        if (modelContent[field].primaryKey) {
+          primaryKeyDefined = true
+          break
+        }
+      }
+      if (!primaryKeyDefined) {
+        modelObj.id = {
           type: Sequelize.STRING,
           primaryKey: true,
           displayPage: []
-        },
-        ...modelContent
+        }
       }
 
       sequelizeUtil.preProcessModelObj({

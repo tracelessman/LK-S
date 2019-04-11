@@ -158,7 +158,7 @@ let LKServer = {
             if (wsS&&wsS.has(ws._did)) {
                 isValid = true;
             }
-        }else if (action=="getAllDetainedMsg" || action == "ping" || action == "login" || action == "register" ) {
+        }else if (action == "ping" || action == "login" || action == "register" ) {
             isValid = true;
         }
         //非法请求或需要重新登录的客户端请求
@@ -400,9 +400,13 @@ let LKServer = {
             let ps = [];
             if(msg.body.content.orgMCode!==orgMCode){
                 ps.push(Org.asyGetBaseList());
+            }else{
+                ps.push(null)
             }
             if(msg.body.content.memberMCode!==memberMCode){
                 ps.push(Member.asyGetAllMCodes())
+            }else{
+                ps.push(null)
             }
             result = await Promise.all(ps)
             let content = JSON.stringify(
@@ -436,6 +440,9 @@ let LKServer = {
         let result = await Promise.all([Member.asyGetMember(uid),Device.asyGetDevice(did)]);
         let content = {};
         let isValid = false;
+        // console.info(uid+","+did+" login,"+JSON.stringify(result[0]))
+        // console.info(uid+","+did+" login,"+JSON.stringify(result[1]))
+
         if(result[0]&&result[1]){
             let wsS = this.clients.get(uid);
             if (!wsS) {
@@ -466,16 +473,16 @@ let LKServer = {
         }else{
             content.err="invalid user";
         }
-
+        // console.info(uid+","+did+" login,"+isValid)
         let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,content));
         wsSend(ws, rep, ()=> {
-            if(isValid)
-                this.sendAllDetainedMsg(msg, ws)
+            // if(isValid)
+            //     this.sendAllDetainedMsg(msg, ws)
         });
 
     },
     async getAllDetainedMsg (msg, ws) {
-      await this.sendAllDetainedMsg(msg, ws)
+       await this.sendAllDetainedMsg(msg, ws)
       let rep = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{}))
       wsSend(ws, rep)
     },
@@ -483,6 +490,7 @@ let LKServer = {
       let uid = msg.header.uid;
       let did = msg.header.did;
       return Message.asyGetAllLocalRetainMsg(uid,did).then((rows)=>{
+          // console.info("sendAllDetainedMsg:"+uid+","+rows.length+":"+JSON.stringify(rows));
         this._sendLocalRetainMsgs(ws,rows);
       });
     },
@@ -645,7 +653,9 @@ let LKServer = {
                                                 if(d&&d.venderDid){
                                                     setTimeout(()=>{
                                                         let content = JSON.parse(msg.body.content);
-                                                        Push.pushIOS("新消息:"+(content.type==0?content.data:"图片或语音"),d.venderDid);
+                                                        // let pushMsg = "新消息:"+(content.type==0?content.data:"图片或语音")
+                                                        const pushMsg = "您有新消息,请注意查收"
+                                                        Push.pushIOS(pushMsg,d.venderDid);
                                                         let date = new Date();
                                                         Log.info("pushIOS:msgId "+msg.header.id+",target "+target.id+","+send2+","+(content.type==0?content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                                                     },2000);
@@ -1218,6 +1228,7 @@ let LKServer = {
             await Message.asyAddMessage(msg);
         }
         let chatId = msg.body.content.chatId;
+        await Group.asyRemoveGroupMember(chatId,header.uid);
         Group.asyGetGroupMembers(chatId).then((curMembers)=> {
             if (curMembers) {
                 curMembers.forEach((target) => {

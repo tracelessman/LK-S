@@ -31,7 +31,7 @@ module.exports = {
             type: Sequelize.TEXT
         },
         body: {
-
+          type: Sequelize.TEXT('medium')
         },
         sendTime: {
             allowNull: true

@@ -76,6 +76,13 @@ const storeUtil = {
         storage: metaDbStorage,
         logging (sql) {
           // console.log("执行sql:"+sql);
+        },
+        define: {
+          freezeTableName: true,
+          charset: 'utf8',
+          dialectOptions: {
+            collate: 'utf8mb4_general_ci'
+          }
         }
       })
       sqlModel = metaDb.define('T_Sql', sqlObj)

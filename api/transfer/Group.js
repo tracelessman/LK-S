@@ -179,6 +179,30 @@ let Group = {
                 }
             });
         });
+    },
+    asyRemoveGroupMember:function (gid,contactId) {
+        return new Promise((resolve,reject)=>{
+            let sql = `
+                delete from groupMember
+                where gid=? and memberId=?
+            `;
+            Pool.query(sql,[gid,contactId], (error,results,fields) =>{
+                if(error){
+                    reject(error);
+                }else{
+                    let sql2 = `
+                        delete from groupChat
+                        where id not in(select distinct(gid) from groupMember)
+                    `;
+                    Pool.query(sql2,[], (error,results,fields) =>{
+                        if(error){
+                            console.info(error);
+                        }
+                    });
+                    resolve();
+                }
+            });
+        });
     }
 }
 module.exports = Group;

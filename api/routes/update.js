@@ -79,12 +79,12 @@ router.post('/checkUpdate', (req, res) => {
       result.isHotUpdate = true
     }
     let fileName, filePath
-    const ppkPostFix = `/public/ppk/${config.appName}.ppk`
+    const ppkPostFix = `/public/ppk/${os}/${config.appName}.ppk`
     const apkPostFix = `/public/android/${config.appName}.apk`
 
     if (result.isHotUpdate) {
       fileName = `${config.appName}.ppk`
-      filePath = path.resolve(rootPath, `static/public/ppk/${fileName}`)
+      filePath = path.resolve(rootPath, `static/public/ppk/${os}/${fileName}`)
     } else {
       if (os === 'ios') {
         fileName = `${config.appName}.ipa`
