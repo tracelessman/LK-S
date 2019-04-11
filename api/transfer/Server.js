@@ -26,6 +26,8 @@ const TransferFlowCursor = require('./TransferFlowCursor');
 const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 const UploadSchedular = require("./upload/Schedular")
+const Ticket = require("./Ticket")
+const NodeRSA = require('node-rsa')
 
 function  wsSend (ws, content, callback) {
   //log
@@ -277,6 +279,7 @@ let LKServer = {
         const record = await ormService.user.getFirstRecord()
         return record.publicKey.toString(encoding)
     },
+
     _newMsgFromRow:function (row,local) {
         let msg = {
             header:{target:{}}
@@ -504,47 +507,80 @@ let LKServer = {
         // let checkCode = content.checkCode;
         // let qrCode = content.qrCode;
         let description = content.description;
-        //TODO 验证签名,checkCode,修改ticket,memeber记录
-        //验证是否存在该人员
-        let member = await Member.asyGetMember(uid);
-        if(member){
-            //设备id是否重复
-            let device = await Device.asyGetDevice(did);
-            if(device){
-                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"device id already exist"}));
-                wsSend(ws, content);
-            }else{
-                let introducerDid = content.introducerDid;
-                if(introducerDid){
-                    let device = await Device.asyGetDevice(introducerDid);
-                    if(!device||device.memberId!==uid){
-                        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"illegal introducer"}));
+        //验证签名,checkCode
+        let qrCode = content.qrCode;
+        let metaData = qrCode.metaData;
+        let checkCodeInput = content.checkCode;
+        let ticketId = metaData.ticketId;
+        if(ticketId){
+            let ticket = await Ticket.asyGetTicket(ticketId);
+            let now = new Date();
+            if(ticket&&(ticket.startTime+ticket.timeout<now.getTime())){
+                if((checkCodeInput==ticket.checkCode)||!ticket.checkCode){
+                    let signature = qrCode.signature;
+                    let pk = await this.asyGetPK();
+                    const key = new NodeRSA();
+                    key.importKey(pk, config.encrypt.publicKeyFormat);
+                    let ckR = key.verify(JSON.stringify(metaData),signature,config.encrypt.sourceFormat,config.encrypt.signatureFormat);
+                    if(ckR){
+                        //验证是否存在该人员
+                        let member = await Member.asyGetMember(uid);
+                        if(member){
+                            //设备id是否重复
+                            let device = await Device.asyGetDevice(did);
+                            if(device){
+                                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"device id already exist"}));
+                                wsSend(ws, content);
+                            }else{
+                                let introducerDid = content.introducerDid;
+                                if(introducerDid){
+                                    let device = await Device.asyGetDevice(introducerDid);
+                                    if(!device||device.memberId!==uid){
+                                        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"illegal introducer"}));
+                                        wsSend(ws, content);
+                                        return;
+                                    }
+                                }
+                                try{
+                                    await Device.asyAddDevice(uid,did,venderDid,pk,description);
+                                    DeviceManager.deviceChanged(uid);
+                                    //返回全部org、members、该人的好友
+
+                                    let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseList(),Member.asyGetAll(),Friend.asyGetAllFriends(uid),Group.asyGetGroupContacts(uid),Group.asyGetAllGroupDetail(uid)];
+                                    let result = await Promise.all(ps);
+                                    const publicKey = await this.asyGetPK()
+                                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4],groupContacts:result[5],groups:result[6]}));
+                                    wsSend(ws, content);
+                                }catch(error){
+                                    console.log(error)
+
+                                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:error.toString()}));
+                                    wsSend(ws, content);
+                                }
+
+                            }
+                        }else{
+                            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"member not exist"}));
+                            wsSend(ws, content);
+                        }
+                    }else{
+                        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid checkcode"}));
                         wsSend(ws, content);
-                        return;
                     }
-                }
-                try{
-                    await Device.asyAddDevice(uid,did,venderDid,pk,description);
-                    DeviceManager.deviceChanged(uid);
-                    //返回全部org、members、该人的好友
-
-                    let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseList(),Member.asyGetAll(),Friend.asyGetAllFriends(uid),Group.asyGetGroupContacts(uid),Group.asyGetAllGroupDetail(uid)];
-                    let result = await Promise.all(ps);
-                    const publicKey = await this.asyGetPK()
-                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4],groupContacts:result[5],groups:result[6]}));
-                    wsSend(ws, content);
-                }catch(error){
-                    console.log(error)
-
-                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:error.toString()}));
+                }else{
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid checkcode"}));
                     wsSend(ws, content);
                 }
 
+            }else{
+                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid ticket"}));
+                wsSend(ws, content);
             }
         }else{
-            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"member not exist"}));
+            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid ticket"}));
             wsSend(ws, content);
         }
+
 
         //注册设备
     },

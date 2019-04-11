@@ -232,7 +232,8 @@ router.post('/qrcode', function (req, res) {
       mCode: member.mCode,
       hasCheckCode: !!ticket.checkCode,
       name: member.name,
-      url: config.url
+      url: config.url,
+        ticketId:ticketId
     }// md5
     const signatureRaw = key.sign(JSON.stringify(metaData), config.encrypt.signatureFormat, config.encrypt.sourceFormat)
     const signature = md5(signatureRaw).toString()
