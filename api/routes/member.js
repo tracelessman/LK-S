@@ -32,7 +32,9 @@ router.post('/addMember', (req, res) => {
       startTime: new Date()
     }
     await ormService.member.addRecord(member)
+    console.log('after add record')
     MCodeManager.resetSingleMemberMagicCode(memberId)
+    console.log('after resetMagicCode')
     await ormService.ticket.addRecord(ticket)
     res.json()
   })()

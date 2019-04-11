@@ -64,10 +64,13 @@ let MCodeManager = {
      */
     resetSingleMemberMagicCode:function (memberId) {
         Member.asyGetMember(memberId).then((m)=>{
+          console.log({m})
             if(m){
                 let params = [m.name,m.pic];
                 let code = this._magicCode(params);
+                console.log({code})
                 Member.setMCode(memberId,code).then(()=>{
+                  console.log('Member.setMCode')
                     this.resetMemberMagicCode();
                 });
             }else{
