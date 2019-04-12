@@ -57,7 +57,7 @@ class CryptoUtil {
     })
   }
 
-  static parseQrcode ({
+  static verifyQrcode ({
     publicKey,
     qrCode
   }) {
