@@ -75,6 +75,9 @@ class CryptoUtil {
     const pass = key.verify(CryptoUtil.toJsonStringUniq(metaData), signature,
       encrypt.sourceFormat, encrypt.signatureFormat)
 
+      if(pass){
+        return qrCode.ticketId
+      }
     return pass
   }
 

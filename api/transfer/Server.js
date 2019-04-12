@@ -27,7 +27,7 @@ const {exitOnUnexpected} = ErrorUtil
 const Push = require('../push')
 const UploadSchedular = require("./upload/Schedular")
 const Ticket = require("./Ticket")
-const NodeRSA = require('node-rsa')
+const CryptoUtil = require('../util/CryptoUtil')
 
 function  wsSend (ws, content, callback) {
   //log
@@ -497,88 +497,86 @@ let LKServer = {
       });
     },
     register:async function (msg,ws) {
-
         let content = msg.body.content;
         let uid = content.uid;
         let did = content.did;
         let venderDid = content.venderDid;
         let pk = content.pk;
-        // let checkCode = content.checkCode;
-        // let qrCode = content.qrCode;
         let description = content.description;
-        //验证签名,checkCode
         let qrCode = content.qrCode;
-        let metaData = qrCode.metaData;
-        let checkCodeInput = content.checkCode;
-        let ticketId = metaData.ticketId;
-        if(ticketId){
-            let ticket = await Ticket.asyGetTicket(ticketId);
-            let now = new Date();
-            if(ticket&&(ticket.startTime+ticket.timeout<now.getTime())){
-                if((checkCodeInput==ticket.checkCode)||!ticket.checkCode){
-                    let signature = qrCode.signature;
-                    let pk = await this.asyGetPK();
-                    const key = new NodeRSA();
-                    key.importKey(pk, config.encrypt.publicKeyFormat);
-                    let ckR = key.verify(JSON.stringify(metaData),signature,config.encrypt.sourceFormat,config.encrypt.signatureFormat);
-                    if(ckR){
-                        //验证是否存在该人员
-                        let member = await Member.asyGetMember(uid);
-                        if(member){
-                            //设备id是否重复
-                            let device = await Device.asyGetDevice(did);
-                            if(device){
-                                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"device id already exist"}));
-                                wsSend(ws, content);
-                            }else{
-                                let introducerDid = content.introducerDid;
-                                if(introducerDid){
-                                    let device = await Device.asyGetDevice(introducerDid);
-                                    if(!device||device.memberId!==uid){
-                                        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"illegal introducer"}));
-                                        wsSend(ws, content);
-                                        return;
-                                    }
-                                }
-                                try{
-                                    await Device.asyAddDevice(uid,did,venderDid,pk,description);
-                                    DeviceManager.deviceChanged(uid);
-                                    //返回全部org、members、该人的好友
-
-                                    let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseList(),Member.asyGetAll(),Friend.asyGetAllFriends(uid),Group.asyGetGroupContacts(uid),Group.asyGetAllGroupDetail(uid)];
-                                    let result = await Promise.all(ps);
-                                    const publicKey = await this.asyGetPK()
-                                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4],groupContacts:result[5],groups:result[6]}));
-                                    wsSend(ws, content);
-                                }catch(error){
-                                    console.log(error)
-
-                                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:error.toString()}));
-                                    wsSend(ws, content);
-                                }
-
-                            }
-                        }else{
-                            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"member not exist"}));
+        if(qrCode||content.introducerDid){//m ,d
+            let introducerDid = content.introducerDid;
+            if(introducerDid){//desk
+                let device = await Device.asyGetDevice(introducerDid);
+                if(!device||device.memberId!==uid){
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"illegal introducer"}));
+                    wsSend(ws, content);
+                    return;
+                }
+            }else if(qrCode){
+                let pk = await this.asyGetPK();
+                let ticketId = CryptoUtil.verifyQrcode(pk,qrCode)
+                if(ticketId){
+                    let checkCodeInput = content.checkCode;
+                    let ticket = await Ticket.asyGetTicket(ticketId);
+                    let now = new Date();
+                    if(ticket&&(ticket.startTime+ticket.timeout<now.getTime())){
+                        if(ticket.checkCode&&(checkCodeInput!=ticket.checkCode)){
+                            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid checkcode"}));
                             wsSend(ws, content);
+                            return;
                         }
+
                     }else{
-                        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid checkcode"}));
+                        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid ticket"}));
                         wsSend(ws, content);
+                        return;
                     }
                 }else{
-                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid checkcode"}));
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid ticket"}));
                     wsSend(ws, content);
+                    return;
                 }
+            }
 
+            //do it
+            //验证是否存在该人员
+            let member = await Member.asyGetMember(uid);
+            if(member){
+                //设备id是否重复
+                let device = await Device.asyGetDevice(did);
+                if(device){
+                    let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"device id already exist"}));
+                    wsSend(ws, content);
+                }else{
+
+                    try{
+                        await Device.asyAddDevice(uid,did,venderDid,pk,description);
+                        DeviceManager.deviceChanged(uid);
+                        //返回全部org、members、该人的好友
+
+                        let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseList(),Member.asyGetAll(),Friend.asyGetAllFriends(uid),Group.asyGetGroupContacts(uid),Group.asyGetAllGroupDetail(uid)];
+                        let result = await Promise.all(ps);
+                        const publicKey = await this.asyGetPK()
+                        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4],groupContacts:result[5],groups:result[6]}));
+                        wsSend(ws, content);
+                    }catch(error){
+                        console.log(error)
+
+                        let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:error.toString()}));
+                        wsSend(ws, content);
+                    }
+
+                }
             }else{
-                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid ticket"}));
+                let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"member not exist"}));
                 wsSend(ws, content);
             }
         }else{
-            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid ticket"}));
+            let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"illegal register"}));
             wsSend(ws, content);
         }
+
 
 
         //注册设备
@@ -1310,7 +1308,7 @@ let LKServer = {
         }
         let chatId = msg.body.content.chatId;
         let name = msg.body.content.name;
-        Group.setGroupName(chatId,name).then(function () {
+        Group.setGroupName(chatId,name).then( ()=> {
             Group.asyGetGroupMembers(chatId).then((curMembers)=> {
                 if (curMembers) {
                     curMembers.forEach((target) => {
