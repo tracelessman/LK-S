@@ -22,7 +22,7 @@ const sqlAry = [
 ].join(';')
 
 async function createView () {
-  const ormModel = await ormModelPromise
+  const ormModel = await ormModelPromise;
   const psAry = []
 
   for (let ele in ormModel) {
