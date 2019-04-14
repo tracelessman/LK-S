@@ -5,6 +5,10 @@ const UUID = require('uuid/v4')
 const _ = require('lodash')
 const {ErrorUtil} = require('@ys/collection')
 
+const EventEmitter = require('events');
+// fixme: supress MaxListenersExceededWarning workaround
+EventEmitter.defaultMaxListeners = 1000
+
 
 const debugLevel = require('../../constant/debugLevel')
 const config = require('../../config')
