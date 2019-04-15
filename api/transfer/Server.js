@@ -400,23 +400,24 @@ let LKServer = {
     ping: async function(msg,ws){
         try{
             ws._lastHbTime = Date.now();
-            let result = await Promise.all([MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode()]);
-            let orgMCode = result[0];
-            let memberMCode = result[1];
-            let ps = [];
-            if(msg.body.content.orgMCode!==orgMCode){
-                ps.push(Org.asyGetBaseList());
-            }else{
-                ps.push(null)
-            }
-            if(msg.body.content.memberMCode!==memberMCode){
-                ps.push(Member.asyGetAllMCodes())
-            }else{
-                ps.push(null)
-            }
-            result = await Promise.all(ps)
-            let content = JSON.stringify(
-                LKServer.newResponseMsg(msg.header.id,
+            let respContent = {};
+            if(msg.body.content){
+                let result = await Promise.all([MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode()]);
+                let orgMCode = result[0];
+                let memberMCode = result[1];
+                let ps = [];
+                if(msg.body.content.orgMCode!==orgMCode){
+                    ps.push(Org.asyGetBaseList());
+                }else{
+                    ps.push(null)
+                }
+                if(msg.body.content.memberMCode!==memberMCode){
+                    ps.push(Member.asyGetAllMCodes())
+                }else{
+                    ps.push(null)
+                }
+                result = await Promise.all(ps)
+                respContent = LKServer.newResponseMsg(msg.header.id,
                     {
                         orgMCode:orgMCode,
                         memberMCode:memberMCode,
@@ -424,9 +425,9 @@ let LKServer = {
                         members:msg.body.content.memberMCode!==memberMCode?result[1]:null
                     }
 
-                ));
-
-            wsSend(ws, content);
+                );
+            }
+            wsSend(ws, JSON.stringify(respContent));
         }catch (e){
             console.info("ping:"+e);
         }
