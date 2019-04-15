@@ -519,7 +519,10 @@ let LKServer = {
                 }
             }else if(qrCode){
                 let pk = await this.asyGetPK();
-                let ticketId = CryptoUtil.verifyQrcode(pk,qrCode)
+                let ticketId = CryptoUtil.verifyQrcode({
+                publicKey: pk,
+                  qrCode
+              })
                 if(ticketId){
                     let checkCodeInput = content.checkCode;
                     let ticket = await Ticket.asyGetTicket(ticketId);
