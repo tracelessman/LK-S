@@ -9,7 +9,7 @@
     "build": "nuxt build",
     "start": "NODE_ENV=production nuxt start",
     "dev:web": "cross-env DEBUG=info NODE_ENV=development nuxt",
-    "dev:transfer": "node --inspect api/transfer/Server.js",
+    "dev:transfer": "node api/transfer/Server.js",
     "dev:all": "concurrently 'npm run dev:transfer' 'npm run dev:web'",
     "lint": "eslint --ext .js,.vue .",
     "postinstall": "node bin/postinstall",
