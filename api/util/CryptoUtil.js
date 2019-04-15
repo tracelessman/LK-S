@@ -36,7 +36,8 @@ class CryptoUtil {
     return decryptedText
   }
 
-  // metaData is an object
+  // metaData is an object,
+  // privateKey, {Blob}
   static generateQrcode ({
     privateKey,
     metaData
@@ -57,13 +58,14 @@ class CryptoUtil {
     })
   }
 
+  // publicKey, {Blob}
   static verifyQrcode ({
     publicKey,
     qrCode
   }) {
-    qrCode = CryptoUtil.decryptAES({
+    qrCode = JSON.parse(CryptoUtil.decryptAES({
       data: qrCode
-    })
+    }))
     let signature = qrCode.signature
     const metaData = _.cloneDeep(qrCode)
 
@@ -75,9 +77,9 @@ class CryptoUtil {
     const pass = key.verify(CryptoUtil.toJsonStringUniq(metaData), signature,
       encrypt.sourceFormat, encrypt.signatureFormat)
 
-      if(pass){
-        return qrCode.ticketId
-      }
+    if (pass) {
+      return qrCode.ticketId
+    }
     return pass
   }
 
