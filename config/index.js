@@ -65,6 +65,7 @@ if (fs.existsSync(unversionedPath)) {
   _.merge(config, require(unversionedPath))
 }
 config.url = `${protocol}://${config.ip}:${config.port}`
+config.txServerUrl = `${protocol}://${config.txServerIp}:${config.port}`
 
 debug({ip: config.ip, url: config.url})
 Object.freeze(config)
