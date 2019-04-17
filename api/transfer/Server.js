@@ -278,10 +278,14 @@ let LKServer = {
         return config.wsPort
 
     },
-    async asyGetPK(encoding = 'base64') {
+    async asyGetPK(encoding) {
        const ormService =  await ormServicePromise
         const record = await ormService.user.getFirstRecord()
-        return record.publicKey.toString(encoding)
+      let result = record.publicKey
+      if(encoding) {
+        result = result.toString(encoding)
+      }
+        return result
     },
     _newMsgFromRow:function (row,local) {
         let msg = {
@@ -519,9 +523,9 @@ let LKServer = {
                     return;
                 }
             }else if(qrCode){
-                let pk = await this.asyGetPK();
+                const publicKey = await this.asyGetPK();
                 let ticketId = CryptoUtil.verifyQrcode({
-                publicKey: Buffer.from(pk,'base64'),
+                  publicKey,
                   qrCode
               })
                 if(ticketId){
@@ -565,7 +569,7 @@ let LKServer = {
 
                         let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseList(),Member.asyGetAll(),Friend.asyGetAllFriends(uid),Group.asyGetGroupContacts(uid),Group.asyGetAllGroupDetail(uid)];
                         let result = await Promise.all(ps);
-                        const publicKey = await this.asyGetPK()
+                        const publicKey = await this.asyGetPK('base64')
                         let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4],groupContacts:result[5],groups:result[6]}));
                         wsSend(ws, content);
                     }catch(error){

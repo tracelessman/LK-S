@@ -4,15 +4,11 @@ const aesjs = require('aes-js')
 const md5 = require('crypto-js/md5')
 const NodeRSA = require('node-rsa')
 const _ = require('lodash')
+const config = require('../../config')
 
-const encrypt = {
-  publicKeyFormat: 'pkcs8-public-der',
-  privateKeyFormat: 'pkcs1-der',
-  signatureFormat: 'hex',
-  sourceFormat: 'utf8',
-  aesKey: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 ],
-  counter: 5
-}
+const {ormServicePromise} = require('../store/ormService')
+
+const {encrypt} = config
 const {counter} = encrypt
 
 class CryptoUtil {
@@ -45,17 +41,17 @@ class CryptoUtil {
     const key = new NodeRSA()
 
     key.importKey(privateKey, encrypt.privateKeyFormat)
-    const signatureRaw = key.sign(CryptoUtil.toJsonStringUniq(metaData), encrypt.signatureFormat, encrypt.sourceFormat)
-    const signature = md5(signatureRaw).toString()
-
+    const signature = key.sign(Buffer.from(md5(CryptoUtil.toJsonStringUniq(metaData)).toString()), encrypt.signatureFormat, encrypt.sourceFormat)
     const qrCodeData = {
       ...metaData,
       signature
     }
 
-    return CryptoUtil.encryptAES({
+    const encryptedStr = CryptoUtil.encryptAES({
       data: JSON.stringify(qrCodeData)
     })
+
+    return encryptedStr
   }
 
   // publicKey, {Blob}
@@ -74,9 +70,8 @@ class CryptoUtil {
     const key = new NodeRSA()
 
     key.importKey(publicKey, encrypt.publicKeyFormat)
-    const pass = key.verify(CryptoUtil.toJsonStringUniq(metaData), signature,
+    const pass = key.verify(Buffer.from(md5(CryptoUtil.toJsonStringUniq(metaData)).toString()), signature,
       encrypt.sourceFormat, encrypt.signatureFormat)
-
     if (pass) {
       return qrCode.ticketId
     }
@@ -85,14 +80,35 @@ class CryptoUtil {
 
   // obj to uniq json str
   static toJsonStringUniq (obj) {
-    const result = {}
+    const resultObj = {}
     const keyAry = Object.keys(obj).sort()
     for (let ele of keyAry) {
-      result[ele] = obj[ele]
+      resultObj[ele] = obj[ele]
     }
-    return JSON.stringify(result)
+    const result = JSON.stringify(resultObj)
+    return result
+  }
+
+  static async test () {
+    const ormService = await ormServicePromise
+    const record = await ormService.user.getFirstRecord()
+
+    const qrCode = await CryptoUtil.generateQrcode({
+      privateKey: record.privateKey,
+      metaData: {
+        a: 'test'
+      }
+    })
+    const result = await CryptoUtil.verifyQrcode({
+      publicKey: record.publicKey,
+      qrCode
+    })
+
+    console.log('test result', result)
   }
 }
+
+// CryptoUtil.test()
 
 Object.freeze(CryptoUtil)
 module.exports = CryptoUtil

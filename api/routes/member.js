@@ -1,16 +1,12 @@
 const { Router } = require('express')
-const path = require('path')
-const rootPath = path.resolve(__dirname, '../../')
 const router = Router()
 const {ormModelPromise} = require('../store/ormModel')
 const {ormServicePromise} = require('../store/ormService')
 const util = require('../util')
 const uuid = require('uuid')
 const config = require('../../config')
-const NodeRSA = require('node-rsa')
-const aesjs = require('aes-js')
-const md5 = require('crypto-js/md5')
 const MCodeManager = require('../transfer/MCodeManager')
+const {generateQrcode} = require('../util/CryptoUtil')
 
 router.post('/addMember', (req, res) => {
   util.checkLogin(req, res)
@@ -209,50 +205,39 @@ function getTree (ary) {
   return result
 }
 
-router.post('/qrcode', function (req, res) {
+router.post('/qrcode', async (req, res) => {
   util.checkLogin(req, res)
-  const {memberId, ticketId} = req.body;
+  const {memberId, ticketId} = req.body
 
-  (async () => {
-    const ormService = await ormServicePromise
-    const record = await ormService.user.getRecordById(req.session.user.id)
-    const member = await ormService.member.queryExactOne({id: memberId})
-    const ticket = await ormService.ticket.queryExactOne({id: ticketId})
-    const key = new NodeRSA()
+  const ormService = await ormServicePromise
+  const record = await ormService.user.getRecordById(req.session.user.id)
+  const member = await ormService.member.queryExactOne({id: memberId})
+  const ticket = await ormService.ticket.queryExactOne({id: ticketId})
 
-    key.importKey(record.privateKey, config.encrypt.privateKeyFormat)
+  const metaData = {
+    action: 'register',
+    code: 'LK',
+    id: memberId,
+    ip: config.ip,
+    port: config.wsPort,
+    orgId: member.orgId,
+    mCode: member.mCode,
+    hasCheckCode: !!ticket.checkCode,
+    name: member.name,
+    url: config.url,
+    ticketId
+  }
 
-    const metaData = {
-      action: 'register',
-      code: 'LK',
-      id: memberId,
-      ip: config.ip,
-      port: config.wsPort,
-      orgId: member.orgId,
-      mCode: member.mCode,
-      hasCheckCode: !!ticket.checkCode,
-      name: member.name,
-      url: config.url,
-        ticketId:ticketId
-    }// md5
-    const signatureRaw = key.sign(JSON.stringify(metaData), config.encrypt.signatureFormat, config.encrypt.sourceFormat)
-    const signature = md5(signatureRaw).toString()
-    const qrcodeData = {
-      ...metaData,
-      signature
+  const qrcodeData = generateQrcode({
+    privateKey: record.privateKey,
+    metaData
+  })
+
+  res.json({
+    content: {
+      qrcodeData
     }
-    const textBytes = aesjs.utils.utf8.toBytes(JSON.stringify(qrcodeData))
-    const aesCtr = new aesjs.ModeOfOperation.ctr(config.encrypt.aesKey, new aesjs.Counter(5))
-    const encryptedBytes = aesCtr.encrypt(textBytes)
-    const encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes)
-
-    res.json({
-      content: {
-        qrcodeData: encryptedHex
-      }
-
-    })
-  })()
+  })
 })
 
 module.exports = router
