@@ -532,7 +532,9 @@ let LKServer = {
                     let checkCodeInput = content.checkCode;
                     let ticket = await Ticket.asyGetTicket(ticketId);
                     let now = new Date();
-                    if(ticket&&(ticket.startTime+ticket.timeout<now.getTime())){
+                    // const withinTime = ticket.startTime+ticket.timeout > now.getTime()
+                    // if(ticket&& withinTime){
+                    if(ticket){
                         if(ticket.checkCode&&(checkCodeInput!=ticket.checkCode)){
                             let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"invalid checkcode"}));
                             wsSend(ws, content);
