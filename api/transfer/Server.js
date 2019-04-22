@@ -670,7 +670,14 @@ let LKServer = {
         let senderDid = header.did;
         let diffs = [];
         let ckDiffPs = [];
-
+        let member = await Member.asyGetMember(senderUid);
+        let pushMsg = ''
+        if(msg.body.hasOwnProperty("isGroup")){
+            let groups = await Group.asyGetGroup(msg.body.chatId);
+            pushMsg = groups.name + " 群 "+member.name +" 成员发来新的群消息,请注意查收"
+        }else{
+            pushMsg = member.name+"发来新的消息,请注意查收"
+        }
         let targetsNeedTrasfer = new Map();
 
         let localFlowsPs = [];
@@ -701,7 +708,6 @@ let LKServer = {
                                                     setTimeout(()=>{
                                                         let content = JSON.parse(msg.body.content);
                                                         // let pushMsg = "新消息:"+(content.type==0?content.data:"图片或语音")
-                                                        const pushMsg = "您有新消息,请注意查收"
                                                         Push.pushIOS(pushMsg,d.venderDid);
                                                         let date = new Date();
                                                         Log.info("pushIOS:msgId "+msg.header.id+",target "+target.id+","+send2+","+(content.type==0?content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
