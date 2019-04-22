@@ -1,5 +1,4 @@
 const NodeSsh = require('node-ssh')
-const path = require('path')
 
 const config = require('../config')
 const {originServer} = config

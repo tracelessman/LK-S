@@ -14,7 +14,8 @@ const index = {
     user: 'root',
     password: '',
     mysqlUser: '',
-    mysqlPassword: ''
+    mysqlPassword: '',
+    database: 'LK_S'
   },
   sqlite_file_name: 'traceless-transfer-db',
   // 本地sqlite 地址
