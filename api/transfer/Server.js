@@ -712,13 +712,13 @@ let LKServer = {
         let diffs = [];
         let ckDiffPs = [];
         let member = await Member.asyGetMember(senderUid);
-        let pushMsg = ''
-        if(msg.body.hasOwnProperty("isGroup")){
-            let groups = await Group.asyGetGroup(msg.body.chatId);
-            pushMsg = groups.name + " 群 "+member.name +" 成员发来新的群消息,请注意查收"
-        }else{
-            pushMsg = member.name+"发来新的消息,请注意查收"
-        }
+        let pushMsg = '发来新的消息,请注意查收'
+        // if(msg.body.hasOwnProperty("isGroup")){
+        //     let groups = await Group.asyGetGroup(msg.body.chatId);
+        //     pushMsg = groups.name + " 群 "+member.name +" 成员发来新的群消息,请注意查收"
+        // }else{
+        //     pushMsg = member.name+"发来新的消息,请注意查收"
+        // }
         let targetsNeedTrasfer = new Map();
 
         let localFlowsPs = [];
