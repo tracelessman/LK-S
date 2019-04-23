@@ -164,7 +164,7 @@ let LKServer = {
             if (wsS&&wsS.has(ws._did)) {
                 isValid = true;
             }
-        }else if (action == "ping" || action == "login" || action == "register" ) {
+        }else if (action == "ping" || action == "login" || action == "register" || action === 'updateRegister') {
             isValid = true;
         }
         //非法请求或需要重新登录的客户端请求
