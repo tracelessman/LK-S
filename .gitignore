@@ -28,5 +28,7 @@ static/public
 # mac
 ._*
 
-
+*.ipa
+*.ppk
+*.apk
 
