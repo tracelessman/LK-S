@@ -430,6 +430,8 @@ let LKServer = {
                     }
 
                 );
+            }else{
+                respContent = LKServer.newResponseMsg(msg.header.id);
             }
             wsSend(ws, JSON.stringify(respContent));
         }catch (e){
