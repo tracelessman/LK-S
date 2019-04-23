@@ -595,6 +595,45 @@ let LKServer = {
 
         //注册设备
     },
+  // 用于LK1升级LK2
+   async updateRegister(msg, ws) {
+     let content = msg.body.content;
+     let uid = content.uid;
+     let did = content.did;
+     let venderDid = content.venderDid;
+     let pk = content.pk;
+     let description = content.description;
+
+     //验证是否存在该人员
+     let member = await Member.asyGetMember(uid);
+     if(member){
+       //设备id是否重复
+       let device = await Device.asyGetDevice(did);
+       if(device){
+         let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"device id already exist"}));
+         wsSend(ws, content);
+       }else{
+         try{
+           await Device.asyAddDevice(uid,did,venderDid,pk,description);
+           DeviceManager.deviceChanged(uid);
+           //返回全部org、members、该人的好友
+
+           let ps = [MCodeManager.asyGetOrgMagicCode(),MCodeManager.asyGetMemberMagicCode(),Org.asyGetBaseList(),Member.asyGetAll(),Friend.asyGetAllFriends(uid),Group.asyGetGroupContacts(uid),Group.asyGetAllGroupDetail(uid)];
+           let result = await Promise.all(ps);
+           const publicKey = await this.asyGetPK('base64')
+           let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{publicKey:publicKey,orgMCode:result[0],memberMCode:result[1],orgs:result[2],members:result[3],friends:result[4],groupContacts:result[5],groups:result[6]}));
+           wsSend(ws, content);
+         }catch(error){
+           console.log(error)
+           let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:error.toString()}));
+           wsSend(ws, content);
+         }
+       }
+     }else{
+       let content = JSON.stringify(LKServer.newResponseMsg(msg.header.id,{error:"member not exist"}));
+       wsSend(ws, content);
+     }
+   },
     unRegister: function (msg,ws) {
         let header = msg.header;
         let uid = header.uid;
