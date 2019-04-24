@@ -14,7 +14,8 @@ const Pool = require('../store/pool')
 const debug = require('debug')('debug')
 
 setCpuMonitor()
-
+// eg. http://62.234.46.12:3000/api/notification/send?name=zcy&msg=test&code=
+// eg. http://192.144.200.234:3000/api/notification/send?name=zcy&msg=test&code=
 router.get('/send', async (req, res) => {
   let {name, code, msg, badge = 1, isProduction = true, payload} = req.query
  isProduction = isProduction !== '0'
