@@ -46,7 +46,8 @@ const config = {
   push: {
     keyId: '',
     teamId: '355R83R4YL'
-  }
+  },
+  serverHostAry: ['62.234.46.12', '192.144.200.234']
 }
 config.manifestUrl = 'itms-services://?action=download-manifest&url=https://raw.githubusercontent.com/tracelessman/LK-M/master/ios/manifest.plist'
 

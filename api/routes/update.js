@@ -80,13 +80,15 @@ router.post('/checkUpdate', (req, res) => {
         result.isHotUpdate = true
       }
       let fileName, filePath
-      const ppkPostFix = `/public/ppk/${os}/${config.appName}.ppk`
-      const apkPostFix = `/public/android/${config.appName}.apk`
+      let ppkPostFix = `/public/ppk/${os}/${config.appName}.ppk`
+      let apkPostFix = `/public/android/${config.appName}.apk`
 
       if (result.isHotUpdate) {
         fileName = `${config.appName}.ppk`
         if (isTesting) {
           filePath = path.resolve(rootPath, `static/testing/ppk/${os}/${fileName}`)
+          ppkPostFix = `/testing/ppk/${os}/${config.appName}.ppk`
+          apkPostFix = `/testing/android/${config.appName}.apk`
         } else {
           filePath = path.resolve(rootPath, `static/public/ppk/${os}/${fileName}`)
         }
