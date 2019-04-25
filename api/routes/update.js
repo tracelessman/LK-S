@@ -60,7 +60,7 @@ router.post('/checkUpdate', (req, res) => {
 
     // 如果updateAnyWay,那就需要更新
     if (updateAnyWay) {
-      prepareUpdate(false)
+      prepareUpdate(false, true)
       result.needUpdate = true
     }
     // 如果是处于开发状态,则不需要更新
@@ -69,7 +69,7 @@ router.post('/checkUpdate', (req, res) => {
     }
     res.end(JSON.stringify(result))
 
-    function prepareUpdate (isPreview) {
+    function prepareUpdate (isPreview, isTesting) {
       result.buildNumberServer = isPreview ? buildNumberServer : previewBuildNumber
 
       // 原生版本不同必然原生更新
@@ -85,7 +85,11 @@ router.post('/checkUpdate', (req, res) => {
 
       if (result.isHotUpdate) {
         fileName = `${config.appName}.ppk`
-        filePath = path.resolve(rootPath, `static/public/ppk/${os}/${fileName}`)
+        if (isTesting) {
+          filePath = path.resolve(rootPath, `static/testing/ppk/${os}/${fileName}`)
+        } else {
+          filePath = path.resolve(rootPath, `static/public/ppk/${os}/${fileName}`)
+        }
       } else {
         if (os === 'ios') {
           fileName = `${config.appName}.ipa`
