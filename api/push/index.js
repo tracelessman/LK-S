@@ -2,7 +2,7 @@ const apn = require('apn')
 const path = require('path')
 const rootPath = path.resolve(__dirname, '../../')
 const config = require(path.resolve(rootPath, 'config'))
-const {bundleId} = config
+const {bundleId, push} = config
 const debug = require('debug')('push')
 
 class Push {
@@ -11,8 +11,8 @@ class Push {
       const options = {
         token: {
           key: path.resolve(rootPath, 'certificate/serviceKey.p8'),
-          keyId: 'XA79Y94CD8',
-          teamId: '355R83R4YL'
+          keyId: push.keyId,
+          teamId: push.teamId
         },
         production: isProduction
       }

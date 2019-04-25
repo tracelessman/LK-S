@@ -9,7 +9,6 @@ const childProcess = require('child_process')
 const path = require('path')
 const rootDir = path.resolve(__dirname, '../../')
 const config = require(path.resolve(rootDir, 'config'))
-const {admin} = config
 const Pool = require('../store/pool')
 const debug = require('debug')('debug')
 
