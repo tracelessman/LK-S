@@ -751,7 +751,8 @@ let LKServer = {
                                                         // let pushMsg = "新消息:"+(content.type==0?content.data:"图片或语音")
                                                         Push.pushIOS(pushMsg,d.venderDid);
                                                         let date = new Date();
-                                                        Log.info("pushIOS:msgId "+msg.header.id+",target "+target.id+","+send2+","+(content.type==0?content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
+                                                        console.log(`pushIOS: ${d.venderDid}`)
+                                                        // Log.info("pushIOS:msgId "+msg.header.id+",target "+target.id+","+send2+","+(content.type==0?content.data:"图片或语音") + "," + (date.getMonth() + 1) + "月" + date.getDate() + "日 " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds());
                                                     },2000);
                                                 }
                                             })
