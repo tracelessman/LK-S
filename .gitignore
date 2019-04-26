@@ -32,3 +32,5 @@ static/public
 *.ppk
 *.apk
 
+# push key file
+*.p8
