@@ -24,7 +24,7 @@ const org = require('./routes/org')
 const db = require('./routes/db')
 const update = require('./routes/update')
 const notification = require('./routes/notification')
-// Import API Routes
+
 app.use('/user', user)
 app.use('/orm', orm)
 app.use('/test', test)
